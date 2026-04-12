@@ -4,7 +4,7 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
-RUN NODE_OPTIONS="--max-old-space-size=512" npm run build
+RUN NODE_OPTIONS="--max-old-space-size=1024" npm run build
 
 # Build backend
 FROM golang:1.26-alpine AS backend-builder
