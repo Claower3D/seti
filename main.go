@@ -46,7 +46,8 @@ func main() {
 		protected := api.Group("")
 		protected.Use(middleware.AuthMiddleware())
 		{
-			protected.GET("/me", handlers.GetMe)
+			protected.GET("/users/search", handlers.SearchUsers)
+protected.GET("/me", handlers.GetMe)
 			protected.GET("/posts", handlers.GetPosts)
 			protected.POST("/posts", handlers.CreatePost)
 			// Profile
@@ -83,3 +84,4 @@ func main() {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
+

@@ -92,3 +92,17 @@ func GetUserProfile(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, user)
 }
+
+func SearchUsers(c *gin.Context) {
+query := c.Query("q")
+if query == "" {
+c.JSON(http.StatusBadRequest, gin.H{"error": "Query is required"})
+return
+}
+var users []models.User
+if err := db.DB.Where("username LIKE ?", "%"+query+"%").Limit(20).Find(&users).Error; err != nil {
+c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search users"})
+return
+}
+c.JSON(http.StatusOK, users)
+}

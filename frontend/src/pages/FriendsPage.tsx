@@ -5,6 +5,8 @@ import { UserPlus, MessageSquare, Search } from 'lucide-react';
 
 export const FriendsPage = () => {
   const [friends, setFriends] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
   const fetchFriends = async () => {
@@ -12,54 +14,73 @@ export const FriendsPage = () => {
       const res = await api.get('/friends');
       setFriends(res.data || []);
     } catch (err) {
-      console.error('Failed to fetch friends');
       setFriends([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchFriends();
-  }, []);
+  const searchUsers = async (q: string) => {
+    if (!q.trim()) { setSearchResults([]); return; }
+    try {
+      const res = await api.get('/users/search?q=' + q);
+      setSearchResults(res.data || []);
+    } catch (err) {
+      setSearchResults([]);
+    }
+  };
+
+  useEffect(() => { fetchFriends(); }, []);
+  useEffect(() => { searchUsers(searchQuery); }, [searchQuery]);
 
   return (
     <div className="container">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Друзья</h1>
         <div style={{ position: 'relative', width: '300px' }}>
           <Search size={18} style={{ position: 'absolute', left: '15px', top: '15px', color: 'var(--text-secondary)' }} />
-          <input type="text" className="input-field" placeholder="Найти друзей..." style={{ paddingLeft: '45px' }} />
+          <input type="text" className="input-field" placeholder="Найти людей..."
+            style={{ paddingLeft: '45px' }} value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
       </motion.div>
 
+      {searchQuery && (
+        <div style={{ marginBottom: '30px' }}>
+          <h2 style={{ marginBottom: '16px' }}>Результаты поиска</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+            {searchResults.length === 0 ? (
+              <p style={{ color: 'var(--text-secondary)' }}>Никого не найдено</p>
+            ) : searchResults.map((user) => (
+              <motion.div key={user.id} whileHover={{ scale: 1.02 }} className="glass-panel"
+                style={{ padding: '24px', textAlign: 'center' }}>
+                <img src={user.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.username}
+                  alt="avatar" style={{ width: '80px', height: '80px', borderRadius: '50%', marginBottom: '12px' }} />
+                <h3>{user.username}</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>{user.bio || 'Нет описания'}</p>
+                <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+                  onClick={() => api.post('/friends/request/' + user.id).then(() => alert('Запрос отправлен!'))}>
+                  <UserPlus size={16} /> Добавить
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <h2 style={{ marginBottom: '16px' }}>Мои друзья</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
-        {loading ? (
-          <div>Загрузка...</div>
-        ) : friends.length > 0 ? (
+        {loading ? <div>Загрузка...</div> : friends.length > 0 ? (
           friends.map((friend) => (
-            <motion.div 
-              key={friend.id}
-              whileHover={{ scale: 1.02 }}
-              className="glass-panel" 
-              style={{ padding: '24px', textAlign: 'center' }}
-            >
-              <img src={friend.avatar} alt="avatar" style={{ width: '100px', height: '100px', borderRadius: '50%', marginBottom: '16px', border: '3px solid var(--primary-color)' }} />
-              <h3 style={{ marginBottom: '8px' }}>{friend.username}</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>{friend.bio || 'У этого пользователя нет описания'}</p>
-              
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>
-                  <MessageSquare size={16} /> Написать
-                </button>
-                <button style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white', padding: '8px 16px', borderRadius: '12px', cursor: 'pointer' }}>
-                  Профиль
-                </button>
-              </div>
+            <motion.div key={friend.id} whileHover={{ scale: 1.02 }} className="glass-panel"
+              style={{ padding: '24px', textAlign: 'center' }}>
+              <img src={friend.avatar} alt="avatar" style={{ width: '100px', height: '100px', borderRadius: '50%', marginBottom: '16px' }} />
+              <h3>{friend.username}</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>{friend.bio || 'Нет описания'}</p>
+              <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>
+                <MessageSquare size={16} /> Написать
+              </button>
             </motion.div>
           ))
         ) : (
