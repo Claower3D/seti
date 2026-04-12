@@ -118,14 +118,32 @@ const Header = () => {
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ textAlign: 'right' }} className="hide-mobile">
-            <div style={{ fontWeight: 'bold' }}>{user.username}</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Online</div>
-          </div>
           <img src={user.avatar} style={{ width: '40px', height: '40px', borderRadius: '12px', border: '2px solid var(--primary-color)' }} alt="avatar" />
         </div>
       </div>
     </div>
+  );
+};
+
+const MobileNav = () => {
+  const { user } = useAuth();
+  const location = useLocation();
+  if (!user) return null;
+  return (
+    <nav className="mobile-nav">
+      <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
+        <Home size={22} /><span>Новости</span>
+      </Link>
+      <Link to="/messages" className={location.pathname === '/messages' ? 'active' : ''}>
+        <MessageSquare size={22} /><span>Чаты</span>
+      </Link>
+      <Link to="/friends" className={location.pathname === '/friends' ? 'active' : ''}>
+        <Users size={22} /><span>Друзья</span>
+      </Link>
+      <Link to={`/profile/${user.username}`} className={location.pathname.startsWith('/profile') ? 'active' : ''}>
+        <User size={22} /><span>Профиль</span>
+      </Link>
+    </nav>
   );
 };
 
@@ -144,51 +162,34 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-function App() {
+function AppInner() {
   const location = useLocation();
-  const { user } = useAuth();
-
   return (
-    <AuthProvider>
-      <div className="main-layout">
-        <Sidebar />
-        <div style={{ flex: 1 }} className="main-content">
-          <Header />
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
-              <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-              <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
-              <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            </Routes>
-          </AnimatePresence>
-        </div>
+    <div className="main-layout">
+      <Sidebar />
+      <div style={{ flex: 1 }} className="main-content">
+        <Header />
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+            <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
+            <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          </Routes>
+        </AnimatePresence>
       </div>
-      {user && (
-        <nav className="mobile-nav">
-          <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
-            <Home size={22} /><span>Новости</span>
-          </Link>
-          <Link to="/messages" className={location.pathname === '/messages' ? 'active' : ''}>
-            <MessageSquare size={22} /><span>Чаты</span>
-          </Link>
-          <Link to="/friends" className={location.pathname === '/friends' ? 'active' : ''}>
-            <Users size={22} /><span>Друзья</span>
-          </Link>
-          <Link to={`/profile/${user.username}`} className={location.pathname.startsWith('/profile') ? 'active' : ''}>
-            <User size={22} /><span>Профиль</span>
-          </Link>
-        </nav>
-      )}
-    </AuthProvider>
+      <MobileNav />
+    </div>
   );
 }
 
 const Root = () => (
   <BrowserRouter>
-    <App />
+    <AuthProvider>
+      <AppInner />
+    </AuthProvider>
   </BrowserRouter>
 );
 
