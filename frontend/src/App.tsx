@@ -81,12 +81,12 @@ const Header = () => {
   if (!user) return null;
 
   return (
-    <div className="glass-panel" style={{ width: '100%', padding: '15px 30px', marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ position: 'relative', width: '400px' }}>
+    <div className="glass-panel" style={{ width: '100%', padding: '15px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
         <Search size={18} style={{ position: 'absolute', left: '15px', top: '15px', color: 'var(--text-secondary)' }} />
-        <input type="text" className="input-field" placeholder="Поиск людей, постов..." style={{ paddingLeft: '45px' }} />
+        <input type="text" className="input-field" placeholder="Поиск..." style={{ paddingLeft: '45px' }} />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: '16px' }}>
         <div style={{ position: 'relative' }}>
           <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setShowNotifs(!showNotifs)}>
             <Bell size={24} style={{ color: requests.length > 0 ? 'var(--primary-color)' : 'var(--text-secondary)' }} />
@@ -97,7 +97,7 @@ const Header = () => {
             )}
           </div>
           {showNotifs && (
-            <div className="glass-panel" style={{ position: 'absolute', right: 0, top: '40px', width: '300px', zIndex: 1000, padding: '16px' }}>
+            <div className="glass-panel" style={{ position: 'absolute', right: 0, top: '40px', width: '280px', zIndex: 1000, padding: '16px' }}>
               <h3 style={{ marginBottom: '12px' }}>Заявки в друзья</h3>
               {requests.length === 0 ? (
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Нет новых заявок</p>
@@ -117,12 +117,12 @@ const Header = () => {
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ textAlign: 'right' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ textAlign: 'right' }} className="hide-mobile">
             <div style={{ fontWeight: 'bold' }}>{user.username}</div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Online</div>
           </div>
-          <img src={user.avatar} style={{ width: '45px', height: '45px', borderRadius: '14px', border: '2px solid var(--primary-color)' }} alt="avatar" />
+          <img src={user.avatar} style={{ width: '40px', height: '40px', borderRadius: '12px', border: '2px solid var(--primary-color)' }} alt="avatar" />
         </div>
       </div>
     </div>
@@ -146,11 +146,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   const location = useLocation();
+  const { user } = useAuth();
+
   return (
     <AuthProvider>
       <div className="main-layout">
         <Sidebar />
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1 }} className="main-content">
           <Header />
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
@@ -164,6 +166,22 @@ function App() {
           </AnimatePresence>
         </div>
       </div>
+      {user && (
+        <nav className="mobile-nav">
+          <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
+            <Home size={22} /><span>Новости</span>
+          </Link>
+          <Link to="/messages" className={location.pathname === '/messages' ? 'active' : ''}>
+            <MessageSquare size={22} /><span>Чаты</span>
+          </Link>
+          <Link to="/friends" className={location.pathname === '/friends' ? 'active' : ''}>
+            <Users size={22} /><span>Друзья</span>
+          </Link>
+          <Link to={`/profile/${user.username}`} className={location.pathname.startsWith('/profile') ? 'active' : ''}>
+            <User size={22} /><span>Профиль</span>
+          </Link>
+        </nav>
+      )}
     </AuthProvider>
   );
 }
