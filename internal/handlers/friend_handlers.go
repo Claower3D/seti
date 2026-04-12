@@ -82,3 +82,4 @@ func GetFriendRequests(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, users)
 }
+
