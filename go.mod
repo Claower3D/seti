@@ -1,6 +1,6 @@
 module social-network
 
-go 1.26.1
+go 1.24
 
 require (
 	github.com/bytedance/gopkg v0.1.3 // indirect
