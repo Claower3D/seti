@@ -1,0 +1,36 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Dependency directories
+node_modules/
+vendor/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Environments
+.env
+.env.local
+
+# Databases
+*.db
+*.db-journal
+
+# Build directories
+frontend/dist/
+dist/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
