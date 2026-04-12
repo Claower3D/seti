@@ -15,141 +15,118 @@ export const ProfilePage = () => {
 
   const isOwnProfile = currentUser?.username === username;
 
-  const fetchProfile = async () => {
-    try {
-      const res = await api.get(`/profile/${username}`);
-      setProfileUser(res.data);
-    } catch (err) {
-      console.error('Failed to fetch profile');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchProfile();
+    setLoading(true);
+    api.get(`/profile/${username}`)
+      .then(res => setProfileUser(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [username]);
 
   if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
-      <motion.div 
-        animate={{ rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-        style={{ width: '40px', height: '40px', border: '4px solid var(--primary-color)', borderTopColor: 'transparent', borderRadius: '50%' }}
-      />
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '80px' }}>
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+        style={{ width: '40px', height: '40px', border: '4px solid var(--primary-color)', borderTopColor: 'transparent', borderRadius: '50%' }} />
     </div>
   );
 
-  if (!profileUser) return <div style={{ textAlign: 'center', padding: '100px' }}> Пользователь не найден </div>;
+  if (!profileUser) return (
+    <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-secondary)' }}>Пользователь не найден</div>
+  );
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      {/* Profile Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-panel" 
-        style={{ overflow: 'hidden', marginBottom: '30px' }}
-      >
-        <div style={{ height: '200px', background: 'linear-gradient(135deg, #6366f1, #a855f7)', position: 'relative' }}>
-          {/* Cover gradient or image */}
-        </div>
-        
-        <div style={{ padding: '0 40px 30px', position: 'relative' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '-60px' }}>
-            <img 
-              src={profileUser.avatar} 
-              alt="avatar" 
-              style={{ width: '150px', height: '150px', borderRadius: '30px', border: '6px solid var(--bg-color)', background: 'var(--bg-color)', objectFit: 'cover' }} 
-            />
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      {/* Header card */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        className="glass-panel" style={{ overflow: 'hidden', marginBottom: '20px' }}>
+
+        {/* Cover */}
+        <div style={{ height: '140px', background: 'linear-gradient(135deg, #6366f1, #a855f7)' }} />
+
+        {/* Avatar + actions */}
+        <div style={{ padding: '0 20px 24px', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '-50px', flexWrap: 'wrap', gap: '12px' }}>
+            <img src={profileUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profileUser.username}
+              alt="avatar" style={{ width: '100px', height: '100px', borderRadius: '24px', border: '4px solid var(--bg-color)', objectFit: 'cover' }} />
             {isOwnProfile && (
-              <button className="btn-primary" onClick={() => setIsEditModalOpen(true)}>
-                <Edit3 size={18} /> Редактировать профиль
+              <button className="btn-primary" onClick={() => setIsEditModalOpen(true)}
+                style={{ padding: '10px 18px', fontSize: '0.9rem' }}>
+                <Edit3 size={16} /> Редактировать
               </button>
             )}
           </div>
 
-          <div style={{ marginTop: '24px' }}>
-            <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>{profileUser.username}</h1>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '1.1rem', maxWidth: '600px' }}>
-              {profileUser.bio || 'Этот пользователь пока ничего не рассказал о себе.'}
+          <div style={{ marginTop: '16px' }}>
+            <h1 style={{ fontSize: '1.6rem', marginBottom: '6px' }}>{profileUser.username}</h1>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '14px', fontSize: '1rem', lineHeight: '1.5' }}>
+              {profileUser.bio || 'Пользователь пока ничего не рассказал о себе.'}
             </p>
 
-            <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
-                <Calendar size={18} />
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                <Calendar size={15} />
                 <span>Присоединился {new Date(profileUser.createdAt).toLocaleDateString()}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
-                <MapPin size={18} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                <MapPin size={15} />
                 <span>Земля</span>
               </div>
             </div>
           </div>
         </div>
-      </motion.div>
 
-      {/* Profile Stats & Content Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '30px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-          <div className="glass-panel" style={{ padding: '24px' }}>
-            <h3 style={{ marginBottom: '20px' }}>Статистика</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
-                  <FileText size={18} /> Посты
-                </div>
-                <span style={{ fontWeight: 'bold' }}>{(profileUser.posts || []).length}</span>
+        {/* Stats row */}
+        <div style={{ display: 'flex', borderTop: '1px solid var(--border-color)' }}>
+          {[
+            { icon: FileText, label: 'Постов', value: (profileUser.posts || []).length },
+            { icon: Users, label: 'Друзей', value: (profileUser.friends || []).length },
+          ].map(({ icon: Icon, label, value }) => (
+            <div key={label} style={{ flex: 1, padding: '16px', textAlign: 'center', borderRight: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '1.4rem', fontWeight: '700' }}>{value}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '2px' }}>
+                <Icon size={13} /> {label}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
-                  <Users size={18} /> Друзья
-                </div>
-                <span style={{ fontWeight: 'bold' }}>{(profileUser.friends || []).length}</span>
-              </div>
+            </div>
+          ))}
+          <div style={{ flex: 1, padding: '16px', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: '700' }}>0</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '2px' }}>
+              <Heart size={13} /> Лайков
             </div>
           </div>
         </div>
+      </motion.div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <h2 style={{ marginBottom: '10px' }}>Посты пользователя</h2>
-          {(profileUser.posts || []).length > 0 ? (
-            profileUser.posts.map((post: any) => (
-              <motion.div 
-                key={post.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="glass-panel" 
-                style={{ padding: '24px' }}
-              >
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                  {new Date(post.createdAt).toLocaleString()}
-                </div>
-                <p style={{ fontSize: '1.1rem', marginBottom: '20px' }}>{post.content}</p>
-                <div style={{ display: 'flex', gap: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-                    <Heart size={20} /> Лайк
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-                    <MessageCircle size={20} /> Коммент
-                  </div>
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              У пользователя пока нет постов.
-            </div>
-          )}
-        </div>
+      {/* Posts */}
+      <h2 style={{ marginBottom: '16px', fontSize: '1.2rem' }}>Посты пользователя</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {(profileUser.posts || []).length > 0 ? (
+          profileUser.posts.map((post: any) => (
+            <motion.div key={post.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="glass-panel" style={{ padding: '20px' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
+                {new Date(post.createdAt).toLocaleString()}
+              </div>
+              <p style={{ fontSize: '1rem', lineHeight: '1.6', marginBottom: '16px' }}>{post.content}</p>
+              <div style={{ display: 'flex', gap: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}>
+                  <Heart size={18} /> Лайк
+                </button>
+                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}>
+                  <MessageCircle size={18} /> Комментарий
+                </button>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            У пользователя пока нет постов.
+          </div>
+        )}
       </div>
 
-      <EditProfileModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
-        currentUser={profileUser}
-        onUpdate={(updated) => setProfileUser({...profileUser, ...updated})}
-      />
+      <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}
+        currentUser={profileUser} onUpdate={(updated) => setProfileUser({ ...profileUser, ...updated })} />
     </div>
   );
 };
