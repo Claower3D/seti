@@ -47,64 +47,65 @@ export const FeedPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="glass-panel" 
-          style={{ padding: '24px', marginBottom: '24px' }}
+          style={{ padding: '24px', marginBottom: '24px', border: '1px solid rgba(0, 242, 255, 0.2)' }}
         >
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-            <img src={user?.avatar} alt="avatar" style={{ width: '45px', height: '45px', borderRadius: '12px' }} />
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+            <img src={user?.avatar} alt="avatar" style={{ width: '52px', height: '52px', borderRadius: '16px', border: '2px solid var(--primary-color)' }} />
             <textarea 
               className="input-field" 
               placeholder="Что у вас нового?"
-              style={{ minHeight: '80px', resize: 'none' }}
+              style={{ minHeight: '100px', resize: 'none', background: 'rgba(255,255,255,0.02)', fontSize: '1.1rem' }}
               value={content}
               onChange={(e) => setContent(e.target.value)}
             />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
-                <ImageIcon size={20} /> Фото/Видео
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+            <div style={{ display: 'flex', gap: '24px' }}>
+              <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', transition: 'var(--transition)' }}>
+                <ImageIcon size={22} className="neon-text" /> <span>Медиа</span>
               </button>
             </div>
             <button className="btn-primary" onClick={handlePost} disabled={isPosting}>
-              {isPosting ? 'Публикация...' : <><Send size={18} /> Опубликовать</>}
+              {isPosting ? 'Цифровизация...' : <><Send size={18} /> Опубликовать</>}
             </button>
           </div>
         </motion.div>
 
         {/* Posts List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
           {posts.map((post, index) => (
             <motion.div 
               key={post.id} 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: Math.min(index * 0.05, 0.5) }}
               className="glass-panel" 
-              style={{ padding: '24px' }}
+              style={{ padding: '28px', borderLeft: index % 2 === 0 ? '4px solid var(--primary-color)' : '4px solid var(--secondary-color)' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                  <img src={post.user?.avatar} alt="avatar" style={{ width: '50px', height: '50px', borderRadius: '14px' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                  <img src={post.user?.avatar} alt="avatar" style={{ width: '54px', height: '54px', borderRadius: '18px', border: '2px solid rgba(255,255,255,0.1)' }} />
                   <div>
-                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{post.user?.username}</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                      {new Date(post.createdAt).toLocaleString()}
+                    <div style={{ fontWeight: '900', fontSize: '1.2rem', color: 'white' }}>{post.user?.username}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary-color)', boxShadow: '0 0 5px var(--primary-color)' }}></div>
+                      {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • SETI Network
                     </div>
                   </div>
                 </div>
                 <MoreHorizontal style={{ color: 'var(--text-secondary)', cursor: 'pointer' }} />
               </div>
-              <p style={{ marginBottom: '20px', fontSize: '1.05rem', lineHeight: '1.6' }}>{post.content}</p>
+              <p style={{ marginBottom: '24px', fontSize: '1.15rem', lineHeight: '1.6', color: '#e2e8f0', letterSpacing: '0.2px' }}>{post.content}</p>
               
-              <div style={{ display: 'flex', gap: '30px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
-                  <Heart size={22} /> Лайк
+              <div style={{ display: 'flex', gap: '32px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
+                  <Heart size={24} /> <span>Лайк</span>
                 </button>
-                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
-                  <MessageCircle size={22} /> Коммент
+                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
+                  <MessageCircle size={24} /> <span>Коммент</span>
                 </button>
-                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
-                  <Share2 size={22} /> Поделиться
+                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
+                  <Share2 size={24} /> <span>Share</span>
                 </button>
               </div>
             </motion.div>
@@ -113,19 +114,22 @@ export const FeedPage = () => {
       </div>
 
       <div className="widgets-container">
-        <div className="glass-panel" style={{ padding: '24px', position: 'sticky', top: '30px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <TrendingUp color="var(--primary-color)" size={20} />
-            <h3 style={{ fontSize: '1.2rem' }}>Актуальное</h3>
+        <div className="glass-panel" style={{ padding: '28px', position: 'sticky', top: '30px', border: '1px solid rgba(189, 0, 255, 0.2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+            <TrendingUp className="neon-text-purple" size={24} />
+            <h3 style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '-0.5px' }}>Матрица тегов</h3>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {['#development', '#railway', '#go', '#react', '#design'].map(tag => (
-              <div key={tag} style={{ cursor: 'pointer' }}>
-                <div style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>{tag}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{Math.floor(Math.random() * 1000)} постов</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {['#future', '#cyber', '#digital', '#sett', '#logic'].map(tag => (
+              <div key={tag} style={{ cursor: 'pointer', group: 'true' }}>
+                <div style={{ color: 'var(--secondary-color)', fontWeight: '800', fontSize: '1.05rem', transition: 'var(--transition)' }} className="hover-neon">{tag}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{Math.floor(Math.random() * 5000)} импульсов</div>
               </div>
             ))}
           </div>
+          <button className="btn-primary" style={{ width: '100%', marginTop: '24px', background: 'rgba(189, 0, 255, 0.1)', border: '1px solid var(--secondary-color)', color: 'var(--secondary-color)', boxShadow: 'none' }}>
+            Показать все
+          </button>
         </div>
       </div>
     </div>

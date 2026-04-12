@@ -28,47 +28,63 @@ export const LoginPage = () => {
   };
 
   return (
-    <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="glass-panel fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', textAlign: 'center' }}>Welcome Back</h2>
-        <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>Sign in to continue to your feed</p>
+    <div style={{ minHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="glass-panel" 
+        style={{ width: '100%', maxWidth: '440px', padding: '3rem 2.5rem', border: '1px solid rgba(0, 242, 255, 0.2)', boxShadow: '0 0 40px rgba(0, 0, 0, 0.5)' }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <h1 style={{ fontSize: '3rem', fontWeight: '900', letterSpacing: '-2px', marginBottom: '8px' }} className="neon-text">SETI</h1>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: '700', marginBottom: '8px', color: 'white' }}>Идентификация</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Введите ключи доступа для входа в сеть</p>
+        </div>
         
-        {error && <div style={{ color: '#ff4d4d', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            style={{ color: '#ff4d4d', marginBottom: '1.5rem', textAlign: 'center', padding: '10px', background: 'rgba(255, 77, 77, 0.05)', borderRadius: '12px', border: '1px solid rgba(255, 77, 77, 0.2)', fontSize: '0.9rem' }}
+          >
+            {error}
+          </motion.div>
+        )}
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div style={{ position: 'relative' }}>
-            <Mail size={18} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
+            <Mail size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
             <input 
               type="email" 
               className="input-field" 
-              placeholder="Email" 
-              style={{ paddingLeft: '40px' }}
+              placeholder="Системный Email" 
+              style={{ paddingLeft: '48px', height: '52px' }}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
           <div style={{ position: 'relative' }}>
-            <Lock size={18} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
+            <Lock size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
             <input 
               type="password" 
               className="input-field" 
-              placeholder="Password" 
-              style={{ paddingLeft: '40px' }}
+              placeholder="Пароль доступа" 
+              style={{ paddingLeft: '48px', height: '52px' }}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
-          <button className="btn-primary" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in...' : <><LogIn size={18} /> Sign In</>}
+          <button className="btn-primary" type="submit" disabled={isSubmitting} style={{ height: '52px', justifyContent: 'center', fontSize: '1rem' }}>
+            {isSubmitting ? 'Авторизация...' : <><LogIn size={20} /> Войти в SETI</>}
           </button>
         </form>
         
-        <p style={{ marginTop: '1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-          Don't have an account? <Link to="/register" style={{ fontWeight: '600' }}>Register</Link>
+        <p style={{ marginTop: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          Нет доступа? <Link to="/register" style={{ fontWeight: '800', color: 'var(--primary-color)', textDecoration: 'none' }} className="neon-text">Регистрация в матрице</Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };
@@ -98,60 +114,76 @@ export const RegisterPage = () => {
     };
   
     return (
-      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="glass-panel fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
-          <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', textAlign: 'center' }}>Join Us</h2>
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>Create an account to start sharing</p>
+      <div style={{ minHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="glass-panel" 
+          style={{ width: '100%', maxWidth: '440px', padding: '3rem 2.5rem', border: '1px solid rgba(189, 0, 255, 0.2)', boxShadow: '0 0 40px rgba(0, 0, 0, 0.5)' }}
+        >
+          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+            <h1 style={{ fontSize: '3rem', fontWeight: '900', letterSpacing: '-2px', marginBottom: '8px' }} className="neon-text-purple">SETI</h1>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: '700', marginBottom: '8px', color: 'white' }}>Новая Сущность</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Создайте свой цифровой отпечаток</p>
+          </div>
           
-          {error && <div style={{ color: '#ff4d4d', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              style={{ color: '#ff4d4d', marginBottom: '1.5rem', textAlign: 'center', padding: '10px', background: 'rgba(255, 77, 77, 0.05)', borderRadius: '12px', border: '1px solid rgba(255, 77, 77, 0.2)', fontSize: '0.9rem' }}
+            >
+              {error}
+            </motion.div>
+          )}
           
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ position: 'relative' }}>
-              <User size={18} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
+              <User size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
               <input 
                 type="text" 
                 className="input-field" 
-                placeholder="Username" 
-                style={{ paddingLeft: '40px' }}
+                placeholder="Цифровое имя (Username)" 
+                style={{ paddingLeft: '48px', height: '52px' }}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
             <div style={{ position: 'relative' }}>
-              <Mail size={18} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
+              <Mail size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
               <input 
                 type="email" 
                 className="input-field" 
-                placeholder="Email" 
-                style={{ paddingLeft: '40px' }}
+                placeholder="Email для синхронизации" 
+                style={{ paddingLeft: '48px', height: '52px' }}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div style={{ position: 'relative' }}>
-              <Lock size={18} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
+              <Lock size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
               <input 
                 type="password" 
                 className="input-field" 
-                placeholder="Password (min 6 chars)" 
-                style={{ paddingLeft: '40px' }}
+                placeholder="Криптографический пароль" 
+                style={{ paddingLeft: '48px', height: '52px' }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
               />
             </div>
-            <button className="btn-primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating account...' : <><LogIn size={18} /> Register</>}
+            <button className="btn-primary" type="submit" disabled={isSubmitting} style={{ height: '52px', justifyContent: 'center', fontSize: '1rem', background: 'linear-gradient(135deg, var(--secondary-color), var(--accent-pink))', boxShadow: '0 0 15px rgba(189, 0, 255, 0.4)' }}>
+              {isSubmitting ? 'Генерация...' : <><LogIn size={20} /> Создать сущность</>}
             </button>
           </form>
           
-          <p style={{ marginTop: '1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            Already have an account? <Link to="/login" style={{ fontWeight: '600' }}>Sign In</Link>
+          <p style={{ marginTop: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            Уже в системе? <Link to="/login" style={{ fontWeight: '800', color: 'var(--secondary-color)', textDecoration: 'none' }} className="neon-text-purple">Идентификация</Link>
           </p>
-        </div>
+        </motion.div>
       </div>
     );
   };
