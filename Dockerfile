@@ -10,7 +10,7 @@ RUN NODE_OPTIONS="--max-old-space-size=1024" npm run build
 FROM golang:1.26-alpine AS backend-builder
 WORKDIR /app
 COPY go.mod go.sum ./
-RUN go mod download
+RUN go mod download && go mod tidy
 COPY . .
 RUN go build -o main .
 
