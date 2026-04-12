@@ -12,7 +12,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go mod tidy && go build -o main .
+RUN apk add --no-cache gcc musl-dev && CGO_ENABLED=1 go mod tidy && CGO_ENABLED=1 go build -o main .
 
 # Final image
 FROM alpine:latest
