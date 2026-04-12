@@ -55,7 +55,8 @@ protected.GET("/me", handlers.GetMe)
 			protected.PUT("/profile", handlers.UpdateProfile)
 
 			// Friends
-			protected.GET("/friends", handlers.GetFriends)
+			protected.GET("/friends/requests", handlers.GetFriendRequests)
+                        protected.GET("/friends", handlers.GetFriends)
 			protected.POST("/friends/request/:id", handlers.SendFriendRequest)
 			protected.POST("/friends/accept/:id", handlers.AcceptFriendRequest)
 
