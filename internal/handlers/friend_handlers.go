@@ -65,3 +65,20 @@ func GetFriends(c *gin.Context) {
 
 	c.JSON(http.StatusOK, friends)
 }
+
+
+func GetFriendRequests(c *gin.Context) {
+	userID, _ := c.Get("userId")
+	var friendships []models.Friendship
+	db.DB.Where("friend_id = ? AND status = ?", userID, "pending").Find(&friendships)
+	var users []models.User
+	for _, f := range friendships {
+		var u models.User
+		db.DB.First(&u, f.UserID)
+		users = append(users, u)
+	}
+	if users == nil {
+		users = []models.User{}
+	}
+	c.JSON(http.StatusOK, users)
+}
