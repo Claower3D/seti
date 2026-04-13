@@ -83,10 +83,3 @@ type Comment struct {
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
-
-type Like struct {
-ID        uint      `gorm:"primaryKey" json:"id"`
-PostID    uint      `gorm:"not null" json:"postId"`
-UserID    uint      `gorm:"not null" json:"userId"`
-CreatedAt time.Time `json:"createdAt"`
-}
