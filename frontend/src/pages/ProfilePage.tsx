@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
-import { Edit3, Calendar, MapPin, FileText, Heart, MessageCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Edit3, Calendar, MapPin, FileText, Heart, MessageCircle, MoreHorizontal, Trash2, Check, X } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
 export const ProfilePage = () => {
@@ -12,6 +12,10 @@ export const ProfilePage = () => {
   const [profileUser, setProfileUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const isOwnProfile = currentUser?.username === username;
 
@@ -22,6 +26,46 @@ export const ProfilePage = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [username]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenu(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleLike = async (postId: number) => {
+    try {
+      await api.post(`/posts/${postId}/like`);
+      setProfileUser((prev: any) => ({
+        ...prev,
+        posts: prev.posts.map((p: any) =>
+          p.id === postId ? { ...p, liked: !p.liked, likesCount: (p.likesCount || 0) + (p.liked ? -1 : 1) } : p
+        ),
+      }));
+    } catch { console.error('Failed to like'); }
+  };
+
+  const handleDelete = async (postId: number) => {
+    if (!confirm('Удалить запись?')) return;
+    try {
+      await api.delete(`/posts/${postId}`);
+      setProfileUser((prev: any) => ({ ...prev, posts: prev.posts.filter((p: any) => p.id !== postId) }));
+    } catch { console.error('Failed to delete'); }
+    setOpenMenu(null);
+  };
+
+  const handleEditStart = (post: any) => { setEditingId(post.id); setEditText(post.content); setOpenMenu(null); };
+
+  const handleEditSave = async (postId: number) => {
+    if (!editText.trim()) return;
+    try {
+      await api.patch(`/posts/${postId}`, { content: editText });
+      setProfileUser((prev: any) => ({ ...prev, posts: prev.posts.map((p: any) => p.id === postId ? { ...p, content: editText } : p) }));
+      setEditingId(null);
+    } catch { console.error('Failed to edit'); }
+  };
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: '80px' }}>
@@ -36,11 +80,9 @@ export const ProfilePage = () => {
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      {/* Header card */}
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
         className="glass-panel" style={{ overflow: 'hidden', marginBottom: '30px', border: '1px solid rgba(0, 242, 255, 0.1)' }}>
 
-        {/* Futuristic Cover */}
         <div style={{ height: '200px', background: 'linear-gradient(45deg, #050608, #1a1a2e)', position: 'relative' }}>
           <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(0, 242, 255, 0.1) 0%, transparent 70%)' }}></div>
           <div style={{ position: 'absolute', bottom: '-50px', left: '24px', display: 'flex', alignItems: 'flex-end', gap: '20px' }}>
@@ -52,7 +94,6 @@ export const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Profile Info & Actions */}
         <div style={{ padding: '70px 24px 30px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
             <div style={{ flex: 1, minWidth: '250px' }}>
@@ -68,10 +109,9 @@ export const ProfilePage = () => {
                 </div>
               </div>
               <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '24px', maxWidth: '600px', borderLeft: '2px solid var(--primary-color)', paddingLeft: '16px' }}>
-                {profileUser.bio || 'Этот пользователь еще не загрузил данные своей биографии в SETI-матрицу.'}
+                {profileUser.bio || 'Этот пользователь ещё не загрузил данные своей биографии в SETI-матрицу.'}
               </p>
             </div>
-
             {isOwnProfile && (
               <button className="btn-primary" onClick={() => setIsEditModalOpen(true)}>
                 <Edit3 size={18} /> Редактировать
@@ -79,12 +119,11 @@ export const ProfilePage = () => {
             )}
           </div>
 
-          {/* Stats row */}
           <div style={{ display: 'flex', gap: '40px', marginTop: '10px' }}>
             {[
               { label: 'Посты', value: (profileUser.posts || []).length },
               { label: 'Друзья', value: (profileUser.friends || []).length },
-              { label: 'Импульсы', value: 0 },
+              { label: 'импульсы', value: 0 },
             ].map(({ label, value }) => (
               <div key={label} style={{ textAlign: 'left' }}>
                 <div style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }} className="neon-text-purple">{value}</div>
@@ -95,42 +134,98 @@ export const ProfilePage = () => {
         </div>
       </motion.div>
 
-      {/* Posts Section */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
         <FileText className="neon-text" size={24} />
         <h2 style={{ fontSize: '1.6rem', fontWeight: '900', letterSpacing: '-0.5px' }}>Архив данных</h2>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {(profileUser.posts || []).length > 0 ? (
-          profileUser.posts.map((post: any, index: number) => (
-            <motion.div key={post.id} 
-              initial={{ opacity: 0, x: -20 }} 
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="glass-panel" style={{ padding: '24px', borderLeft: index % 2 === 0 ? '4px solid var(--primary-color)' : '4px solid var(--secondary-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary-color)', boxShadow: '0 0 5px var(--primary-color)' }}></div>
-                  {new Date(post.createdAt).toLocaleString()}
+        <AnimatePresence>
+          {(profileUser.posts || []).length > 0 ? (
+            profileUser.posts.map((post: any, index: number) => (
+              <motion.div key={post.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: index * 0.05 }}
+                className="glass-panel" style={{ padding: '24px', borderLeft: index % 2 === 0 ? '4px solid var(--primary-color)' : '4px solid var(--secondary-color)' }}>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary-color)', boxShadow: '0 0 5px var(--primary-color)' }}></div>
+                    {new Date(post.createdAt).toLocaleString()}
+                  </div>
+                  {isOwnProfile && (
+                    <div style={{ position: 'relative' }} ref={openMenu === post.id ? menuRef : null}>
+                      <button onClick={() => setOpenMenu(openMenu === post.id ? null : post.id)}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', display: 'flex' }}>
+                        <MoreHorizontal size={20} />
+                      </button>
+                      <AnimatePresence>
+                        {openMenu === post.id && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: -8 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="glass-panel"
+                            style={{ position: 'absolute', right: 0, top: '32px', zIndex: 100, minWidth: '160px', padding: '8px', border: '1px solid rgba(0,242,255,0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}
+                          >
+                            <button onClick={() => handleEditStart(post)}
+                              style={{ width: '100%', background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '600' }}
+                              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,242,255,0.08)')}
+                              onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                              <Edit3 size={16} style={{ color: 'var(--primary-color)' }} /> Редактировать
+                            </button>
+                            <button onClick={() => handleDelete(post.id)}
+                              style={{ width: '100%', background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '600' }}
+                              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,0,100,0.08)')}
+                              onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                              <Trash2 size={16} style={{ color: '#ff3060' }} /> Удалить
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
-              </div>
-              <p style={{ fontSize: '1.1rem', lineHeight: '1.7', color: '#f1f5f9', marginBottom: '20px' }}>{post.content}</p>
-              <div style={{ display: 'flex', gap: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '700' }}>
-                  <Heart size={20} /> Лайк
-                </button>
-                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '700' }}>
-                  <MessageCircle size={20} /> Комментарий
-                </button>
-              </div>
-            </motion.div>
-          ))
-        ) : (
-          <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', border: '1px dashed var(--border-color)' }}>
-            У пользователя пока нет зафиксированных данных в SETI.
-          </div>
-        )}
+
+                {editingId === post.id ? (
+                  <div style={{ marginBottom: '20px' }}>
+                    <textarea className="input-field" value={editText} onChange={e => setEditText(e.target.value)} autoFocus
+                      style={{ width: '100%', minHeight: '80px', resize: 'none', fontSize: '1.05rem', marginBottom: '12px' }} />
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button onClick={() => handleEditSave(post.id)} className="btn-primary"
+                        style={{ padding: '8px 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Check size={16} /> Сохранить
+                      </button>
+                      <button onClick={() => setEditingId(null)}
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px 20px', borderRadius: '10px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <X size={16} /> Отмена
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '1.1rem', lineHeight: '1.7', color: '#f1f5f9', marginBottom: '20px' }}>{post.content}</p>
+                )}
+
+                <div style={{ display: 'flex', gap: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                  <button onClick={() => handleLike(post.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '700', color: post.liked ? '#ff3060' : 'var(--text-secondary)' }}>
+                    <Heart size={20} fill={post.liked ? '#ff3060' : 'none'} style={{ filter: post.liked ? 'drop-shadow(0 0 6px #ff3060)' : 'none' }} />
+                    {post.likesCount > 0 ? post.likesCount : 'Лайк'}
+                  </button>
+                  <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '700' }}>
+                    <MessageCircle size={20} /> Комментарий
+                  </button>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', border: '1px dashed var(--border-color)' }}>
+              У пользователя пока нет записей в SETI.
+            </div>
+          )}
+        </AnimatePresence>
       </div>
 
       <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}
