@@ -106,3 +106,68 @@ return
 }
 c.JSON(http.StatusOK, users)
 }
+
+func DeletePost(c *gin.Context) {
+postID := c.Param("id")
+userID, _ := c.Get("userId")
+var post models.Post
+if err := db.DB.First(&post, postID).Error; err != nil {
+c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+return
+}
+if post.UserID != userID.(uint) {
+c.JSON(http.StatusForbidden, gin.H{"error": "Not your post"})
+return
+}
+db.DB.Delete(&post)
+c.JSON(http.StatusOK, gin.H{"message": "Deleted"})
+}
+
+func UpdatePost(c *gin.Context) {
+postID := c.Param("id")
+userID, _ := c.Get("userId")
+var post models.Post
+if err := db.DB.First(&post, postID).Error; err != nil {
+c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+return
+}
+if post.UserID != userID.(uint) {
+c.JSON(http.StatusForbidden, gin.H{"error": "Not your post"})
+return
+}
+var input struct {
+Content string `json:"content"`
+}
+c.ShouldBindJSON(&input)
+if input.Content != "" {
+post.Content = input.Content
+}
+db.DB.Save(&post)
+db.DB.Preload("User").First(&post, post.ID)
+c.JSON(http.StatusOK, post)
+}
+
+func LikePost(c *gin.Context) {
+postID := c.Param("id")
+userID, _ := c.Get("userId")
+var like models.Like
+err := db.DB.Where("post_id = ? AND user_id = ?", postID, userID).First(&like).Error
+if err != nil {
+db.DB.Create(&models.Like{PostID: parseUint(postID), UserID: userID.(uint)})
+} else {
+db.DB.Delete(&like)
+}
+var count int64
+db.DB.Model(&models.Like{}).Where("post_id = ?", postID).Count(&count)
+c.JSON(http.StatusOK, gin.H{"likesCount": count})
+}
+
+func parseUint(s string) uint {
+var n uint64
+for _, c := range s {
+if c >= '0' && c <= '9' {
+n = n*10 + uint64(c-'0')
+}
+}
+return uint(n)
+}
