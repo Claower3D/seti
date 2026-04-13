@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Edit3, Calendar, MapPin, Users, FileText, Heart, MessageCircle } from 'lucide-react';
+import { Edit3, Calendar, MapPin, FileText, Heart, MessageCircle } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
 export const ProfilePage = () => {

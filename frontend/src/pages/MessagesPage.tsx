@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { Send, Search, ArrowLeft, MessageSquare } from 'lucide-react';

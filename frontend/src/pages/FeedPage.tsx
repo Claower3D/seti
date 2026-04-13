@@ -121,7 +121,7 @@ export const FeedPage = () => {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {['#future', '#cyber', '#digital', '#sett', '#logic'].map(tag => (
-              <div key={tag} style={{ cursor: 'pointer', group: 'true' }}>
+              <div key={tag} style={{ cursor: 'pointer' }}>
                 <div style={{ color: 'var(--secondary-color)', fontWeight: '800', fontSize: '1.05rem', transition: 'var(--transition)' }} className="hover-neon">{tag}</div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{Math.floor(Math.random() * 5000)} импульсов</div>
               </div>
@@ -135,3 +135,4 @@ export const FeedPage = () => {
     </div>
   );
 };
+
