@@ -1,4 +1,4 @@
-﻿package main
+package main
 
 import (
 "log"
@@ -17,6 +17,7 @@ _ = godotenv.Load()
 db.InitDB()
 
 r := gin.Default()
+r.Static("/uploads", "./uploads")
 
 r.Use(func(c *gin.Context) {
 c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
@@ -52,6 +53,14 @@ protected.POST("/friends/request/:id", handlers.SendFriendRequest)
 protected.POST("/friends/accept/:id", handlers.AcceptFriendRequest)
 protected.DELETE("/friends/request/:id", handlers.DeclineFriendRequest)
 
+protected.POST("/upload", handlers.UploadFile)
+protected.GET("/groups", handlers.GetGroups)
+protected.POST("/groups", handlers.CreateGroup)
+protected.GET("/groups/search", handlers.SearchGroups)
+protected.GET("/groups/:id", handlers.GetGroup)
+protected.POST("/groups/:id/join", handlers.JoinGroup)
+protected.POST("/groups/:id/leave", handlers.LeaveGroup)
+protected.GET("/groups/:id/messages", handlers.GetGroupMessages)
 protected.GET("/messages/:otherId", handlers.GetMessages)
 }
 }
@@ -72,3 +81,5 @@ if err := r.Run(":" + port); err != nil {
 log.Fatalf("Failed to start server: %v", err)
 }
 }
+
+
