@@ -2,6 +2,7 @@ package models
 
 import (
 	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -20,10 +21,10 @@ type User struct {
 }
 
 type Friendship struct {
-	ID        uint `gorm:"primaryKey"`
-	UserID    uint `gorm:"not null"`
-	FriendID  uint `gorm:"not null"`
-	Status    string `gorm:"default:'pending'"` // 'pending', 'accepted'
+	ID        uint   `gorm:"primaryKey"`
+	UserID    uint   `gorm:"not null"`
+	FriendID  uint   `gorm:"not null"`
+	Status    string `gorm:"default:'pending'"`
 	CreatedAt time.Time
 }
 
@@ -31,8 +32,33 @@ type Message struct {
 	ID         uint      `gorm:"primaryKey" json:"id"`
 	SenderID   uint      `json:"senderId"`
 	ReceiverID uint      `json:"receiverId"`
+	GroupID    *uint     `json:"groupId,omitempty"`
 	Content    string    `json:"content"`
+	FileURL    string    `json:"fileUrl,omitempty"`
+	FileType   string    `json:"fileType,omitempty"`
+	FileName   string    `json:"fileName,omitempty"`
 	CreatedAt  time.Time `json:"createdAt"`
+}
+
+type Group struct {
+	ID          uint          `gorm:"primaryKey" json:"id"`
+	Name        string        `gorm:"not null" json:"name"`
+	Description string        `json:"description"`
+	Avatar      string        `json:"avatar"`
+	OwnerID     uint          `json:"ownerId"`
+	Owner       User          `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
+	Members     []GroupMember `json:"members,omitempty"`
+	CreatedAt   time.Time     `json:"createdAt"`
+	UpdatedAt   time.Time     `json:"updatedAt"`
+}
+
+type GroupMember struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	GroupID   uint      `gorm:"not null" json:"groupId"`
+	UserID    uint      `gorm:"not null" json:"userId"`
+	User      User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	Role      string    `gorm:"default:'member'" json:"role"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Post struct {

@@ -7,7 +7,8 @@ import { FeedPage } from './pages/FeedPage';
 import { MessagesPage } from './pages/MessagesPage';
 import { FriendsPage } from './pages/FriendsPage';
 import { ProfilePage } from './pages/ProfilePage';
-import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X } from 'lucide-react';
+import { GroupsPage } from './pages/GroupsPage';
+import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, BookOpen } from 'lucide-react';
 import api from './api/client';
 
 const Sidebar = () => {
@@ -18,6 +19,7 @@ const Sidebar = () => {
     { name: 'Новости', icon: Home, path: '/' },
     { name: 'Сообщения', icon: MessageSquare, path: '/messages' },
     { name: 'Друзья', icon: Users, path: '/friends' },
+    { name: 'Группы', icon: BookOpen, path: '/groups' },
     { name: 'Мой профиль', icon: User, path: `/profile/${user.username}` },
   ];
   return (
@@ -130,6 +132,7 @@ const MobileNav = () => {
         { to: '/', icon: Home, label: 'Лента' },
         { to: '/messages', icon: MessageSquare, label: 'Чаты' },
         { to: '/friends', icon: Users, label: 'Друзья' },
+        { to: '/groups', icon: BookOpen, label: 'Группы' },
         { to: `/profile/${user.username}`, icon: User, label: 'Профиль' },
       ].map(({ to, icon: Icon, label }) => (
         <Link key={to} to={to} className={location.pathname === to || (to !== '/' && location.pathname.startsWith(to)) ? 'active' : ''}>
@@ -169,6 +172,7 @@ function AppInner() {
             <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
             <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
+            <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
             <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           </Routes>
         </AnimatePresence>
