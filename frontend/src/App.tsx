@@ -7,7 +7,7 @@ import { FeedPage } from './pages/FeedPage';
 import { MessagesPage } from './pages/MessagesPage';
 import { FriendsPage } from './pages/FriendsPage';
 import { ProfilePage } from './pages/ProfilePage';
-import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Compass, Check, X } from 'lucide-react';
+import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X } from 'lucide-react';
 import api from './api/client';
 
 const Sidebar = () => {
@@ -22,26 +22,33 @@ const Sidebar = () => {
   ];
   return (
     <div className="sidebar glass-panel">
-      <div style={{ marginBottom: '48px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-        <div className="pulse" style={{ background: 'var(--primary-color)', padding: '12px', borderRadius: '14px', boxShadow: 'var(--neon-glow)' }}>
-          <Compass color="black" size={26} />
+      <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '12px', padding: '0 4px' }}>
+        <div className="pulse" style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(180,0,255,0.2))', border: '1px solid rgba(0,245,255,0.4)', padding: '10px', borderRadius: '12px', boxShadow: '0 0 20px rgba(0,245,255,0.3)' }}>
+          <Zap color="#00f5ff" size={22} style={{ filter: 'drop-shadow(0 0 6px #00f5ff)' }} />
         </div>
-        <span style={{ fontSize: '1.8rem', fontWeight: '900', letterSpacing: '-1px' }} className="neon-text">SETI</span>
+        <span style={{ fontSize: '1.6rem', fontWeight: '900', background: 'linear-gradient(135deg, #00f5ff, #b400ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>SETI</span>
       </div>
       <nav style={{ flex: 1 }}>
         {navItems.map((item) => (
           <Link to={item.path} key={item.name} style={{ textDecoration: 'none' }}>
-            <div className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}>
-              <item.icon size={22} strokeWidth={location.pathname === item.path ? 2.5 : 2} />
+            <div className={`nav-item ${location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path)) ? 'active' : ''}`}>
+              <item.icon size={20} />
               <span>{item.name}</span>
             </div>
           </Link>
         ))}
       </nav>
-      <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
-        <div className="nav-item" onClick={logout} style={{ color: '#ff4d4d' }}>
-          <LogOut size={22} />
-          <span>Выйти</span>
+      <div style={{ borderTop: '1px solid rgba(0,245,255,0.08)', paddingTop: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', marginBottom: '6px' }}>
+          <img src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
+            style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.3)' }} alt="" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: '700', color: '#00f5ff', textShadow: '0 0 8px rgba(0,245,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>● Online</div>
+          </div>
+        </div>
+        <div className="nav-item" onClick={logout} style={{ color: 'rgba(255,60,60,0.7)', borderColor: 'transparent' }}>
+          <LogOut size={18} /><span>Выйти</span>
         </div>
       </div>
     </div>
@@ -54,78 +61,59 @@ const Header = () => {
   const [showNotifs, setShowNotifs] = useState(false);
 
   const fetchRequests = async () => {
-    try {
-      const res = await api.get('/friends/requests');
-      setRequests(res.data || []);
-    } catch { setRequests([]); }
+    try { const res = await api.get('/friends/requests'); setRequests(res.data || []); } catch { setRequests([]); }
   };
 
-  const acceptRequest = async (id: number) => {
-    await api.post('/friends/accept/' + id);
-    fetchRequests();
-  };
-
-  const declineRequest = async (id: number) => {
-    try { await api.delete('/friends/request/' + id); } catch {}
-    setRequests(prev => prev.filter(r => r.id !== id));
-  };
+  const acceptRequest = async (id: number) => { await api.post('/friends/accept/' + id); fetchRequests(); };
+  const declineRequest = (id: number) => setRequests(prev => prev.filter(r => r.id !== id));
 
   useEffect(() => {
-    if (user) {
-      fetchRequests();
-      const interval = setInterval(fetchRequests, 15000);
-      return () => clearInterval(interval);
-    }
+    if (user) { fetchRequests(); const t = setInterval(fetchRequests, 15000); return () => clearInterval(t); }
   }, [user]);
 
   if (!user) return null;
 
   return (
-    <div className="glass-panel" style={{ width: '100%', padding: '12px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderRadius: '0 0 24px 24px' }}>
-      <div style={{ position: 'relative', flex: 1, maxWidth: '500px' }}>
-        <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-        <input type="text" className="input-field" placeholder="Поиск в SETI..." style={{ paddingLeft: '48px', height: '48px' }} />
+    <div className="glass-panel" style={{ padding: '12px 20px', marginBottom: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 'var(--radius)' }}>
+      <div style={{ position: 'relative', flex: 1, maxWidth: '420px' }}>
+        <Search size={15} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+        <input type="text" className="input-field" placeholder="Поиск в SETI..." style={{ paddingLeft: '40px', padding: '10px 16px 10px 40px', fontSize: '0.85rem' }} />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginLeft: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginLeft: '16px' }}>
         <div style={{ position: 'relative' }}>
-          <div style={{ position: 'relative', cursor: 'pointer', padding: '10px', borderRadius: '12px', transition: 'var(--transition)' }} 
-               className={requests.length > 0 ? 'pulse' : ''}
-               onClick={() => setShowNotifs(!showNotifs)}>
-            <Bell size={24} style={{ color: requests.length > 0 ? 'var(--primary-color)' : 'var(--text-secondary)' }} />
+          <button onClick={() => setShowNotifs(!showNotifs)}
+            className={requests.length > 0 ? 'pulse' : ''}
+            style={{ background: requests.length > 0 ? 'rgba(0,245,255,0.08)' : 'transparent', border: requests.length > 0 ? '1px solid rgba(0,245,255,0.2)' : '1px solid transparent', cursor: 'pointer', color: requests.length > 0 ? '#00f5ff' : 'var(--text-secondary)', padding: '8px', borderRadius: '12px', position: 'relative', transition: 'all 0.3s', display: 'flex' }}>
+            <Bell size={20} style={{ filter: requests.length > 0 ? 'drop-shadow(0 0 6px #00f5ff)' : 'none' }} />
             {requests.length > 0 && (
-              <div style={{ position: 'absolute', top: '6px', right: '6px', background: 'var(--primary-color)', borderRadius: '50%', width: '18px', height: '18px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black', fontWeight: 'bold', boxShadow: '0 0 10px var(--primary-color)' }}>
+              <div style={{ position: 'absolute', top: '4px', right: '4px', background: '#ff0090', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.58rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '800', boxShadow: '0 0 8px rgba(255,0,144,0.8)' }}>
                 {requests.length}
               </div>
             )}
-          </div>
+          </button>
           {showNotifs && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="glass-panel" style={{ position: 'absolute', right: 0, top: '55px', width: '320px', zIndex: 1000, padding: '20px', boxShadow: '0 10px 40px rgba(0,0,0,0.8)' }}>
-              <h3 style={{ marginBottom: '16px', fontSize: '1.2rem' }} className="neon-text">Заявки</h3>
+            <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="glass-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '290px', zIndex: 1000, padding: '18px', boxShadow: '0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,245,255,0.05)' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: '800', color: '#00f5ff', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.08em', textShadow: '0 0 8px rgba(0,245,255,0.6)' }}>
+                Заявки в друзья
+              </div>
               {requests.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Нет новых уведомлений</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Нет новых заявок</p>
               ) : requests.map((r) => (
-                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                  <img src={r.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + r.username}
-                    alt="avatar" style={{ width: '42px', height: '42px', borderRadius: '50%', border: '1px solid var(--primary-color)' }} />
-                  <span style={{ flex: 1, fontWeight: 'bold', fontSize: '0.95rem' }}>{r.username}</span>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button onClick={() => acceptRequest(r.id)} style={{ background: 'var(--primary-color)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: 'black' }}>
-                      <Check size={16} />
-                    </button>
-                    <button onClick={() => declineRequest(r.id)} style={{ background: 'rgba(255,77,77,0.1)', border: '1px solid rgba(255,77,77,0.3)', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#ff4d4d' }}>
-                      <X size={16} />
-                    </button>
-                  </div>
+                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <img src={r.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + r.username} alt=""
+                    style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.3)' }} />
+                  <span style={{ flex: 1, fontWeight: '600', fontSize: '0.85rem' }}>{r.username}</span>
+                  <button onClick={() => acceptRequest(r.id)} style={{ background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.3)', borderRadius: '8px', padding: '5px', cursor: 'pointer', color: '#00f5ff', display: 'flex' }}><Check size={14} /></button>
+                  <button onClick={() => declineRequest(r.id)} style={{ background: 'rgba(255,0,144,0.1)', border: '1px solid rgba(255,0,144,0.3)', borderRadius: '8px', padding: '5px', cursor: 'pointer', color: '#ff0090', display: 'flex' }}><X size={14} /></button>
                 </div>
               ))}
             </motion.div>
           )}
         </div>
         <Link to={`/profile/${user.username}`}>
-          <img src={user.avatar} style={{ width: '44px', height: '44px', borderRadius: '14px', border: '2px solid var(--primary-color)', boxShadow: '0 0 10px rgba(0,242,255,0.3)' }} alt="avatar" />
+          <img src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} alt=""
+            style={{ width: '38px', height: '38px', borderRadius: '50%', border: '2px solid rgba(0,245,255,0.4)', boxShadow: '0 0 12px rgba(0,245,255,0.25)', cursor: 'pointer' }} />
         </Link>
       </div>
     </div>
@@ -137,25 +125,18 @@ const MobileNav = () => {
   const location = useLocation();
   if (!user) return null;
   return (
-    <>
-      <Link to="/" className="fab">
-        <Send size={24} />
-      </Link>
-      <nav className="mobile-nav">
-        <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
-          <Home size={26} /><span>Новости</span>
+    <nav className="mobile-nav">
+      {[
+        { to: '/', icon: Home, label: 'Лента' },
+        { to: '/messages', icon: MessageSquare, label: 'Чаты' },
+        { to: '/friends', icon: Users, label: 'Друзья' },
+        { to: `/profile/${user.username}`, icon: User, label: 'Профиль' },
+      ].map(({ to, icon: Icon, label }) => (
+        <Link key={to} to={to} className={location.pathname === to || (to !== '/' && location.pathname.startsWith(to)) ? 'active' : ''}>
+          <Icon size={22} /><span>{label}</span>
         </Link>
-        <Link to="/messages" className={location.pathname === '/messages' ? 'active' : ''}>
-          <MessageSquare size={26} /><span>Чаты</span>
-        </Link>
-        <Link to="/friends" className={location.pathname === '/friends' ? 'active' : ''}>
-          <Users size={26} /><span>Друзья</span>
-        </Link>
-        <Link to={`/profile/${user.username}`} className={location.pathname.startsWith('/profile') ? 'active' : ''}>
-          <User size={26} /><span>Профиль</span>
-        </Link>
-      </nav>
-    </>
+      ))}
+    </nav>
   );
 };
 
@@ -163,10 +144,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { token, loading } = useAuth();
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <div className="glass-panel" style={{ padding: '30px 50px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-          style={{ width: '32px', height: '32px', border: '4px solid var(--primary-color)', borderTopColor: 'transparent', borderRadius: '50%', boxShadow: '0 0 15px var(--primary-color)' }} />
-        <span className="neon-text" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Загрузка SETI...</span>
+      <div className="glass-panel" style={{ padding: '28px 48px', display: 'flex', alignItems: 'center', gap: '18px' }}>
+        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+          style={{ width: '28px', height: '28px', border: '2px solid transparent', borderTopColor: '#00f5ff', borderRadius: '50%', boxShadow: '0 0 15px rgba(0,245,255,0.5)' }} />
+        <span style={{ color: '#00f5ff', fontWeight: '700', textShadow: '0 0 8px rgba(0,245,255,0.6)', fontSize: '1rem' }}>Загрузка SETI...</span>
       </div>
     </div>
   );
@@ -179,7 +160,7 @@ function AppInner() {
   return (
     <div className="main-layout">
       <Sidebar />
-      <div style={{ flex: 1 }} className="main-content">
+      <div style={{ flex: 1, minWidth: 0 }} className="main-content">
         <Header />
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
