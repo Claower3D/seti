@@ -80,7 +80,7 @@ export const FeedPage = () => {
   };
 
   return (
-    <div style={{ display: 'flex', gap: '30px' }}>
+    <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
       <div className="feed-container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -210,7 +210,7 @@ export const FeedPage = () => {
         </div>
       </div>
 
-      <div className="widgets-container">
+      <div className="widgets-container hide-mobile">
         <div className="glass-panel" style={{ padding: '28px', position: 'sticky', top: '30px', border: '1px solid rgba(189, 0, 255, 0.2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
             <TrendingUp className="neon-text-purple" size={24} />
@@ -232,3 +232,5 @@ export const FeedPage = () => {
     </div>
   );
 };
+
+
