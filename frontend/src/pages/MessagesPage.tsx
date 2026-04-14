@@ -150,11 +150,11 @@ export const MessagesPage = () => {
                       <div style={{
                         maxWidth: '70%', padding: '12px 18px',
                         borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
-                        background: isMe ? 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))' : 'rgba(255,255,255,0.05)',
-                        color: isMe ? 'black' : 'white', fontSize: '1rem', lineHeight: '1.5',
+                        background: isMe ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.08)',
+                        color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
                         wordBreak: 'break-word', fontWeight: isMe ? '700' : '500',
                         boxShadow: isMe ? 'var(--neon-glow)' : '0 4px 20px rgba(0,0,0,0.3)',
-                        border: isMe ? 'none' : '1px solid rgba(255,255,255,0.1)'
+                        border: isMe ? '1px solid rgba(0,245,255,0.4)' : '1px solid rgba(255,255,255,0.12)'
                       }}>
                         {msg.fileUrl ? (
                           isImage(msg.fileType)
@@ -201,3 +201,4 @@ export const MessagesPage = () => {
     </div>
   );
 };
+

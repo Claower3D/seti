@@ -205,7 +205,7 @@ export const ProfilePage = () => {
                     </div>
                   </div>
                 ) : (
-                  <p style={{ fontSize: '1.1rem', lineHeight: '1.7', color: '#f1f5f9', marginBottom: '20px' }}>{post.content}</p>
+                  <p style={{ fontSize: '1.1rem', lineHeight: '1.7', color: '#f1f5f9', marginBottom: '20px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{post.content}</p>
                 )}
 
                 <div style={{ display: 'flex', gap: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
@@ -233,3 +233,5 @@ export const ProfilePage = () => {
     </div>
   );
 };
+
+

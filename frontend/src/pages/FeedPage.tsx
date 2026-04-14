@@ -186,7 +186,7 @@ export const FeedPage = () => {
                       </div>
                     </div>
                   ) : (
-                    <p style={{ marginBottom: '24px', fontSize: '1.15rem', lineHeight: '1.6', color: '#e2e8f0', letterSpacing: '0.2px' }}>{post.content}</p>
+                    <p style={{ marginBottom: '24px', fontSize: '1.15rem', lineHeight: '1.6', color: '#e2e8f0', letterSpacing: '0.2px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{post.content}</p>
                   )}
 
                   <div style={{ display: 'flex', gap: '32px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
