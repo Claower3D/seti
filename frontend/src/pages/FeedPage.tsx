@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Image as ImageIcon, Heart, MessageCircle, Share2, MoreHorizontal, TrendingUp, Trash2, Edit3, Check, X } from 'lucide-react';
+import { Send, Image as ImageIcon, Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit3, Check, X } from 'lucide-react';
 
 export const FeedPage = () => {
   const { user } = useAuth();
@@ -80,7 +80,7 @@ export const FeedPage = () => {
   };
 
   return (
-    <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+    <div style={{ display: 'flex', width: '100%' }}>
       <div className="feed-container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -210,12 +210,6 @@ export const FeedPage = () => {
         </div>
       </div>
 
-      <div className="widgets-container hide-mobile">
-        <div className="glass-panel" style={{ padding: '28px', position: 'sticky', top: '30px', border: '1px solid rgba(189, 0, 255, 0.2)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-            <TrendingUp className="neon-text-purple" size={24} />
-            <h3 style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '-0.5px' }}>Матрица тегов</h3>
-          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {['#future', '#cyber', '#digital', '#sett', '#logic'].map(tag => (
               <div key={tag} style={{ cursor: 'pointer' }}>
