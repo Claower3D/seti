@@ -105,7 +105,7 @@ export const FeedPage = () => {
               </button>
             </div>
             <button className="btn-primary" onClick={handlePost} disabled={isPosting}>
-              {isPosting ? 'убликация...' : <><Send size={18} /> публиковать</>}
+              {isPosting ? 'убликация...' : <><Send size={18} /> Опубликовать</>}
             </button>
           </div>
         </motion.div>
