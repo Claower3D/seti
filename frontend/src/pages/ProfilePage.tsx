@@ -44,7 +44,7 @@ export const ProfilePage = () => {
           p.id === postId ? { ...p, liked: !p.liked, likesCount: (p.likesCount || 0) + (p.liked ? -1 : 1) } : p
         ),
       }));
-    } catch { console.error('Failed to like'); }
+    } catch {}
   };
 
   const handleDelete = async (postId: number) => {
@@ -52,7 +52,7 @@ export const ProfilePage = () => {
     try {
       await api.delete(`/posts/${postId}`);
       setProfileUser((prev: any) => ({ ...prev, posts: prev.posts.filter((p: any) => p.id !== postId) }));
-    } catch { console.error('Failed to delete'); }
+    } catch {}
     setOpenMenu(null);
   };
 
@@ -64,13 +64,13 @@ export const ProfilePage = () => {
       await api.patch(`/posts/${postId}`, { content: editText });
       setProfileUser((prev: any) => ({ ...prev, posts: prev.posts.map((p: any) => p.id === postId ? { ...p, content: editText } : p) }));
       setEditingId(null);
-    } catch { console.error('Failed to edit'); }
+    } catch {}
   };
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: '80px' }}>
       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-        style={{ width: '40px', height: '40px', border: '4px solid var(--primary-color)', borderTopColor: 'transparent', borderRadius: '50%' }} />
+        style={{ width: '40px', height: '40px', border: '2px solid transparent', borderTopColor: '#00f5ff', borderRadius: '50%', boxShadow: '0 0 15px rgba(0,245,255,0.5)' }} />
     </div>
   );
 
@@ -80,16 +80,14 @@ export const ProfilePage = () => {
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-        className="glass-panel" style={{ overflow: 'hidden', marginBottom: '30px', border: '1px solid rgba(0, 242, 255, 0.1)' }}>
-
+      <div className="glass-panel" style={{ overflow: 'hidden', marginBottom: '30px', border: '1px solid rgba(0,245,255,0.1)' }}>
         <div style={{ height: '200px', background: 'linear-gradient(45deg, #050608, #1a1a2e)', position: 'relative' }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(0, 242, 255, 0.1) 0%, transparent 70%)' }}></div>
-          <div style={{ position: 'absolute', bottom: '-50px', left: '24px', display: 'flex', alignItems: 'flex-end', gap: '20px' }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(0,245,255,0.1) 0%, transparent 70%)' }} />
+          <div style={{ position: 'absolute', bottom: '-50px', left: '24px' }}>
             <div style={{ position: 'relative' }}>
               <img src={profileUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profileUser.username}
-                alt="avatar" style={{ width: '120px', height: '120px', borderRadius: '24px', border: '4px solid var(--bg-color)', background: 'var(--bg-color)', boxShadow: 'var(--neon-glow)', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', bottom: '8px', right: '8px', width: '18px', height: '18px', background: '#00ff00', borderRadius: '50%', border: '3px solid var(--bg-color)', boxShadow: '0 0 10px #00ff00' }}></div>
+                alt="avatar" style={{ width: '120px', height: '120px', borderRadius: '24px', border: '4px solid #04050a', objectFit: 'cover', boxShadow: '0 0 20px rgba(0,245,255,0.3)' }} />
+              <div style={{ position: 'absolute', bottom: '8px', right: '8px', width: '16px', height: '16px', background: '#00ff00', borderRadius: '50%', border: '3px solid #04050a', boxShadow: '0 0 10px #00ff00' }} />
             </div>
           </div>
         </div>
@@ -97,24 +95,24 @@ export const ProfilePage = () => {
         <div style={{ padding: '70px 24px 30px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
             <div style={{ flex: 1, minWidth: '250px' }}>
-              <h1 style={{ fontSize: '2.2rem', fontWeight: '900', marginBottom: '4px', letterSpacing: '-1px' }} className="neon-text">{profileUser.username}</h1>
+              <h1 style={{ fontSize: '2rem', fontWeight: '900', marginBottom: '8px', letterSpacing: '-1px', color: '#00f5ff', textShadow: '0 0 20px rgba(0,245,255,0.5)' }}>{profileUser.username}</h1>
               <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  <Calendar size={15} className="neon-text-purple" />
+                  <Calendar size={14} style={{ color: '#b400ff' }} />
                   <span>SETI User since {new Date(profileUser.createdAt).toLocaleDateString()}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  <MapPin size={15} className="neon-text" />
+                  <MapPin size={14} style={{ color: '#00f5ff' }} />
                   <span>Earth Sector</span>
                 </div>
               </div>
-              <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '24px', maxWidth: '600px', borderLeft: '2px solid var(--primary-color)', paddingLeft: '16px' }}>
+              <p style={{ color: '#cbd5e1', fontSize: '1rem', lineHeight: '1.6', marginBottom: '24px', maxWidth: '600px', borderLeft: '2px solid rgba(0,245,255,0.4)', paddingLeft: '16px', wordBreak: 'break-word' }}>
                 {profileUser.bio || 'Этот пользователь ещё не загрузил данные своей биографии в SETI-матрицу.'}
               </p>
             </div>
             {isOwnProfile && (
               <button className="btn-primary" onClick={() => setIsEditModalOpen(true)}>
-                <Edit3 size={18} /> Редактировать
+                <Edit3 size={16} /> Редактировать
               </button>
             )}
           </div>
@@ -123,19 +121,19 @@ export const ProfilePage = () => {
             {[
               { label: 'Посты', value: (profileUser.posts || []).length },
               { label: 'Друзья', value: (profileUser.friends || []).length },
-              { label: 'импульсы', value: 0 },
+              { label: 'Импульсы', value: 0 },
             ].map(({ label, value }) => (
               <div key={label} style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }} className="neon-text-purple">{value}</div>
+                <div style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1, color: '#b400ff', textShadow: '0 0 10px rgba(180,0,255,0.5)' }}>{value}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>{label}</div>
               </div>
             ))}
           </div>
         </div>
-      </motion.div>
+      </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <FileText className="neon-text" size={24} />
+        <FileText style={{ color: '#00f5ff' }} size={24} />
         <h2 style={{ fontSize: '1.6rem', fontWeight: '900', letterSpacing: '-0.5px' }}>Архив данных</h2>
       </div>
 
@@ -148,11 +146,10 @@ export const ProfilePage = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: index * 0.05 }}
-                className="glass-panel" style={{ padding: '24px', borderLeft: index % 2 === 0 ? '4px solid var(--primary-color)' : '4px solid var(--secondary-color)' }}>
-
+                className="glass-panel" style={{ padding: '24px', borderLeft: index % 2 === 0 ? '3px solid rgba(0,245,255,0.5)' : '3px solid rgba(180,0,255,0.5)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary-color)', boxShadow: '0 0 5px var(--primary-color)' }}></div>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00f5ff', boxShadow: '0 0 5px #00f5ff' }} />
                     {new Date(post.createdAt).toLocaleString()}
                   </div>
                   {isOwnProfile && (
@@ -163,18 +160,13 @@ export const ProfilePage = () => {
                       </button>
                       <AnimatePresence>
                         {openMenu === post.id && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: -8 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="glass-panel"
-                            style={{ position: 'absolute', right: 0, top: '32px', zIndex: 100, minWidth: '160px', padding: '8px', border: '1px solid rgba(0,242,255,0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}
-                          >
+                          <motion.div initial={{ opacity: 0, scale: 0.9, y: -8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }}
+                            className="glass-panel" style={{ position: 'absolute', right: 0, top: '32px', zIndex: 100, minWidth: '160px', padding: '8px', border: '1px solid rgba(0,245,255,0.2)' }}>
                             <button onClick={() => handleEditStart(post)}
                               style={{ width: '100%', background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '600' }}
-                              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,242,255,0.08)')}
+                              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,245,255,0.08)')}
                               onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-                              <Edit3 size={16} style={{ color: 'var(--primary-color)' }} /> Редактировать
+                              <Edit3 size={16} style={{ color: '#00f5ff' }} /> Редактировать
                             </button>
                             <button onClick={() => handleDelete(post.id)}
                               style={{ width: '100%', background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '600' }}
@@ -188,14 +180,12 @@ export const ProfilePage = () => {
                     </div>
                   )}
                 </div>
-
                 {editingId === post.id ? (
                   <div style={{ marginBottom: '20px' }}>
                     <textarea className="input-field" value={editText} onChange={e => setEditText(e.target.value)} autoFocus
                       style={{ width: '100%', minHeight: '80px', resize: 'none', fontSize: '1.05rem', marginBottom: '12px' }} />
                     <div style={{ display: 'flex', gap: '10px' }}>
-                      <button onClick={() => handleEditSave(post.id)} className="btn-primary"
-                        style={{ padding: '8px 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button onClick={() => handleEditSave(post.id)} className="btn-primary" style={{ padding: '8px 20px', fontSize: '0.9rem' }}>
                         <Check size={16} /> Сохранить
                       </button>
                       <button onClick={() => setEditingId(null)}
@@ -207,7 +197,6 @@ export const ProfilePage = () => {
                 ) : (
                   <p style={{ fontSize: '1.1rem', lineHeight: '1.7', color: '#f1f5f9', marginBottom: '20px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{post.content}</p>
                 )}
-
                 <div style={{ display: 'flex', gap: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
                   <button onClick={() => handleLike(post.id)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '700', color: post.liked ? '#ff3060' : 'var(--text-secondary)' }}>
@@ -221,7 +210,7 @@ export const ProfilePage = () => {
               </motion.div>
             ))
           ) : (
-            <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', border: '1px dashed var(--border-color)' }}>
+            <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', border: '1px dashed rgba(0,245,255,0.1)' }}>
               У пользователя пока нет записей в SETI.
             </div>
           )}
@@ -233,6 +222,3 @@ export const ProfilePage = () => {
     </div>
   );
 };
-
-
-
