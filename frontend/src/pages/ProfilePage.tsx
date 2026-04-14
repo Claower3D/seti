@@ -80,7 +80,7 @@ export const ProfilePage = () => {
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
         className="glass-panel" style={{ overflow: 'hidden', marginBottom: '30px', border: '1px solid rgba(0, 242, 255, 0.1)' }}>
 
         <div style={{ height: '200px', background: 'linear-gradient(45deg, #050608, #1a1a2e)', position: 'relative' }}>
@@ -233,5 +233,6 @@ export const ProfilePage = () => {
     </div>
   );
 };
+
 
 
