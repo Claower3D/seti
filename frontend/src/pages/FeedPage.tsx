@@ -101,7 +101,7 @@ export const FeedPage = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
             <div style={{ display: 'flex', gap: '24px' }}>
               <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', transition: 'var(--transition)' }}>
-                <ImageIcon size={22} className="neon-text" /> <span>едиа</span>
+                <ImageIcon size={22} className="neon-text" /> <span>прекрепить</span>
               </button>
             </div>
             <button className="btn-primary" onClick={handlePost} disabled={isPosting}>
@@ -131,7 +131,7 @@ export const FeedPage = () => {
                         <div style={{ fontWeight: '900', fontSize: '1.2rem', color: 'white' }}>{post.user?.username}</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary-color)', boxShadow: '0 0 5px var(--primary-color)' }}></div>
-                          {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • SETI Network
+                          {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • SETI 
                         </div>
                       </div>
                     </Link>
@@ -154,13 +154,13 @@ export const FeedPage = () => {
                                 style={{ width: '100%', background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '600' }}
                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,242,255,0.08)')}
                                 onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-                                <Edit3 size={16} style={{ color: 'var(--primary-color)' }} /> едактировать
+                                <Edit3 size={16} style={{ color: 'var(--primary-color)' }} /> Редактировать
                               </button>
                               <button onClick={() => handleDelete(post.id)}
                                 style={{ width: '100%', background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '600' }}
                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,0,100,0.08)')}
                                 onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-                                <Trash2 size={16} style={{ color: '#ff3060' }} /> далить
+                                <Trash2 size={16} style={{ color: '#ff3060' }} /> Удалить
                               </button>
                             </motion.div>
                           )}
@@ -179,7 +179,7 @@ export const FeedPage = () => {
                         </button>
                         <button onClick={() => setEditingId(null)}
                           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px 20px', borderRadius: '10px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <X size={16} /> тмена
+                          <X size={16} /> Отмена
                         </button>
                       </div>
                     </div>
@@ -191,10 +191,10 @@ export const FeedPage = () => {
                       style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)', color: post.liked ? '#ff3060' : 'var(--text-secondary)' }}
                       className="post-action-btn">
                       <Heart size={24} fill={post.liked ? '#ff3060' : 'none'} style={{ filter: post.liked ? 'drop-shadow(0 0 6px #ff3060)' : 'none' }} />
-                      <span>{post.likesCount > 0 ? post.likesCount : 'айк'}</span>
+                      <span>{post.likesCount > 0 ? post.likesCount : 'Лайк'}</span>
                     </button>
                     <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
-                      <MessageCircle size={24} /> <span>оммент</span>
+                      <MessageCircle size={24} /> <span>Коммент</span>
                     </button>
                     <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
                       <Share2 size={24} /> <span>Share</span>
