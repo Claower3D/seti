@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Image as ImageIcon, Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit3, Check, X } from 'lucide-react';
+import { Send, Image as ImageIcon, Heart, MessageCircle, Share2, MoreHorizontal, TrendingUp, Trash2, Edit3, Check, X } from 'lucide-react';
 
 export const FeedPage = () => {
   const { user } = useAuth();
@@ -60,7 +60,7 @@ export const FeedPage = () => {
   };
 
   const handleDelete = async (postId: number) => {
-    if (!confirm('далить запись?')) return;
+    if (!confirm('Удалить запись?')) return;
     try {
       await api.delete(`/posts/${postId}`);
       setPosts(prev => prev.filter(p => p.id !== postId));
@@ -80,7 +80,7 @@ export const FeedPage = () => {
   };
 
   return (
-    <div style={{ display: 'flex', width: '100%' }}>
+    <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
       <div className="feed-container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -92,7 +92,7 @@ export const FeedPage = () => {
             <img src={user?.avatar} alt="avatar" style={{ width: '52px', height: '52px', borderRadius: '16px', border: '2px solid var(--primary-color)' }} />
             <textarea
               className="input-field"
-              placeholder="то у вас нового?"
+              placeholder="Что у вас нового?"
               style={{ minHeight: '100px', resize: 'none', background: 'rgba(255,255,255,0.02)', fontSize: '1.1rem' }}
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -101,11 +101,11 @@ export const FeedPage = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
             <div style={{ display: 'flex', gap: '24px' }}>
               <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', transition: 'var(--transition)' }}>
-                <ImageIcon size={22} className="neon-text" /> <span>прекрепить</span>
+                <ImageIcon size={22} className="neon-text" /> <span>Медиа</span>
               </button>
             </div>
             <button className="btn-primary" onClick={handlePost} disabled={isPosting}>
-              {isPosting ? 'убликация...' : <><Send size={18} /> Опубликовать</>}
+              {isPosting ? 'Публикация...' : <><Send size={18} /> Опубликовать</>}
             </button>
           </div>
         </motion.div>
@@ -131,10 +131,11 @@ export const FeedPage = () => {
                         <div style={{ fontWeight: '900', fontSize: '1.2rem', color: 'white' }}>{post.user?.username}</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary-color)', boxShadow: '0 0 5px var(--primary-color)' }}></div>
-                          {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • SETI 
+                          {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • SETI Network
                         </div>
                       </div>
                     </Link>
+
                     {isOwn && (
                       <div style={{ position: 'relative' }} ref={openMenu === post.id ? menuRef : null}>
                         <button onClick={() => setOpenMenu(openMenu === post.id ? null : post.id)}
@@ -168,6 +169,7 @@ export const FeedPage = () => {
                       </div>
                     )}
                   </div>
+
                   {editingId === post.id ? (
                     <div style={{ marginBottom: '24px' }}>
                       <textarea className="input-field" value={editText} onChange={e => setEditText(e.target.value)} autoFocus
@@ -186,6 +188,7 @@ export const FeedPage = () => {
                   ) : (
                     <p style={{ marginBottom: '24px', fontSize: '1.15rem', lineHeight: '1.6', color: '#e2e8f0', letterSpacing: '0.2px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{post.content}</p>
                   )}
+
                   <div style={{ display: 'flex', gap: '32px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
                     <button onClick={() => handleLike(post.id)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)', color: post.liked ? '#ff3060' : 'var(--text-secondary)' }}
@@ -206,6 +209,28 @@ export const FeedPage = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      <div className="widgets-container hide-mobile">
+        <div className="glass-panel" style={{ padding: '28px', position: 'sticky', top: '30px', border: '1px solid rgba(189, 0, 255, 0.2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+            <TrendingUp className="neon-text-purple" size={24} />
+            <h3 style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '-0.5px' }}>Матрица тегов</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {['#future', '#cyber', '#digital', '#sett', '#logic'].map(tag => (
+              <div key={tag} style={{ cursor: 'pointer' }}>
+                <div style={{ color: 'var(--secondary-color)', fontWeight: '800', fontSize: '1.05rem', transition: 'var(--transition)' }} className="hover-neon">{tag}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{Math.floor(Math.random() * 5000)} импульсов</div>
+              </div>
+            ))}
+          </div>
+          <button className="btn-primary" style={{ width: '100%', marginTop: '24px', background: 'rgba(189, 0, 255, 0.1)', border: '1px solid var(--secondary-color)', color: 'var(--secondary-color)', boxShadow: 'none' }}>
+            Показать все
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
+
+
