@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Send, Search, ArrowLeft, MessageSquare, Paperclip } from 'lucide-react';
+import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Square, Edit2, Trash2, X } from 'lucide-react';
 
 export const MessagesPage = () => {
   const { user } = useAuth();
@@ -15,6 +15,10 @@ export const MessagesPage = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const isMobile = window.innerWidth <= 768;
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+  const [editingMsgId, setEditingMsgId] = useState<number | null>(null);
 
   useEffect(() => {
     api.get('/friends').then(res => setFriends(res.data || [])).catch(() => setFriends([]));
@@ -25,8 +29,13 @@ export const MessagesPage = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const socket = new WebSocket(`${protocol}//${window.location.host}/ws?userId=${user.id}`);
     socket.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
+      const data = JSON.parse(event.data);
+      const action = data.action || 'send';
+      const msg = data.message || data;
+
       setMessages(prev => {
+        if (action === 'delete') return prev.filter(m => m.id !== msg.id);
+        if (action === 'edit') return prev.map(m => m.id === msg.id ? { ...m, content: msg.content } : m);
         const inChat = selectedFriend && (msg.senderId === selectedFriend.id || msg.receiverId === selectedFriend.id);
         return inChat ? [...prev, msg] : prev;
       });
@@ -47,8 +56,65 @@ export const MessagesPage = () => {
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!ws || !input.trim() || !selectedFriend) return;
-    ws.send(JSON.stringify({ receiverId: selectedFriend.id, content: input }));
+    
+    if (editingMsgId) {
+      ws.send(JSON.stringify({ action: 'edit', messageId: editingMsgId, content: input, receiverId: selectedFriend.id }));
+      setEditingMsgId(null);
+    } else {
+      ws.send(JSON.stringify({ action: 'send', receiverId: selectedFriend.id, content: input }));
+    }
+    
     setInput('');
+    inputRef.current?.focus();
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const fd = new FormData();
+        fd.append('file', audioBlob, `voice-${Date.now()}.webm`);
+        try {
+          const r = await api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+          ws?.send(JSON.stringify({
+            action: 'send',
+            receiverId: selectedFriend.id,
+            content: '',
+            fileUrl: r.data.url,
+            fileName: 'Голосовое сообщение.webm',
+            fileType: 'audio/webm'
+          }));
+        } catch { alert('Ошибка отправки голосового сообщения'); }
+      };
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    } catch { alert('Нет доступа к микрофону'); }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
+  };
+
+  const handleDelete = (msgId: number) => {
+    if (!ws || !selectedFriend) return;
+    if (confirm('Удалить сообщение?')) {
+      ws.send(JSON.stringify({ action: 'delete', messageId: msgId, receiverId: selectedFriend.id }));
+    }
+  };
+
+  const handeEditClick = (msg: any) => {
+    setEditingMsgId(msg.id);
+    setInput(msg.content);
     inputRef.current?.focus();
   };
 
@@ -59,6 +125,7 @@ export const MessagesPage = () => {
     try {
       const r = await api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       ws.send(JSON.stringify({
+        action: 'send',
         receiverId: selectedFriend.id,
         content: '',
         fileUrl: r.data.url,
@@ -147,23 +214,39 @@ export const MessagesPage = () => {
                       animate={{ opacity: 1, x: 0 }}
                       key={i}
                       style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                      <div style={{
-                        maxWidth: '70%', padding: '12px 18px',
-                        borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
-                        background: isMe ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.08)',
-                        color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
-                        wordBreak: 'break-word', fontWeight: isMe ? '700' : '500',
-                        boxShadow: isMe ? '0 0 15px rgba(0,245,255,0.3), 0 0 30px rgba(0,245,255,0.1)' : '0 0 15px rgba(180,0,255,0.2), 0 4px 20px rgba(0,0,0,0.3)',
-                        border: isMe ? '1px solid rgba(0,245,255,0.4)' : '1px solid rgba(255,255,255,0.12)'
-                      }}>
-                        {msg.fileUrl ? (
-                          isImage(msg.fileType)
-                            ? <img src={`http://localhost:8080${msg.fileUrl}`} alt={msg.fileName} style={{ maxWidth: '240px', borderRadius: '10px', display: 'block' }} />
-                            : <a href={`http://localhost:8080${msg.fileUrl}`} target="_blank" rel="noreferrer"
-                                style={{ color: isMe ? 'black' : '#00f5ff', textDecoration: 'underline' }}>
-                                📎 {msg.fileName}
-                              </a>
-                        ) : msg.content}
+                      <div className="msg-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px', flexDirection: isMe ? 'row-reverse' : 'row' }}>
+                        <div style={{
+                          maxWidth: '70%', padding: '12px 18px',
+                          borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
+                          background: isMe ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.08)',
+                          color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
+                          wordBreak: 'break-word', fontWeight: isMe ? '700' : '500',
+                          boxShadow: isMe ? '0 0 15px rgba(0,245,255,0.3), 0 0 30px rgba(0,245,255,0.1)' : '0 0 15px rgba(180,0,255,0.2), 0 4px 20px rgba(0,0,0,0.3)',
+                          border: isMe ? '1px solid rgba(0,245,255,0.4)' : '1px solid rgba(255,255,255,0.12)'
+                        }}>
+                          {msg.fileUrl ? (
+                            msg.fileType?.includes('audio') 
+                              ? <audio controls src={msg.fileUrl} style={{ height: '40px', outline: 'none' }} />
+                              : isImage(msg.fileType)
+                                ? <img src={msg.fileUrl} alt={msg.fileName} style={{ maxWidth: '240px', borderRadius: '10px', display: 'block' }} />
+                                : <a href={msg.fileUrl} target="_blank" rel="noreferrer"
+                                    style={{ color: isMe ? 'black' : '#00f5ff', textDecoration: 'underline' }}>
+                                    📎 {msg.fileName}
+                                  </a>
+                          ) : msg.content}
+                        </div>
+                        {isMe && (
+                          <div className="msg-actions" style={{ display: 'flex', gap: '4px', opacity: 0.6 }}>
+                            {!msg.fileUrl && (
+                              <button onClick={() => handeEditClick(msg)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}>
+                                <Edit2 size={14} />
+                              </button>
+                            )}
+                            <button onClick={() => handleDelete(msg.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', padding: '4px' }}>
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   );
@@ -178,13 +261,28 @@ export const MessagesPage = () => {
                   <Paperclip size={20} />
                 </button>
                 <input ref={inputRef} type="text" className="input-field"
-                  placeholder="Введите сообщение в SETI..."
+                  placeholder={editingMsgId ? "Редактировать сообщение..." : "Введите сообщение в SETI..."}
                   value={input} onChange={(e) => setInput(e.target.value)}
-                  style={{ borderRadius: '20px', padding: '14px 24px', flex: 1, background: 'rgba(255,255,255,0.03)' }} />
-                <button type="submit" className="btn-primary"
-                  style={{ width: '52px', height: '52px', borderRadius: '50%', flexShrink: 0, padding: 0, justifyContent: 'center' }}>
-                  <Send size={22} />
-                </button>
+                  style={{ borderRadius: '20px', padding: '14px 24px', flex: 1, background: editingMsgId ? 'rgba(0,245,255,0.05)' : 'rgba(255,255,255,0.03)', border: editingMsgId ? '1px solid rgba(0,245,255,0.4)' : 'none' }} />
+                
+                {editingMsgId && (
+                  <button type="button" onClick={() => { setEditingMsgId(null); setInput(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px' }}>
+                    <X size={20} />
+                  </button>
+                )}
+                
+                {input.trim() || editingMsgId ? (
+                  <button type="submit" className="btn-primary"
+                    style={{ width: '52px', height: '52px', borderRadius: '50%', flexShrink: 0, padding: 0, justifyContent: 'center' }}>
+                    <Send size={22} />
+                  </button>
+                ) : (
+                  <button type="button" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording}
+                    className={isRecording ? "pulse" : ""}
+                    style={{ width: '52px', height: '52px', borderRadius: '50%', flexShrink: 0, background: isRecording ? '#ff0055' : 'rgba(0,245,255,0.08)', border: isRecording ? 'none' : '1px solid rgba(0,245,255,0.2)', cursor: 'pointer', color: isRecording ? 'white' : '#00f5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                    {isRecording ? <Square size={20} fill="white" /> : <Mic size={20} />}
+                  </button>
+                )}
               </form>
             </>
           ) : (
