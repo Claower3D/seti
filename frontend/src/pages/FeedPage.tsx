@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Image as ImageIcon, Heart, MessageCircle, Share2, MoreHorizontal, TrendingUp, Trash2, Edit3, Check, X } from 'lucide-react';
+import { Send, Image as ImageIcon, Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit3, Check, X } from 'lucide-react';
 
 export const FeedPage = () => {
   const { user } = useAuth();
@@ -107,7 +107,7 @@ export const FeedPage = () => {
 
   const handleShare = async (postId: number) => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/#`);
+      await navigator.clipboard.writeText(`${window.location.origin}/post/${postId}`);
       alert('Запись скопирована в буфер обмена!');
     } catch {
       alert('Ошибка при копировании');
