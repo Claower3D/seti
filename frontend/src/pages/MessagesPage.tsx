@@ -51,12 +51,18 @@ export const MessagesPage = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const isMobile = window.innerWidth <= 768;
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const [editingMsgId, setEditingMsgId] = useState<number | null>(null);
   const [fullscreenMedia, setFullscreenMedia] = useState<{url: string, type: string} | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     api.get('/friends').then(res => setFriends(res.data || [])).catch(() => setFriends([]));
@@ -254,7 +260,7 @@ export const MessagesPage = () => {
                       style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                       <div className="msg-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px', flexDirection: isMe ? 'row-reverse' : 'row' }}>
                         <div style={{
-                          maxWidth: '70%', padding: '12px 18px',
+                          maxWidth: isMobile ? '88%' : '70%', padding: '12px 18px',
                           borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
                           background: isMe ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.08)',
                           color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
@@ -294,16 +300,16 @@ export const MessagesPage = () => {
                 <div ref={scrollRef} />
               </div>
 
-              <form onSubmit={sendMessage} style={{ padding: '20px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '12px', alignItems: 'center', background: 'rgba(0,0,0,0.2)' }}>
+              <form onSubmit={sendMessage} style={{ padding: isMobile ? '12px 16px' : '20px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(0,0,0,0.2)' }}>
                 <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={sendFile} />
                 <button type="button" onClick={() => fileRef.current?.click()}
-                  style={{ width: '52px', height: '52px', borderRadius: '50%', flexShrink: 0, background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.2)', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.2)', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Paperclip size={20} />
                 </button>
                 <input ref={inputRef} type="text" className="input-field"
-                  placeholder={editingMsgId ? "Редактировать сообщение..." : "Введите сообщение в SETI..."}
+                  placeholder={editingMsgId ? "Ред..." : (isMobile ? "Текст..." : "Введите сообщение в SETI...")}
                   value={input} onChange={(e) => setInput(e.target.value)}
-                  style={{ borderRadius: '20px', padding: '14px 24px', flex: 1, background: editingMsgId ? 'rgba(0,245,255,0.05)' : 'rgba(255,255,255,0.03)', border: editingMsgId ? '1px solid rgba(0,245,255,0.4)' : 'none' }} />
+                  style={{ borderRadius: '20px', padding: isMobile ? '10px 16px' : '14px 24px', flex: 1, background: editingMsgId ? 'rgba(0,245,255,0.05)' : 'rgba(255,255,255,0.03)', border: editingMsgId ? '1px solid rgba(0,245,255,0.4)' : 'none', minWidth: 0 }} />
                 
                 {editingMsgId && (
                   <button type="button" onClick={() => { setEditingMsgId(null); setInput(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px' }}>
@@ -313,14 +319,14 @@ export const MessagesPage = () => {
                 
                 {input.trim() || editingMsgId ? (
                   <button type="submit" className="btn-primary"
-                    style={{ width: '52px', height: '52px', borderRadius: '50%', flexShrink: 0, padding: 0, justifyContent: 'center' }}>
-                    <Send size={22} />
+                    style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, padding: 0, justifyContent: 'center' }}>
+                    <Send size={20} />
                   </button>
                 ) : (
                   <button type="button" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording}
                     className={isRecording ? "pulse" : ""}
-                    style={{ width: '52px', height: '52px', borderRadius: '50%', flexShrink: 0, background: isRecording ? '#ff0055' : 'rgba(0,245,255,0.08)', border: isRecording ? 'none' : '1px solid rgba(0,245,255,0.2)', cursor: 'pointer', color: isRecording ? 'white' : '#00f5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
-                    {isRecording ? <Square size={20} fill="white" /> : <Mic size={20} />}
+                    style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, background: isRecording ? '#ff0055' : 'rgba(0,245,255,0.08)', border: isRecording ? 'none' : '1px solid rgba(0,245,255,0.2)', cursor: 'pointer', color: isRecording ? 'white' : '#00f5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                    {isRecording ? <Square size={18} fill="white" /> : <Mic size={20} />}
                   </button>
                 )}
               </form>
