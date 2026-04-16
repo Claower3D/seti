@@ -258,7 +258,7 @@ export const MessagesPage = () => {
                           borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
                           background: isMe ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.08)',
                           color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
-                          wordBreak: 'normal', overflowWrap: 'break-word', wordWrap: 'break-word', whiteSpace: 'pre-wrap', fontWeight: isMe ? '700' : '500', 
+                          wordWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'pre-wrap', fontWeight: isMe ? '700' : '500',
                           boxShadow: isMe ? '0 0 15px rgba(0,245,255,0.3), 0 0 30px rgba(0,245,255,0.1)' : '0 0 15px rgba(180,0,255,0.2), 0 4px 20px rgba(0,0,0,0.3)',
                           border: isMe ? '1px solid rgba(0,245,255,0.4)' : '1px solid rgba(255,255,255,0.12)'
                         }}>
@@ -342,7 +342,7 @@ export const MessagesPage = () => {
         {fullscreenMedia && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
-            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.92)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out', backdropFilter: 'blur(10px)' }}
+            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(10, 15, 30, 0.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out', backdropFilter: 'blur(30px)' }}
             onClick={() => setFullscreenMedia(null)}
           >
             <button style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(0,245,255,0.1)', border: '1px solid currentColor', color: '#00f5ff', width: '48px', height: '48px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', zIndex: 100000 }}>
