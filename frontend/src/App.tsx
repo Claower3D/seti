@@ -95,7 +95,7 @@ const Header = () => {
           </button>
           {showNotifs && (
             <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="glass-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '290px', zIndex: 1000, padding: '18px', boxShadow: '0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,245,255,0.05)' }}>
+              className="glass-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '290px', zIndex: 1000, padding: '18px', background: 'rgba(10, 12, 20, 0.95)', border: '1px solid rgba(0,245,255,0.3)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,245,255,0.1)' }}>
               <div style={{ fontSize: '0.78rem', fontWeight: '800', color: '#00f5ff', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.08em', textShadow: '0 0 8px rgba(0,245,255,0.6)' }}>
                 Заявки в друзья
               </div>
