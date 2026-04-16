@@ -56,6 +56,7 @@ export const MessagesPage = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const [editingMsgId, setEditingMsgId] = useState<number | null>(null);
+  const [fullscreenMedia, setFullscreenMedia] = useState<{url: string, type: string} | null>(null);
 
   useEffect(() => {
     api.get('/friends').then(res => setFriends(res.data || [])).catch(() => setFriends([]));
@@ -264,9 +265,11 @@ export const MessagesPage = () => {
                           {msg.fileUrl ? (
                             msg.fileType?.includes('audio') 
                               ? <VoicePlayer src={msg.fileUrl} />
-                              : isImage(msg.fileType)
-                                ? <img src={msg.fileUrl} alt={msg.fileName} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '10px', display: 'block' }} />
-                                : <a href={msg.fileUrl} target="_blank" rel="noreferrer"
+                              : msg.fileType?.includes('video')
+                                ? <video src={msg.fileUrl} controls style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '10px', outline: 'none' }} />
+                                : isImage(msg.fileType)
+                                  ? <img src={msg.fileUrl} alt={msg.fileName} onClick={() => setFullscreenMedia({url: msg.fileUrl, type: msg.fileType})} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '10px', display: 'block', cursor: 'zoom-in' }} />
+                                  : <a href={msg.fileUrl} target="_blank" rel="noreferrer"
                                     style={{ color: isMe ? 'black' : '#00f5ff', textDecoration: 'underline' }}>
                                     📎 {msg.fileName}
                                   </a>
@@ -333,6 +336,26 @@ export const MessagesPage = () => {
           )}
         </div>
       )}
+
+      {/* FULLSCREEN ZOOM MODAL */}
+      <AnimatePresence>
+        {fullscreenMedia && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.92)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out', backdropFilter: 'blur(10px)' }}
+            onClick={() => setFullscreenMedia(null)}
+          >
+            <button style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(0,245,255,0.1)', border: '1px solid currentColor', color: '#00f5ff', width: '48px', height: '48px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', zIndex: 100000 }}>
+              <X size={28} />
+            </button>
+            {fullscreenMedia.type.includes('video') ? (
+              <video src={fullscreenMedia.url} controls autoPlay onClick={e => e.stopPropagation()} style={{ maxWidth: '90%', maxHeight: '90%', outline: 'none', borderRadius: '12px', boxShadow: '0 0 40px rgba(0,245,255,0.2)' }} />
+            ) : (
+              <img src={fullscreenMedia.url} alt="Fullscreen" onClick={e => e.stopPropagation()} style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 0 40px rgba(0,245,255,0.2)' }} />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
