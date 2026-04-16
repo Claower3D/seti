@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
@@ -14,6 +14,9 @@ export const FeedPage = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -37,16 +40,37 @@ export const FeedPage = () => {
 
   const handlePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() && !attachedImage) return;
     setIsPosting(true);
     try {
-      const res = await api.post('/posts', { content });
+      const res = await api.post('/posts', { content, imageUrl: attachedImage });
       setPosts([res.data, ...posts]);
       setContent('');
+      setAttachedImage(null);
     } catch (err) {
       console.error('Failed to create post');
     } finally {
       setIsPosting(false);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    setIsUploading(true);
+    try {
+      const res = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setAttachedImage(res.data.url);
+    } catch (err) {
+      console.error('Failed to upload file');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -98,13 +122,27 @@ export const FeedPage = () => {
               onChange={(e) => setContent(e.target.value)}
             />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
-            <div style={{ display: 'flex', gap: '24px' }}>
-              <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', transition: 'var(--transition)' }}>
-                <ImageIcon size={22} className="neon-text" /> <span>Медиа</span>
+
+          {attachedImage && (
+            <div style={{ position: 'relative', width: 'fit-content', marginBottom: '20px', marginLeft: '68px' }}>
+              <img src={attachedImage} alt="attachment preview" style={{ maxHeight: '200px', borderRadius: '12px', border: '1px solid rgba(0, 245, 255, 0.3)' }} />
+              <button 
+                onClick={() => setAttachedImage(null)}
+                style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', color: 'white', cursor: 'pointer', padding: '4px', display: 'flex' }}
+              >
+                <X size={16} />
               </button>
             </div>
-            <button className="btn-primary" onClick={handlePost} disabled={isPosting}>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+            <div style={{ display: 'flex', gap: '24px' }}>
+              <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*,video/*" />
+              <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} style={{ background: 'none', border: 'none', color: isUploading ? 'rgba(255,255,255,0.3)' : 'var(--text-secondary)', cursor: isUploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', transition: 'var(--transition)' }}>
+                <ImageIcon size={22} className={isUploading ? "" : "neon-text"} /> <span>{isUploading ? 'Загрузка...' : 'Медиа'}</span>
+              </button>
+            </div>
+            <button className="btn-primary" onClick={handlePost} disabled={isPosting || isUploading}>
               {isPosting ? 'Публикация...' : <><Send size={18} /> Опубликовать</>}
             </button>
           </div>
@@ -186,7 +224,14 @@ export const FeedPage = () => {
                       </div>
                     </div>
                   ) : (
-                    <p style={{ marginBottom: '24px', fontSize: '1.15rem', lineHeight: '1.6', color: '#e2e8f0', letterSpacing: '0.2px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{post.content}</p>
+                    <>
+                      <p style={{ marginBottom: post.imageUrl ? '16px' : '24px', fontSize: '1.15rem', lineHeight: '1.6', color: '#e2e8f0', letterSpacing: '0.2px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{post.content}</p>
+                      {post.imageUrl && (
+                        <div style={{ marginBottom: '24px', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <img src={post.imageUrl} alt="post media" style={{ width: '100%', maxHeight: '500px', objectFit: 'contain', background: 'rgba(0,0,0,0.2)' }} />
+                        </div>
+                      )}
+                    </>
                   )}
 
                   <div style={{ display: 'flex', gap: '32px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>

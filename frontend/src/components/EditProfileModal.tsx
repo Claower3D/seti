@@ -16,6 +16,18 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  React.useEffect(() => {
+    const mainContent = document.querySelector('.main-content') as HTMLElement;
+    if (isOpen && mainContent) {
+      mainContent.style.overflow = 'hidden';
+    } else if (mainContent) {
+      mainContent.style.overflow = 'auto';
+    }
+    return () => {
+      if (mainContent) mainContent.style.overflow = 'auto';
+    };
+  }, [isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
