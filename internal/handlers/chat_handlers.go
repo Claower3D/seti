@@ -65,30 +65,61 @@ func WebSocketHandler(c *gin.Context) {
 		}
 
 		var msgData struct {
+			Action     string `json:"action"`
+			MessageID  uint   `json:"messageId"`
 			ReceiverID uint   `json:"receiverId"`
 			Content    string `json:"content"`
+			FileURL    string `json:"fileUrl"`
+			FileName   string `json:"fileName"`
+			FileType   string `json:"fileType"`
 		}
 
 		if err := json.Unmarshal(message, &msgData); err != nil {
 			continue
 		}
 
-		// Save to DB
-		chatMsg := models.Message{
-			SenderID:   userID,
-			ReceiverID: msgData.ReceiverID,
-			Content:    msgData.Content,
+		if msgData.Action == "" {
+			msgData.Action = "send"
 		}
-		db.DB.Create(&chatMsg)
 
-		// Send to receiver if online
-		mu.Lock()
-		if receiver, ok := clients[msgData.ReceiverID]; ok {
-			receiver.Conn.WriteJSON(chatMsg)
+		var chatMsg models.Message
+
+		if msgData.Action == "delete" {
+			if err := db.DB.Where("id = ? AND sender_id = ?", msgData.MessageID, userID).First(&chatMsg).Error; err == nil {
+				db.DB.Delete(&chatMsg)
+			} else {
+				continue
+			}
+		} else if msgData.Action == "edit" {
+			if err := db.DB.Where("id = ? AND sender_id = ?", msgData.MessageID, userID).First(&chatMsg).Error; err == nil {
+				chatMsg.Content = msgData.Content
+				db.DB.Save(&chatMsg)
+			} else {
+				continue
+			}
+		} else {
+			chatMsg = models.Message{
+				SenderID:   userID,
+				ReceiverID: msgData.ReceiverID,
+				Content:    msgData.Content,
+				FileURL:    msgData.FileURL,
+				FileName:   msgData.FileName,
+				FileType:   msgData.FileType,
+			}
+			db.DB.Create(&chatMsg)
 		}
-		// Echo back to sender
-		if sender, ok := clients[userID]; ok {
-			sender.Conn.WriteJSON(chatMsg)
+
+		outData := map[string]interface{}{
+			"action":  msgData.Action,
+			"message": chatMsg,
+		}
+
+		mu.Lock()
+		if receiver, ok := clients[chatMsg.ReceiverID]; ok {
+			receiver.Conn.WriteJSON(outData)
+		}
+		if sender, ok := clients[chatMsg.SenderID]; ok {
+			sender.Conn.WriteJSON(outData)
 		}
 		mu.Unlock()
 	}
