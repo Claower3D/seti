@@ -2,7 +2,44 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Square, Edit2, Trash2, X } from 'lucide-react';
+import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Square, Edit2, Trash2, X, Play, Pause } from 'lucide-react';
+
+const VoicePlayer = ({ src }: { src: string }) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const toggle = () => {
+    if (audioRef.current) {
+      if (isPlaying) audioRef.current.pause();
+      else audioRef.current.play();
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100);
+    }
+  };
+
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setProgress(0);
+  };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.25)', padding: '8px 16px', borderRadius: '24px', width: '220px', border: '1px solid rgba(0,245,255,0.1)' }}>
+      <button onClick={toggle} style={{ background: '#00f5ff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(0,245,255,0.4)', flexShrink: 0 }}>
+        {isPlaying ? <Pause size={14} fill="black" /> : <Play size={14} fill="black" style={{ marginLeft: '2px' }} />}
+      </button>
+      <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.15)', borderRadius: '2px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ width: `${progress}%`, height: '100%', background: '#00f5ff', borderRadius: '2px', transition: 'width 0.1s linear', boxShadow: '0 0 8px #00f5ff' }} />
+      </div>
+      <audio ref={audioRef} src={src} onTimeUpdate={handleTimeUpdate} onEnded={handleEnded} />
+    </div>
+  );
+};
 
 export const MessagesPage = () => {
   const { user } = useAuth();
@@ -220,15 +257,15 @@ export const MessagesPage = () => {
                           borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
                           background: isMe ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.08)',
                           color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
-                          wordBreak: 'break-word', fontWeight: isMe ? '700' : '500',
+                          wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap', fontWeight: isMe ? '700' : '500',
                           boxShadow: isMe ? '0 0 15px rgba(0,245,255,0.3), 0 0 30px rgba(0,245,255,0.1)' : '0 0 15px rgba(180,0,255,0.2), 0 4px 20px rgba(0,0,0,0.3)',
                           border: isMe ? '1px solid rgba(0,245,255,0.4)' : '1px solid rgba(255,255,255,0.12)'
                         }}>
                           {msg.fileUrl ? (
                             msg.fileType?.includes('audio') 
-                              ? <audio controls src={msg.fileUrl} style={{ height: '40px', outline: 'none' }} />
+                              ? <VoicePlayer src={msg.fileUrl} />
                               : isImage(msg.fileType)
-                                ? <img src={msg.fileUrl} alt={msg.fileName} style={{ maxWidth: '240px', borderRadius: '10px', display: 'block' }} />
+                                ? <img src={msg.fileUrl} alt={msg.fileName} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '10px', display: 'block' }} />
                                 : <a href={msg.fileUrl} target="_blank" rel="noreferrer"
                                     style={{ color: isMe ? 'black' : '#00f5ff', textDecoration: 'underline' }}>
                                     📎 {msg.fileName}
