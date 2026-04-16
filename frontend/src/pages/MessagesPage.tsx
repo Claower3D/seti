@@ -100,14 +100,14 @@ export const MessagesPage = () => {
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!ws || !input.trim() || !selectedFriend) return;
-    
+
     if (editingMsgId) {
       ws.send(JSON.stringify({ action: 'edit', messageId: editingMsgId, content: input, receiverId: selectedFriend.id }));
       setEditingMsgId(null);
     } else {
       ws.send(JSON.stringify({ action: 'send', receiverId: selectedFriend.id, content: input }));
     }
-    
+
     setInput('');
     inputRef.current?.focus();
   };
@@ -258,18 +258,35 @@ export const MessagesPage = () => {
                       animate={{ opacity: 1, x: 0 }}
                       key={i}
                       style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                      <div className="msg-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px', flexDirection: isMe ? 'row-reverse' : 'row' }}>
+
+                      {/* ✅ ФИКС 1: msg-wrapper теперь ограничен по ширине и не растягивается */}
+                      <div className="msg-wrapper" style={{
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flexDirection: isMe ? 'row-reverse' : 'row',
+                        maxWidth: isMobile ? '88%' : '70%',
+                        minWidth: 0,
+                      }}>
+                        {/* ✅ ФИКС 2: убран whiteSpace pre-wrap и wordBreak break-word — текст больше не режется */}
                         <div style={{
-                          maxWidth: isMobile ? '88%' : '70%', padding: '12px 18px',
+                          width: '100%',
+                          padding: '12px 18px',
                           borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
                           background: isMe ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.08)',
-                          color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
-                          wordWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'pre-wrap', fontWeight: isMe ? '700' : '500',
+                          color: isMe ? '#ffffff' : '#e8f4f8',
+                          fontSize: '1rem',
+                          lineHeight: '1.5',
+                          overflowWrap: 'break-word',
+                          wordBreak: 'break-word',
+                          whiteSpace: 'normal',
+                          fontWeight: isMe ? '700' : '500',
                           boxShadow: isMe ? '0 0 15px rgba(0,245,255,0.3), 0 0 30px rgba(0,245,255,0.1)' : '0 0 15px rgba(180,0,255,0.2), 0 4px 20px rgba(0,0,0,0.3)',
-                          border: isMe ? '1px solid rgba(0,245,255,0.4)' : '1px solid rgba(255,255,255,0.12)'
+                          border: isMe ? '1px solid rgba(0,245,255,0.4)' : '1px solid rgba(255,255,255,0.12)',
                         }}>
                           {msg.fileUrl ? (
-                            msg.fileType?.includes('audio') 
+                            msg.fileType?.includes('audio')
                               ? <VoicePlayer src={msg.fileUrl} />
                               : msg.fileType?.includes('video')
                                 ? <video src={msg.fileUrl} controls style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '10px', outline: 'none' }} />
@@ -282,7 +299,7 @@ export const MessagesPage = () => {
                           ) : msg.content}
                         </div>
                         {isMe && (
-                          <div className="msg-actions" style={{ display: 'flex', gap: '4px', opacity: 0.6 }}>
+                          <div className="msg-actions" style={{ display: 'flex', gap: '4px', opacity: 0.6, flexShrink: 0 }}>
                             {!msg.fileUrl && (
                               <button onClick={() => handeEditClick(msg)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}>
                                 <Edit2 size={14} />
@@ -310,13 +327,13 @@ export const MessagesPage = () => {
                   placeholder={editingMsgId ? "Ред..." : (isMobile ? "Текст..." : "Введите сообщение в SETI...")}
                   value={input} onChange={(e) => setInput(e.target.value)}
                   style={{ borderRadius: '20px', padding: isMobile ? '10px 16px' : '14px 24px', flex: 1, background: editingMsgId ? 'rgba(0,245,255,0.05)' : 'rgba(255,255,255,0.03)', border: editingMsgId ? '1px solid rgba(0,245,255,0.4)' : 'none', minWidth: 0 }} />
-                
+
                 {editingMsgId && (
                   <button type="button" onClick={() => { setEditingMsgId(null); setInput(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px' }}>
                     <X size={20} />
                   </button>
                 )}
-                
+
                 {input.trim() || editingMsgId ? (
                   <button type="submit" className="btn-primary"
                     style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, padding: 0, justifyContent: 'center' }}>
@@ -343,7 +360,6 @@ export const MessagesPage = () => {
         </div>
       )}
 
-      {/* FULLSCREEN ZOOM MODAL */}
       <AnimatePresence>
         {fullscreenMedia && (
           <motion.div
@@ -365,5 +381,3 @@ export const MessagesPage = () => {
     </div>
   );
 };
-
-
