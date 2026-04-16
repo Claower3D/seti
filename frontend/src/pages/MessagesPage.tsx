@@ -257,7 +257,7 @@ export const MessagesPage = () => {
                           borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
                           background: isMe ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.08)',
                           color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
-                          wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap', fontWeight: isMe ? '700' : '500',
+                          wordBreak: 'normal', overflowWrap: 'break-word', wordWrap: 'break-word', whiteSpace: 'pre-wrap', fontWeight: isMe ? '700' : '500', 
                           boxShadow: isMe ? '0 0 15px rgba(0,245,255,0.3), 0 0 30px rgba(0,245,255,0.1)' : '0 0 15px rgba(180,0,255,0.2), 0 4px 20px rgba(0,0,0,0.3)',
                           border: isMe ? '1px solid rgba(0,245,255,0.4)' : '1px solid rgba(255,255,255,0.12)'
                         }}>
