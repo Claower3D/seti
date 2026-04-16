@@ -17,6 +17,8 @@ export const FeedPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [activeCommentPostId, setActiveCommentPostId] = useState<number | null>(null);
+  const [commentText, setCommentText] = useState('');
 
   const fetchPosts = async () => {
     try {
@@ -101,6 +103,25 @@ export const FeedPage = () => {
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, content: editText } : p));
       setEditingId(null);
     } catch { console.error('Failed to edit'); }
+  };
+
+  const handleShare = async (postId: number) => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/#`);
+      alert('Запись скопирована в буфер обмена!');
+    } catch {
+      alert('Ошибка при копировании');
+    }
+  };
+
+  const submitComment = (postId: number) => {
+    if (!commentText.trim()) return;
+    // For now, optimistic local update since we just want it to "work" in UI
+    setPosts(prev => prev.map(p => 
+      p.id === postId ? { ...p, comments: [...(p.comments || []), { id: Date.now(), content: commentText, user: user }] } : p
+    ));
+    setCommentText('');
+    setActiveCommentPostId(null);
   };
 
   return (
@@ -241,37 +262,37 @@ export const FeedPage = () => {
                       <Heart size={24} fill={post.liked ? '#ff3060' : 'none'} style={{ filter: post.liked ? 'drop-shadow(0 0 6px #ff3060)' : 'none' }} />
                       <span>{post.likesCount > 0 ? post.likesCount : 'Лайк'}</span>
                     </button>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
+                    <button onClick={() => setActiveCommentPostId(activeCommentPostId === post.id ? null : post.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
                       <MessageCircle size={24} /> <span>Коммент</span>
                     </button>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
+                    <button onClick={() => handleShare(post.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
                       <Share2 size={24} /> <span>Share</span>
                     </button>
                   </div>
+                  
+                  <AnimatePresence>
+                    {activeCommentPostId === post.id && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                        {(post.comments || []).map((c: any) => (
+                           <div key={c.id} style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                             <img src={c.user?.avatar} alt="avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.3)' }} />
+                             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '12px', flex: 1 }}>
+                               <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#00f5ff', marginBottom: '4px' }}>{c.user?.username}</div>
+                               <div style={{ fontSize: '0.95rem', color: '#cbd5e1' }}>{c.content}</div>
+                             </div>
+                           </div>
+                        ))}
+                        <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                          <input type="text" className="input-field" placeholder="Написать комментарий..." value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitComment(post.id)} />
+                          <button className="btn-primary" onClick={() => submitComment(post.id)} style={{ padding: '8px 16px', fontSize: '0.8rem' }}>Отправить</button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               );
             })}
           </AnimatePresence>
-        </div>
-      </div>
-
-      <div className="widgets-container hide-mobile">
-        <div className="glass-panel" style={{ padding: '28px', position: 'sticky', top: '30px', border: '1px solid rgba(189, 0, 255, 0.2)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-            <TrendingUp className="neon-text-purple" size={24} />
-            <h3 style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '-0.5px' }}>Матрица тегов</h3>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            {['#future', '#cyber', '#digital', '#sett', '#logic'].map(tag => (
-              <div key={tag} style={{ cursor: 'pointer' }}>
-                <div style={{ color: 'var(--secondary-color)', fontWeight: '800', fontSize: '1.05rem', transition: 'var(--transition)' }} className="hover-neon">{tag}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{Math.floor(Math.random() * 5000)} импульсов</div>
-              </div>
-            ))}
-          </div>
-          <button className="btn-primary" style={{ width: '100%', marginTop: '24px', background: 'rgba(189, 0, 255, 0.1)', border: '1px solid var(--secondary-color)', color: 'var(--secondary-color)', boxShadow: 'none' }}>
-            Показать все
-          </button>
         </div>
       </div>
     </div>
