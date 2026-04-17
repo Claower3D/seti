@@ -77,3 +77,46 @@ func LikeWave(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
+
+func GetWaveComments(c *gin.Context) {
+	waveID := c.Param("id")
+	var comments []models.WaveComment
+	if err := db.DB.Preload("User").Where("wave_id = ?", waveID).Order("created_at asc").Find(&comments).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch comments"})
+		return
+	}
+	c.JSON(http.StatusOK, comments)
+}
+
+func CreateWaveComment(c *gin.Context) {
+	waveID := c.Param("id")
+	userID, _ := c.Get("userId")
+
+	var input struct {
+		Content string `json:"content" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var waveIDUint uint
+	db.DB.Raw("SELECT id FROM waves WHERE id = ?", waveID).Scan(&waveIDUint)
+
+	comment := models.WaveComment{
+		UserID:  userID.(uint),
+		WaveID:  waveIDUint,
+		Content: input.Content,
+	}
+
+	if err := db.DB.Create(&comment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create comment"})
+		return
+	}
+
+	// Update comments count
+	db.DB.Model(&models.Wave{}).Where("id = ?", waveID).UpdateColumn("comments_count", db.DB.Raw("comments_count + 1"))
+
+	db.DB.Preload("User").First(&comment, comment.ID)
+	c.JSON(http.StatusCreated, comment)
+}

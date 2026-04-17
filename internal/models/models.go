@@ -94,19 +94,29 @@ type Story struct {
 }
 
 type Wave struct {
-	ID          uint      `gorm:"primaryKey" json:"id"`
-	UserID      uint      `json:"userId"`
-	User        User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	VideoURL    string    `json:"videoUrl"`
-	Description string    `json:"description"`
-	LikesCount  int       `json:"likesCount"`
-	Liked       bool      `gorm:"-" json:"liked"`
-	CreatedAt   time.Time `json:"createdAt"`
+	ID            uint      `gorm:"primaryKey" json:"id"`
+	UserID        uint      `json:"userId"`
+	User          User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	VideoURL      string    `json:"videoUrl"`
+	Description   string    `json:"description"`
+	LikesCount    int       `json:"likesCount"`
+	CommentsCount int       `json:"commentsCount"`
+	Liked         bool      `gorm:"-" json:"liked"`
+	CreatedAt     time.Time `json:"createdAt"`
 }
 
 type WaveLike struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	UserID    uint      `json:"userId"`
 	WaveID    uint      `json:"waveId"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type WaveComment struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserID    uint      `json:"userId"`
+	User      User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	WaveID    uint      `json:"waveId"`
+	Content   string    `gorm:"not null" json:"content"`
 	CreatedAt time.Time `json:"createdAt"`
 }
