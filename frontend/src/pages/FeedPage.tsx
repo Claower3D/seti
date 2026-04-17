@@ -366,12 +366,8 @@ export const FeedPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(5,5,15,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(40px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(30px)' }}
           >
-            {/* Blurred Background Layer */}
-            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: -1 }}>
-              <img src={stories[activeStoryIdx].imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(60px) brightness(0.4)', transform: 'scale(1.2)' }} />
-            </div>
 
             <div style={{ width: '100%', maxWidth: '450px', height: '100%', maxHeight: '850px', position: 'relative', overflow: 'hidden', borderRadius: '32px', border: '1px solid rgba(0,245,255,0.15)', boxShadow: '0 40px 100px rgba(0,0,0,0.8), 0 0 50px rgba(0,245,255,0.05)', background: '#000' }}>
               
