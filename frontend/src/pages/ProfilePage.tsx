@@ -53,7 +53,7 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { i
     <AnimatePresence>
       <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: window.innerWidth < 768 ? '0' : '40px' }}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
-          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(15px)' }} />
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(20px)' }} />
         
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
           style={{ 
@@ -61,7 +61,8 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { i
             width: '100%', 
             maxWidth: '1100px', 
             height: window.innerWidth < 768 ? '100%' : '85vh',
-            background: '#050608',
+            background: 'rgba(5, 6, 8, 0.8)',
+            backdropFilter: 'blur(25px)',
             display: 'flex',
             flexDirection: window.innerWidth < 768 ? 'column' : 'row',
             overflow: 'hidden',
