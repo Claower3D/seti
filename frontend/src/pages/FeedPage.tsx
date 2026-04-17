@@ -24,6 +24,7 @@ export const FeedPage = () => {
   const storyInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingStory, setIsUploadingStory] = useState(false);
   const [storyProgress, setStoryProgress] = useState(0);
+  const [isStoryPaused, setIsStoryPaused] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -42,9 +43,12 @@ export const FeedPage = () => {
   useEffect(() => { fetchPosts(); fetchStories(); }, []);
 
   useEffect(() => {
+    setStoryProgress(0);
+  }, [activeStoryIdx]);
+
+  useEffect(() => {
     let timer: any;
-    if (activeStoryIdx !== null) {
-      setStoryProgress(0);
+    if (activeStoryIdx !== null && !isStoryPaused) {
       timer = setInterval(() => {
         setStoryProgress(prev => {
           if (prev >= 100) {
@@ -57,7 +61,7 @@ export const FeedPage = () => {
       }, 50);
     }
     return () => clearInterval(timer);
-  }, [activeStoryIdx, stories.length]);
+  }, [activeStoryIdx, stories.length, isStoryPaused]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -406,7 +410,16 @@ export const FeedPage = () => {
                 </button>
               </div>
 
-              <img src={stories[activeStoryIdx].imageUrl} alt="story" style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black' }} />
+              <img 
+                src={stories[activeStoryIdx].imageUrl} 
+                alt="story" 
+                onMouseDown={() => setIsStoryPaused(true)}
+                onMouseUp={() => setIsStoryPaused(false)}
+                onMouseLeave={() => setIsStoryPaused(false)}
+                onTouchStart={() => setIsStoryPaused(true)}
+                onTouchEnd={() => setIsStoryPaused(false)}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black', cursor: 'pointer' }} 
+              />
 
               {/* Interaction Footer */}
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 20px 40px', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)', display: 'flex', gap: '16px', alignItems: 'center', zIndex: 20 }}>
