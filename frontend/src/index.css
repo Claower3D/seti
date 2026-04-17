@@ -499,17 +499,17 @@ body::after {
   border-radius: 20px;
   font-size: 0.78rem;
   font-weight: 700;
-  background: rgba(0, 245, 255, 0.08);
-  border: 1px solid rgba(0, 245, 255, 0.15);
+  background: color-mix(in srgb, var(--primary), transparent 92%);
+  border: 1px solid color-mix(in srgb, var(--primary), transparent 85%);
   color: var(--primary);
   transition: all 0.2s;
   cursor: pointer;
 }
 
 .tag:hover {
-  background: rgba(0, 245, 255, 0.15);
-  border-color: rgba(0, 245, 255, 0.35);
-  box-shadow: 0 0 12px rgba(0, 245, 255, 0.2);
+  background: color-mix(in srgb, var(--primary), transparent 85%);
+  border-color: color-mix(in srgb, var(--primary), transparent 65%);
+  box-shadow: var(--glow);
 }
 
 /* MOBILE NAV */
@@ -521,13 +521,13 @@ body::after {
   right: 0;
   background: rgba(5, 5, 20, 0.75);
   backdrop-filter: blur(40px);
-  border-top: 1px solid rgba(0, 245, 255, 0.15);
+  border-top: 1px solid var(--border);
   padding: 8px 12px env(safe-area-inset-bottom);
   z-index: 2000;
   justify-content: center;
   align-items: center;
   gap: 15px;
-  box-shadow: 0 -15px 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 245, 255, 0.05);
+  box-shadow: 0 -15px 50px rgba(0, 0, 0, 0.8), var(--glow);
 }
 
 .mobile-nav a {
@@ -549,7 +549,7 @@ body::after {
 
 .mobile-nav a.active {
   color: var(--primary);
-  background: rgba(0, 245, 255, 0.05);
+  background: color-mix(in srgb, var(--primary), transparent 95%);
 }
 
 .mobile-nav a.active::after {
@@ -566,7 +566,7 @@ body::after {
 }
 
 .mobile-nav a.active svg {
-  filter: drop-shadow(0 0 6px rgba(0, 245, 255, 0.6));
+  filter: var(--glow);
 }
 
 /* POST CARD */
@@ -587,15 +587,15 @@ body::after {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.2), rgba(180, 0, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary), transparent 80%), color-mix(in srgb, var(--secondary), transparent 80%), transparent);
   opacity: 0;
   transition: opacity 0.3s;
 }
 
 .post-card:hover {
-  border-color: rgba(0, 245, 255, 0.18);
+  border-color: color-mix(in srgb, var(--primary), transparent 82%);
   transform: translateY(-2px);
-  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 245, 255, 0.06);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5), var(--glow);
 }
 
 .post-card:hover::after {

@@ -303,7 +303,7 @@ export const MessagesPage = () => {
                           width: '100%',
                           padding: '12px 18px',
                           borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
-                          background: isMe ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.08)',
+                          background: isMe ? 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 70%), color-mix(in srgb, var(--secondary), transparent 70%))' : 'rgba(255,255,255,0.08)',
                           color: isMe ? '#ffffff' : '#e8f4f8',
                           fontSize: '1rem',
                           lineHeight: '1.5',
@@ -311,8 +311,8 @@ export const MessagesPage = () => {
                           wordBreak: 'break-word',
                           whiteSpace: 'normal',
                           fontWeight: isMe ? '700' : '500',
-                          boxShadow: isMe ? '0 0 15px rgba(0,245,255,0.3), 0 0 30px rgba(0,245,255,0.1)' : '0 0 15px rgba(180,0,255,0.2), 0 4px 20px rgba(0,0,0,0.3)',
-                          border: isMe ? '1px solid rgba(0,245,255,0.4)' : '1px solid rgba(255,255,255,0.12)',
+                          boxShadow: isMe ? '0 0 15px color-mix(in srgb, var(--primary), transparent 70%), var(--glow)' : '0 0 15px rgba(180,0,255,0.2), 0 4px 20px rgba(0,0,0,0.3)',
+                          border: isMe ? '1px solid var(--border-bright)' : '1px solid rgba(255,255,255,0.12)',
                         }}>
                           {msg.replyStoryUrl && (
                             <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '8px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '3px solid var(--primary-color)' }}>
@@ -328,7 +328,7 @@ export const MessagesPage = () => {
                                 : isImage(msg.fileType)
                                   ? <img src={msg.fileUrl} alt={msg.fileName} onClick={() => setFullscreenMedia({url: msg.fileUrl, type: msg.fileType})} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '10px', display: 'block', cursor: 'zoom-in' }} />
                                   : <a href={msg.fileUrl} target="_blank" rel="noreferrer"
-                                    style={{ color: isMe ? 'black' : '#00f5ff', textDecoration: 'underline' }}>
+                                    style={{ color: isMe ? 'black' : 'var(--primary)', textShadow: isMe ? 'none' : 'var(--glow)', textDecoration: 'underline' }}>
                                     📎 {msg.fileName}
                                   </a>
                           ) : msg.content}
@@ -383,7 +383,7 @@ export const MessagesPage = () => {
                 ) : (
                   <button type="button" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording}
                     className={isRecording ? "pulse" : ""}
-                    style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, background: isRecording ? '#ff0055' : 'rgba(0,245,255,0.08)', border: isRecording ? 'none' : '1px solid rgba(0,245,255,0.2)', cursor: 'pointer', color: isRecording ? 'white' : '#00f5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                    style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, background: isRecording ? '#ff0055' : 'color-mix(in srgb, var(--primary), transparent 92%)', border: isRecording ? 'none' : '1px solid var(--border-bright)', cursor: 'pointer', color: isRecording ? 'white' : 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', boxShadow: isRecording ? '0 0 20px #ff0055' : 'var(--glow)' }}>
                     {isRecording ? <Square size={18} fill="white" /> : <Mic size={20} />}
                   </button>
                 )}
@@ -408,13 +408,13 @@ export const MessagesPage = () => {
             style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(10, 15, 30, 0.5)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out', backdropFilter: 'blur(30px)' }}
             onClick={() => setFullscreenMedia(null)}
           >
-            <button style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(0,245,255,0.1)', border: '1px solid currentColor', color: '#00f5ff', width: '48px', height: '48px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', zIndex: 100000 }}>
+            <button style={{ position: 'absolute', top: '24px', right: '24px', background: 'color-mix(in srgb, var(--primary), transparent 90%)', border: '1px solid currentColor', color: 'var(--primary)', width: '48px', height: '48px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', zIndex: 100000, boxShadow: 'var(--glow)' }}>
               <X size={28} />
             </button>
             {fullscreenMedia.type.includes('video') ? (
-              <video src={fullscreenMedia.url} controls autoPlay onClick={e => e.stopPropagation()} style={{ maxWidth: '90%', maxHeight: '90%', outline: 'none', borderRadius: '12px', boxShadow: '0 0 40px rgba(0,245,255,0.2)' }} />
+              <video src={fullscreenMedia.url} controls autoPlay onClick={e => e.stopPropagation()} style={{ maxWidth: '90%', maxHeight: '90%', outline: 'none', borderRadius: '12px', boxShadow: 'var(--glow-strong)' }} />
             ) : (
-              <img src={fullscreenMedia.url} alt="Fullscreen" onClick={e => e.stopPropagation()} style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 0 40px rgba(0,245,255,0.2)' }} />
+              <img src={fullscreenMedia.url} alt="Fullscreen" onClick={e => e.stopPropagation()} style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain', borderRadius: '12px', boxShadow: 'var(--glow-strong)' }} />
             )}
           </motion.div>
         )}
