@@ -68,6 +68,9 @@ protected.POST("/groups/:id/leave", handlers.LeaveGroup)
 protected.GET("/groups/:id/messages", handlers.GetGroupMessages)
 protected.GET("/messages/:otherId", handlers.GetMessages)
 protected.POST("/messages", handlers.CreateMessage)
+protected.GET("/waves", handlers.GetWaves)
+protected.POST("/waves", handlers.CreateWave)
+protected.POST("/waves/:id/like", handlers.LikeWave)
 }
 }
 
