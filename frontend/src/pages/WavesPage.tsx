@@ -388,7 +388,16 @@ export const WavesPage = () => {
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    
+    const handleTriggerUpload = () => {
+      videoUploadRef.current?.click();
+    };
+    window.addEventListener('trigger-wave-upload', handleTriggerUpload);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('trigger-wave-upload', handleTriggerUpload);
+    };
   }, []);
 
   const fetchWaves = async () => {

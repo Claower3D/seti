@@ -126,20 +126,45 @@ const Header = () => {
 const MobileNav = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const isWavesPage = location.pathname === '/waves';
   if (!user) return null;
+
+  const navItems = [
+    { to: '/', icon: Home, label: 'Лента' },
+    { to: '/messages', icon: MessageSquare, label: 'Чаты' },
+    { to: '/waves', icon: Radio, label: 'Волны', isMiddle: true },
+    { to: '/friends', icon: Users, label: 'Друзья' },
+    { to: `/profile/${user.username}`, icon: User, label: 'Профиль' },
+  ];
+
+  const handlePlusClick = (e: React.MouseEvent) => {
+    if (isWavesPage) {
+      e.preventDefault();
+      window.dispatchEvent(new CustomEvent('trigger-wave-upload'));
+    }
+  };
+
   return (
     <nav className="mobile-nav">
-      {[
-        { to: '/', icon: Home, label: 'Лента' },
-        { to: '/messages', icon: MessageSquare, label: 'Чаты' },
-        { to: '/friends', icon: Users, label: 'Друзья' },
-        { to: '/waves', icon: Radio, label: 'Волны' },
-        { to: `/profile/${user.username}`, icon: User, label: 'Профиль' },
-      ].map(({ to, icon: Icon, label }) => (
-        <Link key={to} to={to} className={location.pathname === to || (to !== '/' && location.pathname.startsWith(to)) ? 'active' : ''}>
-          <Icon size={22} /><span>{label}</span>
-        </Link>
-      ))}
+      {navItems.map(({ to, icon: Icon, label, isMiddle }) => {
+        const isActive = location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
+        
+        if (isMiddle && isWavesPage) {
+          return (
+            <button key="plus" onClick={handlePlusClick} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', outline: 'none', padding: '0 8px' }}>
+              <div style={{ background: 'linear-gradient(135deg, #00f5ff, #b400ff)', borderRadius: '50%', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 15px rgba(0,245,255,0.4)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <Plus size={24} color="white" />
+              </div>
+            </button>
+          );
+        }
+
+        return (
+          <Link key={to} to={to} className={isActive ? 'active' : ''}>
+            <Icon size={22} /><span>{label}</span>
+          </Link>
+        );
+      })}
     </nav>
   );
 };
