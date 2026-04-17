@@ -92,3 +92,21 @@ type Story struct {
 	ImageURL  string    `json:"imageUrl"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+type Wave struct {
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	UserID      uint      `json:"userId"`
+	User        User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	VideoURL    string    `json:"videoUrl"`
+	Description string    `json:"description"`
+	LikesCount  int       `json:"likesCount"`
+	Liked       bool      `gorm:"-" json:"liked"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
+
+type WaveLike struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserID    uint      `json:"userId"`
+	WaveID    uint      `json:"waveId"`
+	CreatedAt time.Time `json:"createdAt"`
+}
