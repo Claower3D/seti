@@ -319,12 +319,12 @@ body::after {
   font-weight: 800;
   cursor: pointer;
   transition: all 0.25s;
-  box-shadow: 0 4px 20px rgba(0, 245, 255, 0.3);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--primary), transparent 70%);
 }
 
 .btn-accent:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 245, 255, 0.5);
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--primary), transparent 50%);
   filter: brightness(1.1);
 }
 
