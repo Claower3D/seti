@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, X, Grid, Film, Zap } from 'lucide-react';
+import { Heart, MessageCircle, X, Grid, Film, Zap, Settings } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
 const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { isOpen: boolean, onClose: () => void, media: any, type: 'post' | 'wave', isMobile: boolean, owner: any }) => {
@@ -277,17 +277,23 @@ export const ProfilePage = () => {
             {isOwnProfile && (
               <button onClick={() => setIsEditModalOpen(true)}
                 style={{ 
-                  padding: '8px 20px', 
-                  borderRadius: '10px', 
-                  fontSize: '0.85rem', 
-                  fontWeight: '800', 
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '12px', 
                   cursor: 'pointer', 
                   background: neon, 
                   color: '#050608',
                   border: 'none',
-                  boxShadow: `0 0 15px ${neon}66`
-                }}>
-                Редактировать
+                  boxShadow: `0 0 15px ${neon}66`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'transform 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'rotate(30deg)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'rotate(0deg)'}
+              >
+                <Settings size={20} />
               </button>
             )}
             {!isOwnProfile && (
