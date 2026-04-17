@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -57,6 +58,14 @@ export const MessagesPage = () => {
   const audioChunksRef = useRef<BlobPart[]>([]);
   const [editingMsgId, setEditingMsgId] = useState<number | null>(null);
   const [fullscreenMedia, setFullscreenMedia] = useState<{url: string, type: string} | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (friends.length > 0 && location.state?.selectedFriendId) {
+      const friend = friends.find(f => f.id === location.state.selectedFriendId);
+      if (friend) setSelectedFriend(friend);
+    }
+  }, [friends, location.state]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -285,6 +294,12 @@ export const MessagesPage = () => {
                           boxShadow: isMe ? '0 0 15px rgba(0,245,255,0.3), 0 0 30px rgba(0,245,255,0.1)' : '0 0 15px rgba(180,0,255,0.2), 0 4px 20px rgba(0,0,0,0.3)',
                           border: isMe ? '1px solid rgba(0,245,255,0.4)' : '1px solid rgba(255,255,255,0.12)',
                         }}>
+                          {msg.replyStoryUrl && (
+                            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '8px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '3px solid var(--primary-color)' }}>
+                               <img src={msg.replyStoryUrl} alt="replied story" style={{ width: '100%', maxWidth: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
+                               <span style={{ fontSize: '0.75rem', opacity: 0.7, color: 'var(--primary-color)', fontWeight: 'bold' }}>Ответ на историю</span>
+                            </div>
+                          )}
                           {msg.fileUrl ? (
                             msg.fileType?.includes('audio')
                               ? <VoicePlayer src={msg.fileUrl} />

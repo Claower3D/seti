@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Image as ImageIcon, Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit3, Check, X } from 'lucide-react';
 
 export const FeedPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [posts, setPosts] = useState<any[]>([]);
   const [content, setContent] = useState('');
   const [isPosting, setIsPosting] = useState(false);
@@ -25,6 +26,7 @@ export const FeedPage = () => {
   const [isUploadingStory, setIsUploadingStory] = useState(false);
   const [storyProgress, setStoryProgress] = useState(0);
   const [isStoryPaused, setIsStoryPaused] = useState(false);
+  const [replyText, setReplyText] = useState('');
 
   const fetchPosts = async () => {
     try {
@@ -62,6 +64,23 @@ export const FeedPage = () => {
     }
     return () => clearInterval(timer);
   }, [activeStoryIdx, stories.length, isStoryPaused]);
+
+  const handleStoryReply = async () => {
+    if (!replyText.trim() || activeStoryIdx === null) return;
+    const storyOwnerId = stories[activeStoryIdx].user.id;
+    try {
+      await api.post('/messages', {
+        receiverId: storyOwnerId,
+        content: replyText,
+        replyStoryUrl: stories[activeStoryIdx].imageUrl
+      });
+      setReplyText('');
+      setActiveStoryIdx(null);
+      navigate('/messages', { state: { selectedFriendId: storyOwnerId } });
+    } catch {
+      alert('Ошибка при отправке ответа');
+    }
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -426,11 +445,16 @@ export const FeedPage = () => {
                 <input 
                   type="text" 
                   placeholder="Ответить на историю..." 
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  onFocus={() => setIsStoryPaused(true)}
+                  onBlur={() => setIsStoryPaused(false)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleStoryReply()}
                   style={{ flex: 1, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '25px', padding: '12px 20px', color: 'white', fontSize: '0.9rem', outline: 'none', backdropFilter: 'blur(10px)' }}
                   onClick={(e) => e.stopPropagation()}
                 />
                 <div style={{ display: 'flex', gap: '18px' }}>
-                  <Heart size={26} color="white" style={{ cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
+                  <Send size={26} color={replyText.trim() ? "var(--primary-color)" : "white"} onClick={(e) => { e.stopPropagation(); handleStoryReply(); }} style={{ cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))', transition: 'all 0.2s' }} />
                   <Share2 size={26} color="white" onClick={(e) => { e.stopPropagation(); handleShare(stories[activeStoryIdx].id); }} style={{ cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
                 </div>
               </div>

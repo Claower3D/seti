@@ -67,6 +67,7 @@ protected.POST("/groups/:id/join", handlers.JoinGroup)
 protected.POST("/groups/:id/leave", handlers.LeaveGroup)
 protected.GET("/groups/:id/messages", handlers.GetGroupMessages)
 protected.GET("/messages/:otherId", handlers.GetMessages)
+protected.POST("/messages", handlers.CreateMessage)
 }
 }
 
