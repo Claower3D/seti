@@ -6,7 +6,6 @@ import (
 	"social-network/internal/models"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type CreatePostInput struct {
