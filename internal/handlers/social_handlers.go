@@ -53,10 +53,11 @@ func CreatePost(c *gin.Context) {
 }
 
 type UpdateProfileInput struct {
-	Username  string `json:"username"`
-	Bio       string `json:"bio"`
-	Avatar    string `json:"avatar"`
-	NeonColor string `json:"neonColor"`
+	Username       string  `json:"username"`
+	Bio            string  `json:"bio"`
+	Avatar         string  `json:"avatar"`
+	NeonColor      string  `json:"neonColor"`
+	NeonBrightness float64 `json:"neonBrightness"`
 }
 
 func UpdateProfile(c *gin.Context) {
@@ -92,6 +93,9 @@ func UpdateProfile(c *gin.Context) {
 	}
 	if input.NeonColor != "" {
 		user.NeonColor = input.NeonColor
+	}
+	if input.NeonBrightness != 0 {
+		user.NeonBrightness = input.NeonBrightness
 	}
 
 	if err := db.DB.Save(&user).Error; err != nil {

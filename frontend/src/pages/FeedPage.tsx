@@ -382,9 +382,9 @@ export const FeedPage = () => {
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
                         {(post.comments || []).map((c: any) => (
                            <div key={c.id} style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-                             <img src={c.user?.avatar} alt="avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.3)' }} />
+                             <img src={c.user?.avatar} alt="avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(var(--primary-rgb), 0.3)' }} />
                              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '12px', flex: 1 }}>
-                               <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#00f5ff', marginBottom: '4px' }}>{c.user?.username}</div>
+                               <div style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '4px' }}>{c.user?.username}</div>
                                <div style={{ fontSize: '0.95rem', color: '#cbd5e1' }}>{c.content}</div>
                              </div>
                            </div>
@@ -413,7 +413,7 @@ export const FeedPage = () => {
             style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(30px)' }}
           >
 
-            <div style={{ width: '100%', maxWidth: '450px', height: '100%', maxHeight: '850px', position: 'relative', overflow: 'hidden', borderRadius: '32px', border: '1px solid rgba(0,245,255,0.15)', boxShadow: '0 40px 100px rgba(0,0,0,0.8), 0 0 50px rgba(0,245,255,0.05)', background: '#000' }}>
+            <div style={{ width: '100%', maxWidth: '450px', height: '100%', maxHeight: '850px', position: 'relative', overflow: 'hidden', borderRadius: '32px', border: '1px solid rgba(var(--primary-rgb), 0.15)', boxShadow: '0 40px 100px rgba(0,0,0,0.8), 0 0 50px rgba(var(--primary-rgb), 0.05)', background: '#000' }}>
               
               {/* Progress Bars (Per User) */}
               {(() => {
@@ -427,8 +427,8 @@ export const FeedPage = () => {
                         <div style={{ 
                           width: i < currentIdxInUser ? '100%' : (i === currentIdxInUser ? `${storyProgress}%` : '0%'), 
                           height: '100%', 
-                          background: 'linear-gradient(90deg, #00f5ff, #b400ff)',
-                          boxShadow: '0 0 10px rgba(0,245,255,0.8)'
+                          background: 'linear-gradient(90deg, var(--primary), var(--secondary))',
+                          boxShadow: 'var(--glow)'
                         }} />
                       </div>
                     ))}
