@@ -342,15 +342,30 @@ export const ProfilePage = () => {
             (profileUser.posts || []).length > 0 ? (
               profileUser.posts.map((post: any) => (
                 <motion.div key={post.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  whileHover={{ scale: 1.02, zIndex: 10 }}
                   onClick={() => { setSelectedMedia(post); setMediaType('post'); }}
-                  style={{ position: 'relative', aspectRatio: '1/1', background: 'rgba(255,255,255,0.03)', overflow: 'hidden', cursor: 'pointer' }}
+                  style={{ 
+                    position: 'relative', 
+                    aspectRatio: '1/1', 
+                    background: 'rgba(255,255,255,0.03)', 
+                    overflow: 'hidden', 
+                    cursor: 'pointer',
+                    borderRadius: isMobile ? '8px' : '16px',
+                    border: '1px solid var(--border)',
+                    boxShadow: 'var(--glow)',
+                    transition: 'border-color 0.3s, box-shadow 0.3s'
+                  }}
                   onMouseEnter={e => {
                     const overlay = e.currentTarget.querySelector('.overlay') as HTMLElement;
                     if(overlay) overlay.style.opacity = '1';
+                    e.currentTarget.style.borderColor = 'var(--primary)';
+                    e.currentTarget.style.boxShadow = 'var(--glow-strong)';
                   }}
                   onMouseLeave={e => {
                     const overlay = e.currentTarget.querySelector('.overlay') as HTMLElement;
                     if(overlay) overlay.style.opacity = '0';
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                    e.currentTarget.style.boxShadow = 'var(--glow)';
                   }}
                 >
                   {post.imageUrl || post.videoUrl ? (
@@ -378,8 +393,27 @@ export const ProfilePage = () => {
             (profileUser.waves || []).length > 0 ? (
               profileUser.waves.map((wave: any) => (
                 <motion.div key={wave.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  whileHover={{ scale: 1.02, zIndex: 10 }}
                   onClick={() => { setSelectedMedia(wave); setMediaType('wave'); }}
-                  style={{ position: 'relative', aspectRatio: '1/1', background: 'rgba(0,0,0,0.2)', overflow: 'hidden', cursor: 'pointer' }}
+                  style={{ 
+                    position: 'relative', 
+                    aspectRatio: '1/1', 
+                    background: 'rgba(0,0,0,0.2)', 
+                    overflow: 'hidden', 
+                    cursor: 'pointer',
+                    borderRadius: isMobile ? '8px' : '16px',
+                    border: '1px solid var(--border)',
+                    boxShadow: 'var(--glow)',
+                    transition: 'border-color 0.3s, box-shadow 0.3s'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'var(--primary)';
+                    e.currentTarget.style.boxShadow = 'var(--glow-strong)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                    e.currentTarget.style.boxShadow = 'var(--glow)';
+                  }}
                 >
                   <video src={wave.videoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4), transparent)', display: 'flex', alignItems: 'flex-end', padding: '10px' }}>
