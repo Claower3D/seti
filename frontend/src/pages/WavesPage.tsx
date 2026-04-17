@@ -242,7 +242,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
                 flexShrink: 0,
               }}
             >
-              {following ? '✓ Запит' : '+ Підписатися'}
+              {following ? '✓ Запрос' : '+ Подписаться'}
             </motion.button>
           )}
         </div>
@@ -280,7 +280,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
             style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
             <Share2 size={isMobile ? 24 : 26} color="white" />
           </motion.button>
-          <span style={{ color: 'white', fontSize: isMobile ? '0.7rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>Поділитися</span>
+          <span style={{ color: 'white', fontSize: isMobile ? '0.7rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>Поделиться</span>
         </div>
 
         <motion.button whileTap={{ scale: 0.8 }} onClick={() => setMuted(m => !m)}
@@ -305,7 +305,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
               <div>
                 <div style={{ width: '40px', height: '4px', background: 'rgba(255,255,255,0.15)', borderRadius: '2px', marginBottom: '12px' }} />
                 <div style={{ fontWeight: '900', color: 'white', fontSize: '1rem' }}>
-                  Коментарі <span style={{ color: '#00f5ff', textShadow: '0 0 10px rgba(0,245,255,0.5)' }}>({commentsCount})</span>
+                  Комментарии <span style={{ color: '#00f5ff', textShadow: '0 0 10px rgba(0,245,255,0.5)' }}>({commentsCount})</span>
                 </div>
               </div>
               <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowComment(false)}
@@ -324,7 +324,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
               ) : comments.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
                   <MessageCircle size={36} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-                  <div style={{ fontSize: '0.9rem' }}>Будь першим, хто залишить коментар</div>
+                  <div style={{ fontSize: '0.9rem' }}>Будь первым, кто оставит комментарий</div>
                 </div>
               ) : comments.map(c => (
                 <motion.div key={c.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -352,7 +352,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
                   value={comment}
                   onChange={e => setComment(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSendComment()}
-                  placeholder="Написати коментар..."
+                  placeholder="Написать комментарий..."
                   style={{ flex: 1, background: 'none', border: 'none', color: 'white', fontSize: '0.9rem', outline: 'none' }}
                 />
                 <motion.button whileTap={{ scale: 0.9 }} onClick={handleSendComment} disabled={!comment.trim() || sendingComment}
@@ -486,8 +486,8 @@ export const WavesPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: '20px' }}>
           <div style={{ background: 'rgba(0,245,255,0.05)', border: '2px dashed rgba(0,245,255,0.3)', borderRadius: '24px', padding: '60px 40px', textAlign: 'center' }}>
             <Zap size={60} color="rgba(0,245,255,0.3)" style={{ margin: '0 auto 16px' }} />
-            <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>Ефір порожній</div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px' }}>Запусти першу хвилю в SETI</div>
+            <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>Эфир пуст</div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px' }}>Запусти первую волну в SETI</div>
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => videoUploadRef.current?.click()}
               style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))', border: '1px solid rgba(0,245,255,0.4)', borderRadius: '14px', padding: '12px 24px', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800', margin: '0 auto', boxShadow: '0 0 20px rgba(0,245,255,0.2)', fontSize: '0.95rem' }}>
               <Upload size={20} /> Загрузить видео
