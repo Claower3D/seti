@@ -165,18 +165,20 @@ function AppInner() {
 
   return (
     <div className="main-layout">
-      <Sidebar />
+      {!isWavesPage && <Sidebar />}
       <div 
         style={{ flex: 1, minWidth: 0 }} 
         className={`main-content ${isWavesPage ? 'waves-layout' : ''}`}
       >
-        <div className="desktop-only">
-          <Header />
-        </div>
         {!isWavesPage && (
-          <div className="mobile-only">
-            <Header />
-          </div>
+          <>
+            <div className="desktop-only">
+              <Header />
+            </div>
+            <div className="mobile-only">
+              <Header />
+            </div>
+          </>
         )}
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
