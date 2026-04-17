@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Square, Edit2, Trash2, X, Play, Pause } from 'lucide-react';
+import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Square, Edit2, Trash2, X, Play, Pause, CheckCheck } from 'lucide-react';
 
 const VoicePlayer = ({ src }: { src: string }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -89,7 +89,17 @@ export const MessagesPage = () => {
       setMessages(prev => {
         if (action === 'delete') return prev.filter(m => m.id !== msg.id);
         if (action === 'edit') return prev.map(m => m.id === msg.id ? { ...m, content: msg.content } : m);
+        if (action === 'read_receipt') {
+           if (selectedFriend && data.senderId === selectedFriend.id) {
+             return prev.map(m => m.receiverId === data.senderId ? { ...m, isRead: true } : m);
+           }
+           return prev;
+        }
         const inChat = selectedFriend && (msg.senderId === selectedFriend.id || msg.receiverId === selectedFriend.id);
+        if (inChat && msg.senderId === selectedFriend.id) {
+           // We are in chat, mark incoming message as read
+           markAsRead(selectedFriend.id);
+        }
         return inChat ? [...prev, msg] : prev;
       });
     };
@@ -99,8 +109,18 @@ export const MessagesPage = () => {
 
   useEffect(() => {
     if (!selectedFriend) return;
-    api.get(`/messages/${selectedFriend.id}`).then(res => setMessages(res.data || []));
+    api.get(`/messages/${selectedFriend.id}`).then(res => {
+      setMessages(res.data || []);
+      // If there are unread messages from them, mark as read
+      markAsRead(selectedFriend.id);
+    });
   }, [selectedFriend]);
+
+  const markAsRead = (friendId: number) => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ action: 'read', receiverId: friendId }));
+    }
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -312,6 +332,12 @@ export const MessagesPage = () => {
                                     📎 {msg.fileName}
                                   </a>
                           ) : msg.content}
+                          
+                          {isMe && (
+                            <div style={{ position: 'absolute', bottom: '8px', right: '12px', opacity: 0.8, display: 'flex', alignItems: 'center' }}>
+                              <CheckCheck size={14} color={msg.isRead ? '#39ff14' : 'rgba(255,255,255,0.4)'} style={{ filter: msg.isRead ? 'drop-shadow(0 0 5px #39ff14)' : 'none' }} />
+                            </div>
+                          )}
                         </div>
                         {isMe && (
                           <div className="msg-actions" style={{ display: 'flex', gap: '4px', opacity: 0.6, flexShrink: 0 }}>
