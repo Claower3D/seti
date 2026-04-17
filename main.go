@@ -54,6 +54,7 @@ protected.PATCH("/posts/:id", handlers.UpdatePost)
 protected.GET("/profile/:username", handlers.GetUserProfile)
 		protected.GET("/profile/:username/friends", handlers.GetUserFriends)
 		protected.PUT("/profile", handlers.UpdateProfile)
+		protected.PUT("/security", handlers.UpdateSecurity)
 
 protected.GET("/friends/requests", handlers.GetFriendRequests)
 protected.GET("/friends", handlers.GetFriends)

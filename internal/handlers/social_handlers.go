@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"social-network/internal/db"
+	"social-network/internal/middleware"
 	"social-network/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -52,8 +53,10 @@ func CreatePost(c *gin.Context) {
 }
 
 type UpdateProfileInput struct {
-	Bio    string `json:"bio"`
-	Avatar string `json:"avatar"`
+	Username  string `json:"username"`
+	Bio       string `json:"bio"`
+	Avatar    string `json:"avatar"`
+	NeonColor string `json:"neonColor"`
 }
 
 func UpdateProfile(c *gin.Context) {
@@ -71,11 +74,24 @@ func UpdateProfile(c *gin.Context) {
 	}
 
 	// Update fields
+	if input.Username != "" && input.Username != user.Username {
+		// Check uniqueness
+		var count int64
+		db.DB.Model(&models.User{}).Where("username = ? AND id != ?", input.Username, userID).Count(&count)
+		if count > 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Этот никнейм уже занят"})
+			return
+		}
+		user.Username = input.Username
+	}
 	if input.Bio != "" {
 		user.Bio = input.Bio
 	}
 	if input.Avatar != "" {
 		user.Avatar = input.Avatar
+	}
+	if input.NeonColor != "" {
+		user.NeonColor = input.NeonColor
 	}
 
 	if err := db.DB.Save(&user).Error; err != nil {
@@ -85,6 +101,35 @@ func UpdateProfile(c *gin.Context) {
 
 	c.JSON(http.StatusOK, user)
 }
+
+func UpdateSecurity(c *gin.Context) {
+	var input struct {
+		CurrentPassword string `json:"currentPassword" binding:"required"`
+		NewPassword     string `json:"newPassword" binding:"required,min=6"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, _ := c.Get("userId")
+	var user models.User
+	db.DB.First(&user, userID)
+
+	// Verify current password
+	if !middleware.CheckPasswordHash(input.CurrentPassword, user.Password) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Текущий пароль указан неверно"})
+		return
+	}
+
+	// Hash and save new password
+	hashed, _ := middleware.HashPassword(input.NewPassword)
+	user.Password = hashed
+	db.DB.Save(&user)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Пароль успешно изменен"})
+}
+
 
 func GetUserProfile(c *gin.Context) {
 	username := c.Param("username")

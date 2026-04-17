@@ -13,6 +13,7 @@ type User struct {
 	Password  string         `json:"-"`
 	Bio       string         `json:"bio"`
 	Avatar    string         `json:"avatar"`
+	NeonColor string         `gorm:"default:'#00f5ff'" json:"neonColor"`
 	CreatedAt time.Time      `json:"createdAt"`
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
