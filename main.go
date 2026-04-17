@@ -50,7 +50,8 @@ protected.PATCH("/posts/:id", handlers.UpdatePost)
 protected.POST("/posts/:id/like", handlers.LikePost)
 
 protected.GET("/profile/:username", handlers.GetUserProfile)
-protected.PUT("/profile", handlers.UpdateProfile)
+		protected.GET("/profile/:username/friends", handlers.GetUserFriends)
+		protected.PUT("/profile", handlers.UpdateProfile)
 
 protected.GET("/friends/requests", handlers.GetFriendRequests)
 protected.GET("/friends", handlers.GetFriends)

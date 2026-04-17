@@ -1,10 +1,60 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit3, Calendar, MapPin, FileText, Heart, MessageCircle, MoreHorizontal, Trash2, Check, X } from 'lucide-react';
+import { Edit3, Calendar, MapPin, FileText, Heart, MessageCircle, MoreHorizontal, Trash2, Check, X, Grid, Film, Users, Zap } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
+
+const FriendsModal = ({ isOpen, onClose, username }: { isOpen: boolean, onClose: () => void, username: string }) => {
+  const [friends, setFriends] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      api.get(`/profile/${username}/friends`)
+        .then(res => setFriends(res.data || []))
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }
+  }, [isOpen, username]);
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }} />
+        <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className="glass-panel" style={{ position: 'relative', width: '100%', maxWidth: '400px', padding: '24px', border: '1px solid rgba(0,245,255,0.3)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '900', color: '#00f5ff', textShadow: '0 0 10px rgba(0,245,255,0.3)' }}>Друзья</h3>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}><div className="pulse" style={{ width: '4px', height: '4px', background: '#00f5ff', margin: 'auto' }} /></div>
+            ) : friends.length === 0 ? (
+              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Нет друзей</p>
+            ) : (
+              friends.map(f => (
+                <Link key={f.id} to={`/profile/${f.username}`} onClick={onClose}
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', marginBottom: '8px', textDecoration: 'none', border: '1px solid transparent', transition: 'all 0.2s' }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(0,245,255,0.2)')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}>
+                  <img src={f.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + f.username} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.3)' }} />
+                  <span style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>@{f.username}</span>
+                </Link>
+              ))
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
 
 export const ProfilePage = () => {
   const { username } = useParams();
@@ -12,10 +62,8 @@ export const ProfilePage = () => {
   const [profileUser, setProfileUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [openMenu, setOpenMenu] = useState<number | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editText, setEditText] = useState('');
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'posts' | 'waves'>('posts');
+  const [isFriendsModalOpen, setIsFriendsModalOpen] = useState(false);
 
   const isOwnProfile = currentUser?.username === username;
 
@@ -26,46 +74,6 @@ export const ProfilePage = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [username]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenu(null);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const handleLike = async (postId: number) => {
-    try {
-      await api.post(`/posts/${postId}/like`);
-      setProfileUser((prev: any) => ({
-        ...prev,
-        posts: prev.posts.map((p: any) =>
-          p.id === postId ? { ...p, liked: !p.liked, likesCount: (p.likesCount || 0) + (p.liked ? -1 : 1) } : p
-        ),
-      }));
-    } catch {}
-  };
-
-  const handleDelete = async (postId: number) => {
-    if (!confirm('Удалить запись?')) return;
-    try {
-      await api.delete(`/posts/${postId}`);
-      setProfileUser((prev: any) => ({ ...prev, posts: prev.posts.filter((p: any) => p.id !== postId) }));
-    } catch {}
-    setOpenMenu(null);
-  };
-
-  const handleEditStart = (post: any) => { setEditingId(post.id); setEditText(post.content); setOpenMenu(null); };
-
-  const handleEditSave = async (postId: number) => {
-    if (!editText.trim()) return;
-    try {
-      await api.patch(`/posts/${postId}`, { content: editText });
-      setProfileUser((prev: any) => ({ ...prev, posts: prev.posts.map((p: any) => p.id === postId ? { ...p, content: editText } : p) }));
-      setEditingId(null);
-    } catch {}
-  };
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: '80px' }}>
@@ -79,146 +87,110 @@ export const ProfilePage = () => {
   );
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <div className="glass-panel" style={{ overflow: 'hidden', marginBottom: '30px', border: '1px solid rgba(0,245,255,0.1)' }}>
-        <div style={{ height: '200px', background: 'linear-gradient(45deg, #050608, #1a1a2e)', position: 'relative' }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(0,245,255,0.1) 0%, transparent 70%)' }} />
-          <div style={{ position: 'absolute', bottom: '-50px', left: '24px' }}>
-            <div style={{ position: 'relative' }}>
-              <img src={profileUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profileUser.username}
-                alt="avatar" style={{ width: '120px', height: '120px', borderRadius: '24px', border: '4px solid #04050a', objectFit: 'cover', boxShadow: '0 0 20px rgba(0,245,255,0.3)' }} />
-              <div style={{ position: 'absolute', bottom: '8px', right: '8px', width: '16px', height: '16px', background: '#00ff00', borderRadius: '50%', border: '3px solid #04050a', boxShadow: '0 0 10px #00ff00' }} />
-            </div>
-          </div>
+    <div style={{ maxWidth: '935px', margin: '0 auto', padding: '0 20px' }}>
+      <div style={{ display: 'flex', gap: '40px', marginBottom: '44px', alignItems: 'flex-start' }}>
+        <div style={{ position: 'relative' }}>
+          <img src={profileUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profileUser.username}
+            alt="avatar" style={{ width: '150px', height: '150px', borderRadius: '50%', border: '4px solid rgba(0,245,255,0.2)', padding: '4px', objectFit: 'cover' }} />
         </div>
-
-        <div style={{ padding: '70px 24px 30px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
-            <div style={{ flex: 1, minWidth: '250px' }}>
-              <h1 style={{ fontSize: '2rem', fontWeight: '900', marginBottom: '8px', letterSpacing: '-1px', color: '#00f5ff', textShadow: '0 0 20px rgba(0,245,255,0.5)' }}>{profileUser.username}</h1>
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  <Calendar size={14} style={{ color: '#b400ff' }} />
-                  <span>SETI User since {new Date(profileUser.createdAt).toLocaleDateString()}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  <MapPin size={14} style={{ color: '#00f5ff' }} />
-                  <span>Earth Sector</span>
-                </div>
-              </div>
-              <p style={{ color: '#cbd5e1', fontSize: '1rem', lineHeight: '1.6', marginBottom: '24px', maxWidth: '600px', borderLeft: '2px solid rgba(0,245,255,0.4)', paddingLeft: '16px', wordBreak: 'break-word' }}>
-                {profileUser.bio || 'Этот пользователь ещё не загрузил данные своей биографии в SETI-матрицу.'}
-              </p>
-            </div>
+        
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
+            <h1 style={{ fontSize: '1.8rem', fontWeight: '300', color: 'white' }}>{profileUser.username}</h1>
             {isOwnProfile && (
-              <button className="btn-primary" onClick={() => setIsEditModalOpen(true)}>
-                <Edit3 size={16} /> Редактировать
+              <button className="glass-panel" onClick={() => setIsEditModalOpen(true)}
+                style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }}>
+                Редактировать
               </button>
+            )}
+            {!isOwnProfile && (
+              <button className="btn-primary" style={{ padding: '8px 24px' }}>Подписаться</button>
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '40px', marginTop: '10px' }}>
-            {[
-              { label: 'Посты', value: (profileUser.posts || []).length },
-              { label: 'Друзья', value: (profileUser.friends || []).length },
-              { label: 'Импульсы', value: 0 },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1, color: '#b400ff', textShadow: '0 0 10px rgba(180,0,255,0.5)' }}>{value}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>{label}</div>
-              </div>
-            ))}
+          <div style={{ display: 'flex', gap: '40px', marginBottom: '20px' }}>
+            <div style={{ fontSize: '1rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{(profileUser.posts || []).length}</span> постов</div>
+            <div onClick={() => setIsFriendsModalOpen(true)} style={{ fontSize: '1rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{(profileUser.friends || []).length}</span> друзей</div>
+            <div style={{ fontSize: '1rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{(profileUser.waves || []).length}</span> волн</div>
+          </div>
+
+          <div style={{ color: 'white' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '5px' }}>SETI User Matrix</h2>
+            <p style={{ fontSize: '1rem', color: '#f1f5f9', whiteSpace: 'pre-wrap' }}>
+              {profileUser.bio || 'Этот пользователь ещё не загрузил данные своей биографии.'}
+            </p>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <FileText style={{ color: '#00f5ff' }} size={24} />
-        <h2 style={{ fontSize: '1.6rem', fontWeight: '900', letterSpacing: '-0.5px' }}>Архив данных</h2>
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'center', gap: '60px' }}>
+        {[
+          { id: 'posts', label: 'ПОСТЫ', icon: Grid },
+          { id: 'waves', label: 'ВОЛНЫ', icon: Film },
+        ].map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+            style={{ 
+              background: 'none', border: 'none', padding: '15px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px',
+              color: activeTab === tab.id ? '#00f5ff' : 'rgba(255,255,255,0.5)',
+              borderTop: activeTab === tab.id ? '2px solid #00f5ff' : '2px solid transparent',
+              marginTop: '-1px', transition: 'all 0.2s'
+            }}>
+            <tab.icon size={14} /> {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <AnimatePresence>
-          {(profileUser.posts || []).length > 0 ? (
-            profileUser.posts.map((post: any, index: number) => (
-              <motion.div key={post.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ delay: index * 0.05 }}
-                className="glass-panel" style={{ padding: '24px', borderLeft: index % 2 === 0 ? '3px solid rgba(0,245,255,0.5)' : '3px solid rgba(180,0,255,0.5)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00f5ff', boxShadow: '0 0 5px #00f5ff' }} />
-                    {new Date(post.createdAt).toLocaleString()}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', marginTop: '20px' }}>
+        <AnimatePresence mode='wait'>
+          {activeTab === 'posts' ? (
+            (profileUser.posts || []).length > 0 ? (
+              profileUser.posts.map((post: any) => (
+                <motion.div key={post.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ position: 'relative', aspectRatio: '1/1', background: 'rgba(255,255,255,0.03)', overflow: 'hidden', cursor: 'pointer' }}
+                  onMouseEnter={e => {
+                    const overlay = e.currentTarget.querySelector('.overlay') as HTMLElement;
+                    if(overlay) overlay.style.opacity = '1';
+                  }}
+                  onMouseLeave={e => {
+                    const overlay = e.currentTarget.querySelector('.overlay') as HTMLElement;
+                    if(overlay) overlay.style.opacity = '0';
+                  }}
+                >
+                  <div style={{ padding: '15px', color: 'white', fontSize: '0.85rem', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                    {post.content.length > 80 ? post.content.substring(0, 80) + '...' : post.content}
                   </div>
-                  {isOwnProfile && (
-                    <div style={{ position: 'relative' }} ref={openMenu === post.id ? menuRef : null}>
-                      <button onClick={() => setOpenMenu(openMenu === post.id ? null : post.id)}
-                        style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', display: 'flex' }}>
-                        <MoreHorizontal size={20} />
-                      </button>
-                      <AnimatePresence>
-                        {openMenu === post.id && (
-                          <motion.div initial={{ opacity: 0, scale: 0.9, y: -8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }}
-                            className="glass-panel" style={{ position: 'absolute', right: 0, top: '32px', zIndex: 100, minWidth: '160px', padding: '8px', border: '1px solid rgba(0,245,255,0.2)' }}>
-                            <button onClick={() => handleEditStart(post)}
-                              style={{ width: '100%', background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '600' }}
-                              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,245,255,0.08)')}
-                              onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-                              <Edit3 size={16} style={{ color: '#00f5ff' }} /> Редактировать
-                            </button>
-                            <button onClick={() => handleDelete(post.id)}
-                              style={{ width: '100%', background: 'none', border: 'none', color: '#e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '600' }}
-                              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,0,100,0.08)')}
-                              onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-                              <Trash2 size={16} style={{ color: '#ff3060' }} /> Удалить
-                            </button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
-                </div>
-                {editingId === post.id ? (
-                  <div style={{ marginBottom: '20px' }}>
-                    <textarea className="input-field" value={editText} onChange={e => setEditText(e.target.value)} autoFocus
-                      style={{ width: '100%', minHeight: '80px', resize: 'none', fontSize: '1.05rem', marginBottom: '12px' }} />
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button onClick={() => handleEditSave(post.id)} className="btn-primary" style={{ padding: '8px 20px', fontSize: '0.9rem' }}>
-                        <Check size={16} /> Сохранить
-                      </button>
-                      <button onClick={() => setEditingId(null)}
-                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px 20px', borderRadius: '10px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <X size={16} /> Отмена
-                      </button>
-                    </div>
+                  <div className="overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', opacity: 0, transition: 'opacity 0.2s' }}>
+                    <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800' }}><Heart size={20} fill="white" /> {post.likesCount || 0}</div>
+                    <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800' }}><MessageCircle size={20} fill="white" /> 0</div>
                   </div>
-                ) : (
-                  <p style={{ fontSize: '1.1rem', lineHeight: '1.7', color: '#f1f5f9', marginBottom: '20px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{post.content}</p>
-                )}
-                <div style={{ display: 'flex', gap: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-                  <button onClick={() => handleLike(post.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '700', color: post.liked ? '#ff3060' : 'var(--text-secondary)' }}>
-                    <Heart size={20} fill={post.liked ? '#ff3060' : 'none'} style={{ filter: post.liked ? 'drop-shadow(0 0 6px #ff3060)' : 'none' }} />
-                    {post.likesCount > 0 ? post.likesCount : 'Лайк'}
-                  </button>
-                  <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '700' }}>
-                    <MessageCircle size={20} /> Комментарий
-                  </button>
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              ))
+            ) : (
+              <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '100px 0', color: 'rgba(255,255,255,0.3)' }}>Нет постов</div>
+            )
           ) : (
-            <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', border: '1px dashed rgba(0,245,255,0.1)' }}>
-              У пользователя пока нет записей в SETI.
-            </div>
+            (profileUser.waves || []).length > 0 ? (
+              profileUser.waves.map((wave: any) => (
+                <motion.div key={wave.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ position: 'relative', aspectRatio: '1/1', background: 'rgba(0,0,0,0.2)', overflow: 'hidden', cursor: 'pointer' }}
+                >
+                  <video src={wave.videoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4), transparent)', display: 'flex', alignItems: 'flex-end', padding: '10px' }}>
+                    <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontWeight: '800' }}><Zap size={14} /> {wave.likesCount || 0}</div>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '100px 0', color: 'rgba(255,255,255,0.3)' }}>Нет волн</div>
+            )
           )}
         </AnimatePresence>
       </div>
 
+      <FriendsModal isOpen={isFriendsModalOpen} onClose={() => setIsFriendsModalOpen(false)} username={profileUser.username} />
+      
       <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}
         currentUser={profileUser} onUpdate={(updated) => setProfileUser({ ...profileUser, ...updated })} />
     </div>
   );
-};
+};
