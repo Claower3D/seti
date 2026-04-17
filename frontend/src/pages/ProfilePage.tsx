@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit3, Calendar, MapPin, FileText, Heart, MessageCircle, MoreHorizontal, Trash2, Check, X, Grid, Film, Users, Zap } from 'lucide-react';
+import { Heart, MessageCircle, X, Grid, Film, Zap } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
 const FriendsModal = ({ isOpen, onClose, username }: { isOpen: boolean, onClose: () => void, username: string }) => {
