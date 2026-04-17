@@ -454,7 +454,7 @@ export const WavesPage = () => {
   );
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ position: 'relative', height: isMobile ? '100%' : 'calc(100vh - 100px)', overflow: 'hidden' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ position: 'relative', height: isMobile ? '100%' : 'calc(100vh - 100px)', overflow: 'hidden', touchAction: 'none' }}>
       {/* Upload button - FAB on mobile, pill on desktop */}
       <div style={{ position: 'absolute', bottom: isMobile ? '24px' : 'auto', top: isMobile ? 'auto' : '12px', right: '12px', zIndex: 100 }}>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
@@ -487,8 +487,8 @@ export const WavesPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: '20px' }}>
           <div style={{ background: 'rgba(0,245,255,0.05)', border: '2px dashed rgba(0,245,255,0.3)', borderRadius: '24px', padding: '60px 40px', textAlign: 'center' }}>
             <Zap size={60} color="rgba(0,245,255,0.3)" style={{ margin: '0 auto 16px' }} />
-            <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>Эфир пуст</div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px' }}>Запусти первую волну в SETI</div>
+            <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>Ефір порожній</div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px' }}>Запусти першу хвилю в SETI</div>
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => videoUploadRef.current?.click()}
               style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))', border: '1px solid rgba(0,245,255,0.4)', borderRadius: '14px', padding: '12px 24px', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800', margin: '0 auto', boxShadow: '0 0 20px rgba(0,245,255,0.2)', fontSize: '0.95rem' }}>
               <Upload size={20} /> Загрузить видео
@@ -508,6 +508,7 @@ export const WavesPage = () => {
             alignItems: 'center',
             msOverflowStyle: 'none',
             scrollbarWidth: 'none',
+            touchAction: 'pan-y'
           }}
           className="hide-scrollbar"
         >
@@ -519,7 +520,7 @@ export const WavesPage = () => {
                 flexShrink: 0,
                 width: '100%',
                 maxWidth: isMobile ? '100%' : '480px',
-                height: isMobile ? '100vh' : '100%',
+                height: isMobile ? '100%' : '100%',
                 scrollSnapAlign: 'start',
                 position: 'relative',
                 borderRadius: isMobile ? '0' : '24px',
