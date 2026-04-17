@@ -9,7 +9,7 @@ import { FriendsPage } from './pages/FriendsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { GroupsPage } from './pages/GroupsPage';
 import { WavesPage } from './pages/WavesPage';
-import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio } from 'lucide-react';
+import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, Plus } from 'lucide-react';
 import api from './api/client';
 
 const Sidebar = () => {
