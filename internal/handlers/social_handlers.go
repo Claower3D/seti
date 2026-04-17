@@ -86,12 +86,36 @@ func UpdateProfile(c *gin.Context) {
 func GetUserProfile(c *gin.Context) {
 	username := c.Param("username")
 	var user models.User
-	if err := db.DB.Preload("Posts", func(db *gorm.DB) *gorm.DB { return db.Order("created_at desc") }).Where("username = ?", username).First(&user).Error; err != nil {
+	if err := db.DB.Preload("Posts", func(db *gorm.DB) *gorm.DB { return db.Order("created_at desc") }).
+		Preload("Waves", func(db *gorm.DB) *gorm.DB { return db.Order("created_at desc") }).
+		Where("username = ?", username).First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 	c.JSON(http.StatusOK, user)
 }
+
+func GetUserFriends(c *gin.Context) {
+	username := c.Param("username")
+	var user models.User
+	if err := db.DB.Where("username = ?", username).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	friends := []models.User{}
+	db.DB.Raw(`
+		SELECT u.* FROM users u
+		JOIN friendships f ON (f.user_id = u.id OR f.friend_id = u.id)
+		WHERE (f.user_id = ? OR f.friend_id = ?)
+		AND f.status = 'accepted'
+		AND u.id != ?
+		AND u.deleted_at IS NULL
+	`, user.ID, user.ID, user.ID).Scan(&friends)
+
+	c.JSON(http.StatusOK, friends)
+}
+
 
 func SearchUsers(c *gin.Context) {
 	query := c.Query("q")

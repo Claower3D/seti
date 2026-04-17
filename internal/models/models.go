@@ -17,6 +17,7 @@ type User struct {
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 	Posts     []Post         `json:"posts,omitempty"`
+	Waves     []Wave         `json:"waves,omitempty"`
 	Friends   []User         `gorm:"many2many:friendships;" json:"friends,omitempty"`
 }
 
