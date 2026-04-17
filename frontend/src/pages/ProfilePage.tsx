@@ -6,6 +6,156 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, X, Grid, Film, Zap } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
+const MediaViewerModal = ({ isOpen, onClose, media, type, currentUser }: { isOpen: boolean, onClose: () => void, media: any, type: 'post' | 'wave', currentUser: any }) => {
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [liked, setLiked] = useState(media?.liked || false);
+  const [likesCount, setLikesCount] = useState(media?.likesCount || 0);
+  const [loadingComments, setLoadingComments] = useState(true);
+
+  useEffect(() => {
+    if (isOpen && media) {
+      setLiked(media.liked);
+      setLikesCount(media.likesCount);
+      setLoadingComments(true);
+      const endpoint = type === 'post' ? `/posts/${media.id}/comments` : `/waves/${media.id}/comments`;
+      api.get(endpoint)
+        .then(res => setComments(res.data || []))
+        .catch(() => {})
+        .finally(() => setLoadingComments(false));
+    }
+  }, [isOpen, media, type]);
+
+  const handleLike = async () => {
+    try {
+      const endpoint = type === 'post' ? `/posts/${media.id}/like` : `/waves/${media.id}/like`;
+      await api.post(endpoint);
+      setLiked(!liked);
+      setLikesCount(prev => liked ? prev - 1 : prev + 1);
+    } catch { console.error('Failed to like'); }
+  };
+
+  const handleComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    try {
+      const endpoint = type === 'post' ? `/posts/${media.id}/comments` : `/waves/${media.id}/comments`;
+      const res = await api.post(endpoint, { content: newComment });
+      setComments([...comments, res.data]);
+      setNewComment('');
+    } catch { console.error('Failed to comment'); }
+  };
+
+  if (!isOpen || !media) return null;
+
+  return (
+    <AnimatePresence>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: window.innerWidth < 768 ? '0' : '40px' }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(15px)' }} />
+        
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+          style={{ 
+            position: 'relative', 
+            width: '100%', 
+            maxWidth: '1100px', 
+            height: window.innerWidth < 768 ? '100%' : '85vh',
+            background: '#050608',
+            display: 'flex',
+            flexDirection: window.innerWidth < 768 ? 'column' : 'row',
+            overflow: 'hidden',
+            borderRadius: window.innerWidth < 768 ? '0' : '20px',
+            border: '1px solid rgba(0,245,255,0.2)',
+            boxShadow: '0 0 50px rgba(0,0,0,0.5)'
+          }}
+        >
+          {/* Media Section */}
+          <div style={{ flex: 1.5, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            {type === 'wave' || media.mediaType === 'video' ? (
+              <video src={media.videoUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} controls autoPlay />
+            ) : media.imageUrl ? (
+              <img src={media.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            ) : (
+              <div style={{ padding: '40px', color: 'white', fontSize: '1.2rem', textAlign: 'center' }}>{media.content}</div>
+            )}
+            {window.innerWidth < 768 && (
+              <button onClick={onClose} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', borderRadius: '50%', padding: '8px', zIndex: 10 }}><X size={24} /></button>
+            )}
+          </div>
+
+          {/* Social Section */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#050608', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+            {/* Header */}
+            <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <img src={media.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (media.user?.username || 'user')} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #00f5ff' }} />
+              <div style={{ fontWeight: '800', color: 'white' }}>@{media.user?.username || 'username'}</div>
+              {!isMobile && <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>}
+            </div>
+
+            {/* Content / Comments */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+              {(type === 'post' && media.imageUrl) && (
+                 <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                       <img src={media.user?.avatar} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                       <div>
+                          <span style={{ fontWeight: '800', color: 'white', marginRight: '8px' }}>{media.user?.username}</span>
+                          <span style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>{media.content}</span>
+                       </div>
+                    </div>
+                 </div>
+              )}
+
+              {loadingComments ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}><div className="pulse" style={{ width: '4px', height: '4px', background: '#00f5ff', margin: 'auto' }} /></div>
+              ) : comments.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '40px 0', fontSize: '0.9rem' }}>Нет комментариев</div>
+              ) : (
+                comments.map(c => (
+                  <div key={c.id} style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                    <img src={c.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + c.user?.username} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                    <div style={{ fontSize: '0.9rem' }}>
+                      <span style={{ fontWeight: '800', color: 'white', marginRight: '8px' }}>{c.user?.username}</span>
+                      <span style={{ color: '#cbd5e1' }}>{c.content}</span>
+                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>{new Date(c.createdAt).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Actions */}
+            <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
+                <button onClick={handleLike} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', color: liked ? '#ff3060' : 'white' }}>
+                  <Heart size={28} fill={liked ? '#ff3060' : 'none'} style={{ filter: liked ? 'drop-shadow(0 0 8px rgba(255,48,96,0.6))' : 'none' }} />
+                </button>
+                <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', color: 'white' }}>
+                  <MessageCircle size={28} />
+                </button>
+              </div>
+              <div style={{ fontWeight: '800', color: 'white', marginBottom: '4px' }}>{likesCount} отметок «Нравится»</div>
+              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>{new Date(media.createdAt).toLocaleDateString('ru-RU', { month: 'long', day: 'numeric' })}</div>
+            </div>
+
+            {/* Comment Input */}
+            <form onSubmit={handleComment} style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '12px' }}>
+              <input 
+                type="text" 
+                placeholder="Добавьте комментарий..." 
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                style={{ flex: 1, background: 'none', border: 'none', color: 'white', fontSize: '0.9rem', outline: 'none' }} 
+              />
+              <button type="submit" disabled={!newComment.trim()} style={{ background: 'none', border: 'none', color: '#00f5ff', fontWeight: '800', cursor: 'pointer', opacity: newComment.trim() ? 1 : 0.3 }}>Опубликовать</button>
+            </form>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
+
 const FriendsModal = ({ isOpen, onClose, username }: { isOpen: boolean, onClose: () => void, username: string }) => {
   const [friends, setFriends] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +214,8 @@ export const ProfilePage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'waves'>('posts');
   const [isFriendsModalOpen, setIsFriendsModalOpen] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [mediaType, setMediaType] = useState<'post' | 'wave'>('post');
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -182,6 +334,7 @@ export const ProfilePage = () => {
             (profileUser.posts || []).length > 0 ? (
               profileUser.posts.map((post: any) => (
                 <motion.div key={post.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  onClick={() => { setSelectedMedia(post); setMediaType('post'); }}
                   style={{ position: 'relative', aspectRatio: '1/1', background: 'rgba(255,255,255,0.03)', overflow: 'hidden', cursor: 'pointer' }}
                   onMouseEnter={e => {
                     const overlay = e.currentTarget.querySelector('.overlay') as HTMLElement;
@@ -217,6 +370,7 @@ export const ProfilePage = () => {
             (profileUser.waves || []).length > 0 ? (
               profileUser.waves.map((wave: any) => (
                 <motion.div key={wave.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  onClick={() => { setSelectedMedia(wave); setMediaType('wave'); }}
                   style={{ position: 'relative', aspectRatio: '1/1', background: 'rgba(0,0,0,0.2)', overflow: 'hidden', cursor: 'pointer' }}
                 >
                   <video src={wave.videoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
@@ -236,6 +390,14 @@ export const ProfilePage = () => {
       
       <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}
         currentUser={profileUser} onUpdate={(updated) => setProfileUser({ ...profileUser, ...updated })} />
+
+      <MediaViewerModal 
+        isOpen={!!selectedMedia} 
+        onClose={() => setSelectedMedia(null)} 
+        media={selectedMedia} 
+        type={mediaType} 
+        currentUser={currentUser}
+      />
     </div>
   );
 };
