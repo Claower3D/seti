@@ -623,3 +623,28 @@ body::after {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* DESKTOP/MOBILE HELPERS */
+.desktop-only {
+  display: block;
+}
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+  .mobile-only {
+    display: block;
+  }
+  
+  .waves-layout {
+    padding: 0 !important;
+    height: 100vh !important;
+    height: 100svh !important;
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+  }
+}

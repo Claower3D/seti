@@ -161,11 +161,23 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 function AppInner() {
   const location = useLocation();
+  const isWavesPage = location.pathname === '/waves';
+
   return (
     <div className="main-layout">
       <Sidebar />
-      <div style={{ flex: 1, minWidth: 0 }} className="main-content">
-        <Header />
+      <div 
+        style={{ flex: 1, minWidth: 0 }} 
+        className={`main-content ${isWavesPage ? 'waves-layout' : ''}`}
+      >
+        <div className="desktop-only">
+          <Header />
+        </div>
+        {!isWavesPage && (
+          <div className="mobile-only">
+            <Header />
+          </div>
+        )}
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/login" element={<LoginPage />} />
