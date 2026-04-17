@@ -10,8 +10,10 @@ import (
 )
 
 type CreatePostInput struct {
-	Content  string `json:"content" binding:"required"`
-	ImageURL string `json:"imageUrl"`
+	Content   string `json:"content" binding:"required"`
+	ImageURL  string `json:"imageUrl"`
+	VideoURL  string `json:"videoUrl"`
+	MediaType string `json:"mediaType"`
 }
 
 func GetPosts(c *gin.Context) {
@@ -32,9 +34,11 @@ func CreatePost(c *gin.Context) {
 
 	userID, _ := c.Get("userId")
 	post := models.Post{
-		Content:  input.Content,
-		ImageURL: input.ImageURL,
-		UserID:   userID.(uint),
+		Content:   input.Content,
+		ImageURL:  input.ImageURL,
+		VideoURL:  input.VideoURL,
+		MediaType: input.MediaType,
+		UserID:    userID.(uint),
 	}
 
 	if err := db.DB.Create(&post).Error; err != nil {

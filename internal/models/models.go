@@ -69,6 +69,8 @@ type Post struct {
 	UserID    uint           `json:"userId"`
 	User      User           `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	ImageURL  string         `json:"imageUrl"`
+	VideoURL  string         `json:"videoUrl"`
+	MediaType string         `json:"mediaType"` // "image", "video", "text"
 	CreatedAt time.Time      `json:"createdAt"`
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`

@@ -65,7 +65,15 @@ export const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState<'posts' | 'waves'>('posts');
   const [isFriendsModalOpen, setIsFriendsModalOpen] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
   const isOwnProfile = currentUser?.username === username;
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -87,19 +95,42 @@ export const ProfilePage = () => {
   );
 
   return (
-    <div style={{ maxWidth: '935px', margin: '0 auto', padding: '0 20px' }}>
-      <div style={{ display: 'flex', gap: '40px', marginBottom: '44px', alignItems: 'flex-start' }}>
+    <div style={{ maxWidth: '935px', margin: '0 auto', padding: isMobile ? '0 10px' : '0 20px' }}>
+      <div style={{ 
+        display: 'flex', 
+        gap: isMobile ? '20px' : '40px', 
+        marginBottom: '44px', 
+        alignItems: isMobile ? 'center' : 'flex-start',
+        flexDirection: isMobile ? 'column' : 'row',
+        textAlign: isMobile ? 'center' : 'left'
+      }}>
         <div style={{ position: 'relative' }}>
           <img src={profileUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profileUser.username}
-            alt="avatar" style={{ width: '150px', height: '150px', borderRadius: '50%', border: '4px solid rgba(0,245,255,0.2)', padding: '4px', objectFit: 'cover' }} />
+            alt="avatar" style={{ width: isMobile ? '90px' : '110px', height: isMobile ? '90px' : '110px', borderRadius: '50%', border: '4px solid rgba(0,245,255,0.2)', padding: '4px', objectFit: 'cover' }} />
         </div>
         
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
+        <div style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '20px', 
+            marginBottom: '20px',
+            justifyContent: isMobile ? 'center' : 'flex-start'
+          }}>
             <h1 style={{ fontSize: '1.8rem', fontWeight: '300', color: 'white' }}>{profileUser.username}</h1>
             {isOwnProfile && (
-              <button className="glass-panel" onClick={() => setIsEditModalOpen(true)}
-                style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <button onClick={() => setIsEditModalOpen(true)}
+                style={{ 
+                  padding: '8px 20px', 
+                  borderRadius: '10px', 
+                  fontSize: '0.85rem', 
+                  fontWeight: '800', 
+                  cursor: 'pointer', 
+                  background: '#00f5ff', 
+                  color: '#050608',
+                  border: 'none',
+                  boxShadow: '0 0 15px rgba(0,245,255,0.4)'
+                }}>
                 Редактировать
               </button>
             )}
@@ -108,22 +139,27 @@ export const ProfilePage = () => {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '40px', marginBottom: '20px' }}>
-            <div style={{ fontSize: '1rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{(profileUser.posts || []).length}</span> постов</div>
-            <div onClick={() => setIsFriendsModalOpen(true)} style={{ fontSize: '1rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{(profileUser.friends || []).length}</span> друзей</div>
-            <div style={{ fontSize: '1rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{(profileUser.waves || []).length}</span> волн</div>
+          <div style={{ 
+            display: 'flex', 
+            gap: isMobile ? '20px' : '40px', 
+            marginBottom: '20px',
+            justifyContent: isMobile ? 'center' : 'flex-start'
+          }}>
+            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{(profileUser.posts || []).length}</span> постов</div>
+            <div onClick={() => setIsFriendsModalOpen(true)} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{(profileUser.friends || []).length}</span> друзей</div>
+            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{(profileUser.waves || []).length}</span> волн</div>
           </div>
 
           <div style={{ color: 'white' }}>
             <h2 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '5px' }}>SETI User Matrix</h2>
-            <p style={{ fontSize: '1rem', color: '#f1f5f9', whiteSpace: 'pre-wrap' }}>
+            <p style={{ fontSize: '0.95rem', color: '#f1f5f9', whiteSpace: 'pre-wrap' }}>
               {profileUser.bio || 'Этот пользователь ещё не загрузил данные своей биографии.'}
             </p>
           </div>
         </div>
       </div>
 
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'center', gap: '60px' }}>
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'center', gap: isMobile ? '30px' : '60px' }}>
         {[
           { id: 'posts', label: 'ПОСТЫ', icon: Grid },
           { id: 'waves', label: 'ВОЛНЫ', icon: Film },
@@ -140,7 +176,7 @@ export const ProfilePage = () => {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', marginTop: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: isMobile ? '2px' : '4px', marginTop: '20px' }}>
         <AnimatePresence mode='wait'>
           {activeTab === 'posts' ? (
             (profileUser.posts || []).length > 0 ? (
@@ -156,12 +192,21 @@ export const ProfilePage = () => {
                     if(overlay) overlay.style.opacity = '0';
                   }}
                 >
-                  <div style={{ padding: '15px', color: 'white', fontSize: '0.85rem', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                    {post.content.length > 80 ? post.content.substring(0, 80) + '...' : post.content}
-                  </div>
-                  <div className="overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', opacity: 0, transition: 'opacity 0.2s' }}>
-                    <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800' }}><Heart size={20} fill="white" /> {post.likesCount || 0}</div>
-                    <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800' }}><MessageCircle size={20} fill="white" /> 0</div>
+                  {post.imageUrl || post.videoUrl ? (
+                    post.mediaType === 'video' ? (
+                      <video src={post.videoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                    ) : (
+                      <img src={post.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )
+                  ) : (
+                    <div style={{ padding: '12px', color: 'white', fontSize: isMobile ? '0.6rem' : '0.8rem', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                      {post.content.length > 60 ? post.content.substring(0, 60) + '...' : post.content}
+                    </div>
+                  )}
+                  
+                  <div className="overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? '10px' : '20px', opacity: 0, transition: 'opacity 0.2s' }}>
+                    <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800', fontSize: isMobile ? '0.7rem' : '1rem' }}><Heart size={isMobile ? 14 : 20} fill="white" /> {post.likesCount || 0}</div>
+                    <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800', fontSize: isMobile ? '0.7rem' : '1rem' }}><MessageCircle size={isMobile ? 14 : 20} fill="white" /> 0</div>
                   </div>
                 </motion.div>
               ))
