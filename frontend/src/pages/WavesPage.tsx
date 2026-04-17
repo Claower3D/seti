@@ -50,8 +50,9 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
   const [commentsCount, setCommentsCount] = useState(wave.commentsCount || 0);
   const [loadingComments, setLoadingComments] = useState(false);
   const [sendingComment, setSendingComment] = useState(false);
-  const [following, setFollowing] = useState(false);
-  const [followSent, setFollowSent] = useState(false);
+  const [following, setFollowing] = useState(false); // Check if they are friends/following
+  const [followLoading, setFollowLoading] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(true);
   const dbTapRef = useRef<number>(0);
 
   const isOwnWave = currentUser?.id === wave.user?.id;
@@ -142,13 +143,19 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
     setSendingComment(false);
   };
 
-  const handleFollow = async () => {
-    if (followSent || following || isOwnWave) return;
+  const toggleFollow = async () => {
+    if (isOwnWave || followLoading) return;
+    setFollowLoading(true);
     try {
-      await api.post(`/friends/request/${wave.user.id}`);
-      setFollowSent(true);
-      setFollowing(true);
+      if (following) {
+        await api.delete(`/friends/request/${wave.user.id}`);
+        setFollowing(false);
+      } else {
+        await api.post(`/friends/request/${wave.user.id}`);
+        setFollowing(true);
+      }
     } catch {}
+    setFollowLoading(false);
   };
 
   const handleShare = () => {
@@ -166,9 +173,22 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
         muted={muted}
         playsInline
         onTimeUpdate={handleTimeUpdate}
+        onWaiting={() => setVideoLoading(true)}
+        onPlaying={() => setVideoLoading(false)}
         onClick={togglePlay}
         style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
       />
+
+      {/* Video Loading Spinner */}
+      {videoLoading && (
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 10 }}>
+          <motion.div 
+            animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
+            transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+            style={{ width: '50px', height: '50px', border: '3px solid rgba(0,245,255,0.1)', borderTopColor: '#00f5ff', borderRadius: '50%', boxShadow: '0 0 20px rgba(0,245,255,0.3)' }} 
+          />
+        </div>
+      )}
 
       {/* Double-tap heart */}
       <AnimatePresence>
@@ -187,15 +207,37 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
 
       {/* Play/pause overlay */}
       <AnimatePresence>
-        {!playing && isActive && (
+        {!playing && isActive && !videoLoading && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none', zIndex: 10 }}
+            exit={{ opacity: 0, scale: 1.5 }}
+            style={{ 
+              position: 'absolute', 
+              top: '50%', 
+              left: '50%', 
+              x: '-50%', 
+              y: '-50%', 
+              pointerEvents: 'none', 
+              zIndex: 30,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            <div style={{ background: 'rgba(0,0,0,0.5)', borderRadius: '50%', padding: isMobile ? '30px' : '20px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-              <Play size={isMobile ? 50 : 40} color="white" fill="white" />
+            <div style={{ 
+              background: 'rgba(0,0,0,0.3)', 
+              borderRadius: '50%', 
+              width: isMobile ? '80px' : '70px',
+              height: isMobile ? '80px' : '70px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(10px)', 
+              border: '1px solid rgba(255,255,255,0.15)',
+              boxShadow: '0 0 40px rgba(0,0,0,0.4)'
+            }}>
+              <Play size={isMobile ? 40 : 35} color="white" fill="white" style={{ marginLeft: '4px' }} />
             </div>
           </motion.div>
         )}
@@ -205,9 +247,28 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '20%', background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)', pointerEvents: 'none' }} />
 
-      {/* Progress bar */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', background: 'rgba(255,255,255,0.15)', zIndex: 15 }}>
-        <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #00f5ff, #b400ff)', boxShadow: '0 0 8px rgba(0,245,255,0.8)', transition: 'width 0.1s linear' }} />
+      <div style={{ 
+        position: 'absolute', 
+        bottom: '0', 
+        left: '0', 
+        right: '0', 
+        height: '4px', 
+        background: 'rgba(255,255,255,0.08)', 
+        zIndex: 100,
+        overflow: 'hidden',
+        backdropFilter: 'blur(4px)'
+      }}>
+        <motion.div 
+          style={{ 
+            height: '100%', 
+            width: `${progress}%`, 
+            background: 'linear-gradient(90deg, #00f5ff, #b400ff, #00f5ff)',
+            backgroundSize: '200% 100%',
+            boxShadow: '0 0 15px rgba(0,245,255,0.6)',
+          }}
+          animate={{ backgroundPosition: ['0% center', '200% center'] }}
+          transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
+        />
       </div>
 
       {/* User info */}
@@ -215,36 +276,33 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
           <img src={wave.user?.avatar} alt="" style={{ width: isMobile ? '48px' : '42px', height: isMobile ? '48px' : '42px', borderRadius: '50%', border: '2px solid rgba(0,245,255,0.5)', boxShadow: '0 0 15px rgba(0,245,255,0.3)' }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: '900', color: 'white', fontSize: isMobile ? '1.1rem' : '1rem', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>@{wave.user?.username}</div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}><Zap size={10} style={{ display: 'inline', marginRight: '3px' }} />Signal Wave</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+              <div style={{ fontWeight: '900', color: 'white', fontSize: isMobile ? '1.1rem' : '1.05rem', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>@{wave.user?.username}</div>
+              {!isOwnWave && (
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={toggleFollow}
+                  disabled={followLoading}
+                  style={{
+                    background: following ? 'rgba(255,255,255,0.1)' : 'rgba(0,245,255,0.15)',
+                    border: following ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(0,245,255,0.4)',
+                    borderRadius: '8px',
+                    padding: isMobile ? '2px 10px' : '2px 8px',
+                    cursor: 'pointer',
+                    color: following ? 'rgba(255,255,255,0.6)' : '#00f5ff',
+                    fontWeight: '800',
+                    fontSize: '0.65rem',
+                    backdropFilter: 'blur(10px)',
+                    transition: 'all 0.3s',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {followLoading ? '...' : (following ? '✓ Читаю' : 'Подписаться')}
+                </motion.button>
+              )}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '3px' }}><Zap size={10} color="#00f5ff" />Signal Wave</div>
           </div>
-          {!isOwnWave && (
-            <motion.button
-              whileTap={{ scale: 0.92 }}
-              onClick={handleFollow}
-              style={{
-                background: following
-                  ? 'rgba(255,255,255,0.1)'
-                  : 'linear-gradient(135deg, rgba(0,245,255,0.25), rgba(180,0,255,0.25))',
-                border: following
-                  ? '1px solid rgba(255,255,255,0.2)'
-                  : '1px solid rgba(0,245,255,0.5)',
-                borderRadius: '20px',
-                padding: isMobile ? '6px 14px' : '6px 14px',
-                cursor: following ? 'default' : 'pointer',
-                color: following ? 'rgba(255,255,255,0.5)' : '#00f5ff',
-                fontWeight: '800',
-                fontSize: isMobile ? '0.7rem' : '0.75rem',
-                backdropFilter: 'blur(10px)',
-                boxShadow: following ? 'none' : '0 0 12px rgba(0,245,255,0.2)',
-                transition: 'all 0.3s',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-              }}
-            >
-              {following ? '✓ Запрос' : '+ Подписаться'}
-            </motion.button>
-          )}
         </div>
         {wave.description && (
           <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: isMobile ? '0.95rem' : '0.9rem', lineHeight: '1.5', margin: 0, fontWeight: '500', textShadow: '0 1px 4px rgba(0,0,0,0.8)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
@@ -463,33 +521,33 @@ export const WavesPage = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ position: 'relative', height: isMobile ? '100%' : 'calc(100vh - 100px)', overflow: 'hidden', touchAction: 'none' }}>
-      {/* Upload button - FAB on mobile, pill on desktop */}
-      <div style={{ position: 'absolute', bottom: isMobile ? '24px' : 'auto', top: isMobile ? 'auto' : '12px', right: '12px', zIndex: 100 }}>
-        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          onClick={() => videoUploadRef.current?.click()}
-          style={{ 
-            background: 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))', 
-            border: '1px solid rgba(0,245,255,0.5)', 
-            borderRadius: isMobile ? '50%' : '14px', 
-            width: isMobile ? '48px' : 'auto',
-            height: isMobile ? '48px' : 'auto',
-            padding: isMobile ? '0' : '10px 16px', 
-            cursor: 'pointer', 
-            color: '#00f5ff', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            gap: '8px', 
-            fontWeight: '700', 
-            backdropFilter: 'blur(20px)', 
-            boxShadow: '0 0 30px rgba(0,245,255,0.25)', 
-            fontSize: '0.85rem' 
-          }}>
-          <Plus size={isMobile ? 24 : 18} /> 
-          {!isMobile && 'Запустить волну'}
-        </motion.button>
-        <input ref={videoUploadRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={handleFileSelect} />
-      </div>
+      {/* Upload button - Only on desktop since mobile has it in the nav bar */}
+      {!isMobile && (
+        <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 100 }}>
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            onClick={() => videoUploadRef.current?.click()}
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))', 
+              border: '1px solid rgba(0,245,255,0.5)', 
+              borderRadius: '14px', 
+              padding: '10px 16px', 
+              cursor: 'pointer', 
+              color: '#00f5ff', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              gap: '8px', 
+              fontWeight: '700', 
+              backdropFilter: 'blur(20px)', 
+              boxShadow: '0 0 30px rgba(0,245,255,0.25)', 
+              fontSize: '0.85rem' 
+            }}>
+            <Plus size={18} /> 
+            Запустить волну
+          </motion.button>
+        </div>
+      )}
+      <input ref={videoUploadRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={handleFileSelect} />
 
       {waves.length === 0 ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: '20px' }}>
