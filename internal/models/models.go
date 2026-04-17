@@ -37,6 +37,7 @@ type Message struct {
 	FileURL    string    `json:"fileUrl,omitempty"`
 	FileType   string    `json:"fileType,omitempty"`
 	FileName   string    `json:"fileName,omitempty"`
+	ReplyStoryURL string `json:"replyStoryUrl,omitempty"`
 	CreatedAt  time.Time `json:"createdAt"`
 }
 

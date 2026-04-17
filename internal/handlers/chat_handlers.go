@@ -72,6 +72,7 @@ func WebSocketHandler(c *gin.Context) {
 			FileURL    string `json:"fileUrl"`
 			FileName   string `json:"fileName"`
 			FileType   string `json:"fileType"`
+			ReplyStoryURL string `json:"replyStoryUrl"`
 		}
 
 		if err := json.Unmarshal(message, &msgData); err != nil {
@@ -105,6 +106,7 @@ func WebSocketHandler(c *gin.Context) {
 				FileURL:    msgData.FileURL,
 				FileName:   msgData.FileName,
 				FileType:   msgData.FileType,
+				ReplyStoryURL: msgData.ReplyStoryURL,
 			}
 			db.DB.Create(&chatMsg)
 		}
@@ -136,4 +138,32 @@ func GetMessages(c *gin.Context) {
 		Find(&messages)
 
 	c.JSON(http.StatusOK, messages)
+}
+
+func CreateMessage(c *gin.Context) {
+	var input struct {
+		ReceiverID    uint   `json:"receiverId" binding:"required"`
+		Content       string `json:"content"`
+		ReplyStoryURL string `json:"replyStoryUrl"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, _ := c.Get("userId")
+	msg := models.Message{
+		SenderID:      userID.(uint),
+		ReceiverID:    input.ReceiverID,
+		Content:       input.Content,
+		ReplyStoryURL: input.ReplyStoryURL,
+	}
+
+	if err := db.DB.Create(&msg).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save message"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, msg)
 }
