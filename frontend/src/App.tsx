@@ -151,10 +151,24 @@ const MobileNav = () => {
         
         if (isMiddle && isWavesPage) {
           return (
-            <button key="plus" onClick={handlePlusClick} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', outline: 'none', padding: '0 8px' }}>
-              <div style={{ background: 'linear-gradient(135deg, #00f5ff, #b400ff)', borderRadius: '50%', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 15px rgba(0,245,255,0.4)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                <Plus size={24} color="white" />
-              </div>
+            <button key="plus" onClick={handlePlusClick} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', outline: 'none', padding: '0 8px', position: 'relative', marginTop: '-12px' }}>
+              <motion.div 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                style={{ 
+                  background: 'linear-gradient(135deg, #00f5ff, #b400ff)', 
+                  borderRadius: '18px', /* Rounded square for TikTok feel */
+                  width: '56px', 
+                  height: '42px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  boxShadow: '0 0 25px rgba(0,245,255,0.5), 0 0 10px rgba(180,0,255,0.3)', 
+                  border: '1px solid rgba(255,255,255,0.3)' 
+                }}
+              >
+                <Plus size={30} color="white" strokeWidth={3} />
+              </motion.div>
             </button>
           );
         }
