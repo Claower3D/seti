@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, X, Grid, Film, Zap } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
-const MediaViewerModal = ({ isOpen, onClose, media, type, currentUser }: { isOpen: boolean, onClose: () => void, media: any, type: 'post' | 'wave', currentUser: any }) => {
+const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile }: { isOpen: boolean, onClose: () => void, media: any, type: 'post' | 'wave', isMobile: boolean }) => {
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
   const [liked, setLiked] = useState(media?.liked || false);
@@ -31,7 +31,7 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, currentUser }: { isOpe
       const endpoint = type === 'post' ? `/posts/${media.id}/like` : `/waves/${media.id}/like`;
       await api.post(endpoint);
       setLiked(!liked);
-      setLikesCount(prev => liked ? prev - 1 : prev + 1);
+      setLikesCount((prev: number) => liked ? prev - 1 : prev + 1);
     } catch { console.error('Failed to like'); }
   };
 
@@ -396,7 +396,7 @@ export const ProfilePage = () => {
         onClose={() => setSelectedMedia(null)} 
         media={selectedMedia} 
         type={mediaType} 
-        currentUser={currentUser}
+        isMobile={isMobile}
       />
     </div>
   );
