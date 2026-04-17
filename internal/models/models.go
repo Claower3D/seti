@@ -142,6 +142,8 @@ type Notification struct {
 	Type       string    `json:"type"` // "like", "comment"
 	WaveID     uint      `json:"waveId"`
 	Wave       Wave      `gorm:"foreignKey:WaveID" json:"wave,omitempty"`
+	PostID     uint      `json:"postId"`
+	Post       Post      `gorm:"foreignKey:PostID" json:"post,omitempty"`
 	Content    string    `json:"content"`
 	Read       bool      `gorm:"default:false" json:"read"`
 	CreatedAt  time.Time `json:"createdAt"`
