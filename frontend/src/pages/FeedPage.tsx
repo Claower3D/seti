@@ -16,7 +16,7 @@ export const FeedPage = () => {
   const [editText, setEditText] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [attachedMedia, setAttachedMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [activeCommentPostId, setActiveCommentPostId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState('');
@@ -92,13 +92,18 @@ export const FeedPage = () => {
 
   const handlePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() && !attachedImage) return;
+    if (!content.trim() && !attachedMedia) return;
     setIsPosting(true);
     try {
-      const res = await api.post('/posts', { content, imageUrl: attachedImage });
+      const res = await api.post('/posts', { 
+        content, 
+        imageUrl: attachedMedia?.type === 'image' ? attachedMedia.url : '',
+        videoUrl: attachedMedia?.type === 'video' ? attachedMedia.url : '',
+        mediaType: attachedMedia?.type || 'text'
+      });
       setPosts([res.data, ...posts]);
       setContent('');
-      setAttachedImage(null);
+      setAttachedMedia(null);
     } catch (err) {
       console.error('Failed to create post');
     } finally {
@@ -110,6 +115,7 @@ export const FeedPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const isVideo = file.type.startsWith('video/');
     const formData = new FormData();
     formData.append('file', file);
     
@@ -118,7 +124,7 @@ export const FeedPage = () => {
       const res = await api.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setAttachedImage(res.data.url);
+      setAttachedMedia({ url: res.data.url, type: isVideo ? 'video' : 'image' });
     } catch (err) {
       console.error('Failed to upload file');
     } finally {
@@ -230,12 +236,16 @@ export const FeedPage = () => {
             />
           </div>
 
-          {attachedImage && (
-            <div style={{ position: 'relative', width: 'fit-content', marginBottom: '20px', marginLeft: '68px' }}>
-              <img src={attachedImage} alt="attachment preview" style={{ maxHeight: '200px', borderRadius: '12px', border: '1px solid rgba(0, 245, 255, 0.3)' }} />
+          {attachedMedia && (
+            <div style={{ position: 'relative', width: 'fit-content', marginBottom: '20px', marginLeft: isMobile ? '0' : '68px', margin: isMobile ? '0 auto 20px' : '0 0 20px 68px' }}>
+              {attachedMedia.type === 'video' ? (
+                <video src={attachedMedia.url} style={{ maxHeight: '200px', borderRadius: '12px', border: '1px solid rgba(0, 245, 255, 0.3)' }} muted autoPlay loop />
+              ) : (
+                <img src={attachedMedia.url} alt="attachment preview" style={{ maxHeight: '200px', borderRadius: '12px', border: '1px solid rgba(0, 245, 255, 0.3)' }} />
+              )}
               <button 
-                onClick={() => setAttachedImage(null)}
-                style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', color: 'white', cursor: 'pointer', padding: '4px', display: 'flex' }}
+                onClick={() => setAttachedMedia(null)}
+                style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', color: 'white', cursor: 'pointer', padding: '4px', display: 'flex', boxShadow: '0 0 10px rgba(0,0,0,0.5)' }}
               >
                 <X size={16} />
               </button>
@@ -332,10 +342,14 @@ export const FeedPage = () => {
                     </div>
                   ) : (
                     <>
-                      <p style={{ marginBottom: post.imageUrl ? '16px' : '24px', fontSize: '1.15rem', lineHeight: '1.6', color: '#e2e8f0', letterSpacing: '0.2px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{post.content}</p>
-                      {post.imageUrl && (
-                        <div style={{ marginBottom: '24px', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <img src={post.imageUrl} alt="post media" style={{ width: '100%', maxHeight: '500px', objectFit: 'contain', background: 'rgba(0,0,0,0.2)' }} />
+                      <p style={{ marginBottom: (post.imageUrl || post.videoUrl) ? '16px' : '24px', fontSize: '1.15rem', lineHeight: '1.6', color: '#e2e8f0', letterSpacing: '0.2px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{post.content}</p>
+                      {(post.imageUrl || post.videoUrl) && (
+                        <div style={{ marginBottom: '24px', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)' }}>
+                          {post.mediaType === 'video' ? (
+                            <video src={post.videoUrl} controls style={{ width: '100%', maxHeight: '500px' }} />
+                          ) : (
+                            <img src={post.imageUrl} alt="post media" style={{ width: '100%', maxHeight: '500px', objectFit: 'contain' }} />
+                          )}
                         </div>
                       )}
                     </>
