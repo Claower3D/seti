@@ -271,7 +271,7 @@ export const ProfilePage = () => {
             marginBottom: '20px',
             justifyContent: isMobile ? 'center' : 'flex-start'
           }}>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: '300', color: 'white' }}>{profileUser.username}</h1>
+            <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--primary)', textShadow: 'var(--glow)' }}>{profileUser.username}</h1>
             {isOwnProfile && (
               <button onClick={() => setIsEditModalOpen(true)}
                 className="btn-primary"

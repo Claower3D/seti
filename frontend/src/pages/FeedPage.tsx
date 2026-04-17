@@ -195,12 +195,12 @@ export const FeedPage = () => {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             <div 
               onClick={() => storyInputRef.current?.click()}
-              style={{ width: '74px', height: '74px', borderRadius: '24px', background: 'rgba(0,245,255,0.05)', border: '2px dashed rgba(0,245,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isUploadingStory ? 'wait' : 'pointer', transition: 'all 0.3s', position: 'relative', opacity: isUploadingStory ? 0.6 : 1 }}
-              onMouseEnter={e => !isUploadingStory && (e.currentTarget.style.borderColor = 'var(--primary-color)')}
-              onMouseLeave={e => !isUploadingStory && (e.currentTarget.style.borderColor = 'rgba(0,245,255,0.3)')}
+              style={{ width: '74px', height: '74px', borderRadius: '24px', background: 'rgba(255,255,255,0.03)', border: '2px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isUploadingStory ? 'wait' : 'pointer', transition: 'all 0.3s', position: 'relative', opacity: isUploadingStory ? 0.6 : 1 }}
+              onMouseEnter={e => !isUploadingStory && (e.currentTarget.style.borderColor = 'var(--primary)')}
+              onMouseLeave={e => !isUploadingStory && (e.currentTarget.style.borderColor = 'var(--border)')}
             >
               <img src={user?.avatar} alt="" style={{ width: '60px', height: '60px', borderRadius: '18px', opacity: isUploadingStory ? 0.2 : 0.5 }} />
-              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', background: 'var(--primary-color)', color: 'black', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid var(--bg)', fontSize: '1.2rem', fontWeight: '900' }}>{isUploadingStory ? '...' : '+'}</div>
+              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', background: 'var(--primary)', color: 'black', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid var(--bg)', fontSize: '1.2rem', fontWeight: '900', boxShadow: 'var(--glow)' }}>{isUploadingStory ? '...' : '+'}</div>
               <input type="file" ref={storyInputRef} hidden onChange={async (e) => {
                 const file = e.target.files?.[0]; if (!file) return;
                 const fd = new FormData(); fd.append('file', file);
@@ -217,7 +217,7 @@ export const FeedPage = () => {
 
           {stories.map((story, idx) => (
             <div key={story.id} onClick={() => { setActiveStoryIdx(idx); setStoryProgress(0); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0, cursor: 'pointer' }}>
-              <div style={{ padding: '3px', borderRadius: '26px', background: 'linear-gradient(45deg, #00f5ff, #b400ff)', boxShadow: '0 0 15px rgba(0,245,255,0.3)' }}>
+              <div style={{ padding: '3px', borderRadius: '26px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', boxShadow: 'var(--glow)' }}>
                 <div style={{ background: 'var(--bg)', borderRadius: '23px', padding: '2px' }}>
                   <img src={story.user?.avatar} alt="" style={{ width: '64px', height: '64px', borderRadius: '20px', objectFit: 'cover' }} />
                 </div>
@@ -230,10 +230,10 @@ export const FeedPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="glass-panel"
-          style={{ padding: '24px', marginBottom: '24px', border: '1px solid rgba(0, 242, 255, 0.2)' }}
+          style={{ padding: '24px', marginBottom: '24px', border: '1px solid var(--border)' }}
         >
           <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
-            <img src={user?.avatar} alt="avatar" style={{ width: '52px', height: '52px', borderRadius: '16px', border: '2px solid var(--primary-color)' }} />
+            <img src={user?.avatar} alt="avatar" style={{ width: '52px', height: '52px', borderRadius: '16px', border: '2px solid var(--primary)', boxShadow: 'var(--glow)' }} />
             <textarea
               className="input-field"
               placeholder="Что у вас нового?"
@@ -284,15 +284,15 @@ export const FeedPage = () => {
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: Math.min(index * 0.05, 0.5) }}
                   className="glass-panel"
-                  style={{ padding: '28px', borderLeft: index % 2 === 0 ? '4px solid var(--primary-color)' : '4px solid var(--secondary-color)' }}
+                  style={{ padding: '28px', borderLeft: index % 2 === 0 ? '4px solid var(--primary)' : '4px solid var(--secondary)' }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
                     <Link to={`/profile/${post.user?.username}`} style={{ textDecoration: 'none', display: 'flex', gap: '16px', alignItems: 'center' }}>
                       <img src={post.user?.avatar} alt="avatar" style={{ width: '54px', height: '54px', borderRadius: '18px', border: '2px solid rgba(255,255,255,0.1)' }} />
                       <div>
-                        <div style={{ fontWeight: '900', fontSize: '1.2rem', color: 'white' }}>{post.user?.username}</div>
+                        <div style={{ fontWeight: '900', fontSize: '1.2rem', color: 'var(--primary)', textShadow: 'var(--glow)' }}>{post.user?.username}</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary-color)', boxShadow: '0 0 5px var(--primary-color)' }}></div>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', boxShadow: 'var(--glow)' }}></div>
                           {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • SETI Network
                         </div>
                       </div>

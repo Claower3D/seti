@@ -240,7 +240,7 @@ export const MessagesPage = () => {
                 <div style={{ position: 'relative' }}>
                   <img src={friend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + friend.username}
                     alt="avatar" style={{ width: '52px', height: '52px', borderRadius: '18px', objectFit: 'cover', border: selectedFriend?.id === friend.id ? '2px solid var(--primary)' : '2px solid transparent' }} />
-                  <div style={{ position: 'absolute', bottom: -2, right: -2, width: '12px', height: '12px', background: '#00ff00', borderRadius: '50%', border: '2px solid var(--bg-color)', boxShadow: '0 0 10px #00ff00' }} />
+                  <div style={{ position: 'absolute', bottom: -2, right: -2, width: '12px', height: '12px', background: 'var(--primary)', borderRadius: '50%', border: '2px solid var(--bg)', boxShadow: 'var(--glow)' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedFriend?.id === friend.id ? 'var(--primary)' : 'white' }}>{friend.username}</div>
@@ -253,7 +253,7 @@ export const MessagesPage = () => {
       )}
 
       {showChat && (
-        <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, border: '1px solid rgba(0,245,255,0.1)' }}>
+        <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, border: '1px solid var(--border)' }}>
           {selectedFriend ? (
             <>
               <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.02)' }}>
@@ -266,14 +266,14 @@ export const MessagesPage = () => {
                 <img src={selectedFriend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedFriend.username}
                   alt="avatar" style={{ width: '44px', height: '44px', borderRadius: '14px', border: '2px solid var(--primary)' }} />
                 <div>
-                  <div style={{ fontWeight: '900', fontSize: '1.1rem', color: 'var(--primary)' }}>{selectedFriend.username}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#00ff00', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div className="pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00ff00' }}></div> Online Signal
+                  <div style={{ fontWeight: '900', fontSize: '1.1rem', color: 'var(--primary)', textShadow: 'var(--glow)' }}>{selectedFriend.username}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div className="pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', boxShadow: 'var(--glow)' }}></div> Online Signal
                   </div>
                 </div>
               </div>
 
-              <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px', background: 'radial-gradient(circle at 50% 50%, rgba(0,242,255,0.02) 0%, transparent 100%)' }}>
+              <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px', background: 'radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--primary), transparent 98%) 0%, transparent 100%)' }}>
                 {messages.length === 0 && (
                   <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '60px' }}>
                     <p style={{ letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.8rem' }}>Инициализация сеанса связи 👋</p>

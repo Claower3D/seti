@@ -80,24 +80,24 @@ export const GroupsPage = () => {
 
   if (selected) return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 100px)' }}>
-      <div className="glass-panel" style={{ padding: '14px 20px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-        <button onClick={() => setSelected(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#00f5ff', display: 'flex' }}><ArrowLeft size={20} /></button>
-        <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0,245,255,0.4)' }}>
-          <Users size={18} color="#00f5ff" />
+      <div className="glass-panel" style={{ padding: '14px 20px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '14px', border: '1px solid var(--border)' }}>
+        <button onClick={() => setSelected(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--primary)', display: 'flex' }}><ArrowLeft size={20} /></button>
+        <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 70%), color-mix(in srgb, var(--secondary), transparent 70%))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-bright)', boxShadow: 'var(--glow)' }}>
+          <Users size={18} color="var(--primary)" />
         </div>
         <div>
-          <div style={{ fontWeight: '700', color: '#00f5ff' }}>{selected.name}</div>
+          <div style={{ fontWeight: '900', color: 'var(--primary)', textShadow: 'var(--glow)' }}>{selected.name}</div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{selected.members?.length || 0} участников</div>
         </div>
       </div>
-      <div className="glass-panel" style={{ flex: 1, overflowY: 'auto', padding: '16px', marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div className="glass-panel" style={{ flex: 1, overflowY: 'auto', padding: '16px', marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '10px', border: '1px solid var(--border)' }}>
         {messages.map((m, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: m.senderId === user?.id ? 'flex-end' : 'flex-start' }}>
-            <div style={{ maxWidth: '70%', background: m.senderId === user?.id ? 'linear-gradient(135deg, rgba(0,245,255,0.15), rgba(180,0,255,0.15))' : 'rgba(255,255,255,0.04)', border: `1px solid ${m.senderId === user?.id ? 'rgba(0,245,255,0.25)' : 'rgba(255,255,255,0.08)'}`, borderRadius: '14px', padding: '10px 14px' }}>
+            <div style={{ maxWidth: '70%', background: m.senderId === user?.id ? 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 85%), color-mix(in srgb, var(--secondary), transparent 85%))' : 'rgba(255,255,255,0.04)', border: `1px solid ${m.senderId === user?.id ? 'var(--border-bright)' : 'var(--border)'}`, borderRadius: '14px', padding: '10px 14px' }}>
               {m.fileUrl ? (
                 isImage(m.fileType)
-                  ? <img src={`http://localhost:8080${m.fileUrl}`} alt={m.fileName} style={{ maxWidth: '240px', borderRadius: '8px' }} />
-                  : <a href={`http://localhost:8080${m.fileUrl}`} target="_blank" rel="noreferrer" style={{ color: '#00f5ff' }}>{m.fileName}</a>
+                  ? <img src={`http://localhost:8080${m.fileUrl}`} alt={m.fileName} style={{ maxWidth: '240px', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                  : <a href={`http://localhost:8080${m.fileUrl}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textShadow: 'var(--glow)' }}>{m.fileName}</a>
               ) : <span style={{ fontSize: '0.9rem' }}>{m.content}</span>}
             </div>
           </div>
@@ -128,7 +128,7 @@ export const GroupsPage = () => {
           <div style={{ fontWeight: '700', color: '#00f5ff', marginBottom: '14px' }}>Новая группа</div>
           <input className="input-field" placeholder="Название группы" value={newName} onChange={e => setNewName(e.target.value)} style={{ marginBottom: '10px', width: '100%' }} />
           <input className="input-field" placeholder="Описание (необязательно)" value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{ marginBottom: '14px', width: '100%' }} />
-          <button onClick={createGroup} style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(180,0,255,0.2))', border: '1px solid rgba(0,245,255,0.3)', borderRadius: '10px', padding: '10px 20px', cursor: 'pointer', color: '#00f5ff', fontWeight: '700' }}>Создать</button>
+          <button onClick={createGroup} style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 80%), color-mix(in srgb, var(--secondary), transparent 80%))', border: '1px solid var(--border-bright)', borderRadius: '10px', padding: '10px 20px', cursor: 'pointer', color: 'var(--primary)', fontWeight: '900', boxShadow: 'var(--glow)' }}>Создать</button>
         </div>
       )}
 
@@ -142,12 +142,12 @@ export const GroupsPage = () => {
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Результаты поиска</div>
           {searchResults.map(g => (
             <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(180,0,255,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0,245,255,0.3)' }}><Users size={18} color="#00f5ff" /></div>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 85%), color-mix(in srgb, var(--secondary), transparent 85%))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}><Users size={18} color="var(--primary)" /></div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: '700' }}>{g.name}</div>
+                <div style={{ fontWeight: '900', color: 'var(--primary)' }}>{g.name}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{g.description}</div>
               </div>
-              <button onClick={() => joinGroup(g)} style={{ background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem' }}><LogIn size={14} /> Вступить</button>
+              <button onClick={() => joinGroup(g)} style={{ background: 'color-mix(in srgb, var(--primary), transparent 92%)', border: '1px solid color-mix(in srgb, var(--primary), transparent 75%)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: '800' }}><LogIn size={14} /> Вступить</button>
             </div>
           ))}
         </div>
@@ -160,10 +160,10 @@ export const GroupsPage = () => {
             <div>Вы пока не состоите в группах</div>
           </div>
         ) : groups.map(g => (
-          <motion.div key={g.id} whileHover={{ scale: 1.01 }} className="glass-panel" onClick={() => setSelected(g)} style={{ padding: '16px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(180,0,255,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0,245,255,0.3)' }}><Users size={20} color="#00f5ff" /></div>
+          <motion.div key={g.id} whileHover={{ scale: 1.01 }} className="glass-panel" onClick={() => setSelected(g)} style={{ padding: '16px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', border: '1px solid var(--border)' }}>
+            <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 85%), color-mix(in srgb, var(--secondary), transparent 85%))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-bright)', boxShadow: 'var(--glow)' }}><Users size={20} color="var(--primary)" /></div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: '700', color: '#00f5ff' }}>{g.name}</div>
+              <div style={{ fontWeight: '900', color: 'var(--primary)', textShadow: 'var(--glow)' }}>{g.name}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{g.members?.length || 0} участников · {g.description || 'Нет описания'}</div>
             </div>
           </motion.div>

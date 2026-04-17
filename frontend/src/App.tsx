@@ -26,10 +26,10 @@ const Sidebar = () => {
   return (
     <div className="sidebar glass-panel">
       <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '12px', padding: '0 4px' }}>
-        <div className="pulse" style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(180,0,255,0.2))', border: '1px solid rgba(0,245,255,0.4)', padding: '10px', borderRadius: '12px', boxShadow: '0 0 20px rgba(0,245,255,0.3)' }}>
-          <Zap color="#00f5ff" size={22} style={{ filter: 'drop-shadow(0 0 6px #00f5ff)' }} />
+        <div className="pulse" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 80%), color-mix(in srgb, var(--secondary), transparent 80%))', border: '1px solid var(--border-bright)', padding: '10px', borderRadius: '12px', boxShadow: 'var(--glow)' }}>
+          <Zap color="var(--primary)" size={22} style={{ filter: 'var(--glow)' }} />
         </div>
-        <span style={{ fontSize: '1.6rem', fontWeight: '900', background: 'linear-gradient(135deg, #00f5ff, #b400ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>SETI</span>
+        <span style={{ fontSize: '1.6rem', fontWeight: '900', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>SETI</span>
       </div>
       <nav style={{ flex: 1 }}>
         {navItems.map((item) => (
@@ -41,13 +41,13 @@ const Sidebar = () => {
           </Link>
         ))}
       </nav>
-      <div style={{ borderTop: '1px solid rgba(0,245,255,0.08)', paddingTop: '16px' }}>
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', marginBottom: '6px' }}>
           <img src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
-            style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.3)' }} alt="" />
+            style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--border-bright)' }} alt="" />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.82rem', fontWeight: '700', color: '#00f5ff', textShadow: '0 0 8px rgba(0,245,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</div>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>● Online</div>
+            <div style={{ fontSize: '0.82rem', fontWeight: '900', color: 'var(--primary)', textShadow: 'var(--glow)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--primary)', fontWeight: '700' }}>● Online Signal</div>
           </div>
         </div>
         <div className="nav-item" onClick={logout} style={{ color: 'rgba(255,60,60,0.7)', borderColor: 'transparent' }}>
@@ -106,19 +106,19 @@ const Header = () => {
           <button onClick={() => setShowNotifs(!showNotifs)}
             className={unreadCount > 0 ? 'pulse' : ''}
             style={{ 
-              background: unreadCount > 0 ? 'rgba(0,245,255,0.08)' : 'transparent', 
-              border: unreadCount > 0 ? '1px solid rgba(0,245,255,0.2)' : '1px solid transparent', 
+              background: unreadCount > 0 ? 'color-mix(in srgb, var(--primary), transparent 90%)' : 'transparent', 
+              border: unreadCount > 0 ? '1px solid var(--border-bright)' : '1px solid transparent', 
               cursor: 'pointer', 
-              color: unreadCount > 0 ? '#00f5ff' : 'var(--text-secondary)', 
+              color: unreadCount > 0 ? 'var(--primary)' : 'var(--text-secondary)', 
               padding: '8px', 
               borderRadius: '12px', 
               position: 'relative', 
               transition: 'all 0.3s', 
               display: 'flex' 
             }}>
-            <Bell size={20} style={{ filter: unreadCount > 0 ? 'drop-shadow(0 0 6px #00f5ff)' : 'none' }} />
+            <Bell size={20} style={{ filter: unreadCount > 0 ? 'var(--glow)' : 'none' }} />
             {unreadCount > 0 && (
-              <div style={{ position: 'absolute', top: '4px', right: '4px', background: '#ff0090', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.58rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '800', boxShadow: '0 0 8px rgba(255,0,144,0.8)' }}>
+              <div style={{ position: 'absolute', top: '4px', right: '4px', background: 'var(--primary)', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.58rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black', fontWeight: '900', boxShadow: 'var(--glow)' }}>
                 {unreadCount}
               </div>
             )}
@@ -126,10 +126,10 @@ const Header = () => {
           <AnimatePresence>
           {showNotifs && (
             <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.96 }}
-              className="glass-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '320px', zIndex: 1000, padding: '18px', background: 'rgba(10, 12, 20, 0.95)', border: '1px solid rgba(0,245,255,0.3)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,245,255,0.1)', maxHeight: '450px', overflowY: 'auto' }}>
+              className="glass-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '320px', zIndex: 1000, padding: '18px', background: 'rgba(10, 12, 20, 0.95)', border: '1px solid var(--border-bright)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 60px rgba(0,0,0,0.9), var(--glow)', maxHeight: '450px', overflowY: 'auto' }}>
               
               {/* Friend Requests Section */}
-              <div style={{ fontSize: '0.7rem', fontWeight: '800', color: '#00f5ff', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Users size={12} /> Заявки в друзья
               </div>
               {requests.length === 0 ? (
@@ -137,10 +137,10 @@ const Header = () => {
               ) : requests.map((r) => (
                 <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '10px' }}>
                   <img src={r.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + r.username} alt=""
-                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.3)' }} />
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--border)' }} />
                   <span style={{ flex: 1, fontWeight: '600', fontSize: '0.8rem', color: 'white' }}>{r.username}</span>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <button onClick={() => acceptRequest(r.id)} style={{ background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.3)', borderRadius: '6px', padding: '4px', cursor: 'pointer', color: '#00f5ff' }}><Check size={14} /></button>
+                    <button onClick={() => acceptRequest(r.id)} style={{ background: 'color-mix(in srgb, var(--primary), transparent 90%)', border: '1px solid var(--border-bright)', borderRadius: '6px', padding: '4px', cursor: 'pointer', color: 'var(--primary)' }}><Check size={14} /></button>
                     <button onClick={() => declineRequest(r.id)} style={{ background: 'rgba(255,0,144,0.1)', border: '1px solid rgba(255,0,144,0.3)', borderRadius: '6px', padding: '4px', cursor: 'pointer', color: '#ff0090' }}><X size={14} /></button>
                   </div>
                 </div>
@@ -195,7 +195,7 @@ const Header = () => {
         </div>
         <Link to={`/profile/${user.username}`}>
           <img src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} alt=""
-            style={{ width: '38px', height: '38px', borderRadius: '50%', border: '2px solid rgba(0,245,255,0.4)', boxShadow: '0 0 12px rgba(0,245,255,0.25)', cursor: 'pointer' }} />
+            style={{ width: '38px', height: '38px', borderRadius: '50%', border: '2px solid var(--border-bright)', boxShadow: 'var(--glow)', cursor: 'pointer' }} />
         </Link>
       </div>
     </div>
@@ -235,18 +235,18 @@ const MobileNav = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 style={{ 
-                  background: 'linear-gradient(135deg, #00f5ff, #b400ff)', 
-                  borderRadius: '18px', /* Rounded square for TikTok feel */
+                  background: 'linear-gradient(135deg, var(--primary), var(--secondary))', 
+                  borderRadius: '18px', 
                   width: '56px', 
                   height: '42px', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
-                  boxShadow: '0 0 25px rgba(0,245,255,0.5), 0 0 10px rgba(180,0,255,0.3)', 
+                  boxShadow: 'var(--glow-strong)', 
                   border: '1px solid rgba(255,255,255,0.3)' 
                 }}
               >
-                <Plus size={30} color="white" strokeWidth={3} />
+                <Plus size={30} color="black" strokeWidth={3} />
               </motion.div>
             </button>
           );
@@ -266,10 +266,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { token, loading } = useAuth();
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <div className="glass-panel" style={{ padding: '28px 48px', display: 'flex', alignItems: 'center', gap: '18px' }}>
+      <div className="glass-panel" style={{ padding: '28px 48px', display: 'flex', alignItems: 'center', gap: '18px', border: '1px solid var(--border-bright)' }}>
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          style={{ width: '28px', height: '28px', border: '2px solid transparent', borderTopColor: '#00f5ff', borderRadius: '50%', boxShadow: '0 0 15px rgba(0,245,255,0.5)' }} />
-        <span style={{ color: '#00f5ff', fontWeight: '700', textShadow: '0 0 8px rgba(0,245,255,0.6)', fontSize: '1rem' }}>Загрузка SETI...</span>
+          style={{ width: '28px', height: '28px', border: '2px solid transparent', borderTopColor: 'var(--primary)', borderRadius: '50%', boxShadow: 'var(--glow)' }} />
+        <span style={{ color: 'var(--primary)', fontWeight: '900', textShadow: 'var(--glow)', fontSize: '1rem', letterSpacing: '1px' }}>Загрузка SETI...</span>
       </div>
     </div>
   );
