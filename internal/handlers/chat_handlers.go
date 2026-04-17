@@ -98,6 +98,22 @@ func WebSocketHandler(c *gin.Context) {
 			} else {
 				continue
 			}
+		} else if msgData.Action == "read" {
+			// Mark all messages from sender to receiver as read
+			db.DB.Model(&models.Message{}).
+				Where("receiver_id = ? AND sender_id = ? AND is_read = ?", userID, msgData.ReceiverID, false).
+				Update("is_read", true)
+			
+			// Broadcast read receipt to the original sender
+			mu.Lock()
+			if sender, ok := clients[msgData.ReceiverID]; ok {
+				sender.Conn.WriteJSON(map[string]interface{}{
+					"action": "read_receipt",
+					"senderId": userID,
+				})
+			}
+			mu.Unlock()
+			continue
 		} else {
 			chatMsg = models.Message{
 				SenderID:   userID,
@@ -130,6 +146,11 @@ func WebSocketHandler(c *gin.Context) {
 func GetMessages(c *gin.Context) {
 	userID, _ := c.Get("userId")
 	otherUserID := c.Param("otherId")
+
+	// Mark messages from other user as read
+	db.DB.Model(&models.Message{}).
+		Where("receiver_id = ? AND sender_id = ? AND is_read = ?", userID, otherUserID, false).
+		Update("is_read", true)
 
 	messages := []models.Message{}
 	db.DB.Where("(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)", 

@@ -40,6 +40,7 @@ type Message struct {
 	FileType   string    `json:"fileType,omitempty"`
 	FileName   string    `json:"fileName,omitempty"`
 	ReplyStoryURL string `json:"replyStoryUrl,omitempty"`
+	IsRead     bool      `gorm:"default:false" json:"isRead"`
 	CreatedAt  time.Time `json:"createdAt"`
 }
 
