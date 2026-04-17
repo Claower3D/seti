@@ -125,6 +125,8 @@ func WebSocketHandler(c *gin.Context) {
 				ReplyStoryURL: msgData.ReplyStoryURL,
 			}
 			db.DB.Create(&chatMsg)
+			// Preload sender info for notifications
+			db.DB.Preload("Sender").First(&chatMsg, chatMsg.ID)
 		}
 
 		outData := map[string]interface{}{

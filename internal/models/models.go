@@ -34,6 +34,7 @@ type Friendship struct {
 type Message struct {
 	ID         uint      `gorm:"primaryKey" json:"id"`
 	SenderID   uint      `json:"senderId"`
+	Sender     User      `gorm:"foreignKey:SenderID" json:"sender,omitempty"`
 	ReceiverID uint      `json:"receiverId"`
 	GroupID    *uint     `json:"groupId,omitempty"`
 	Content    string    `json:"content"`

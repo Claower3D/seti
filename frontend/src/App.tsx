@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { LoginPage, RegisterPage } from './pages/AuthPages';
 import { FeedPage } from './pages/FeedPage';
 import { MessagesPage } from './pages/MessagesPage';
@@ -317,7 +318,9 @@ function AppInner() {
 const Root = () => (
   <BrowserRouter>
     <AuthProvider>
-      <AppInner />
+      <NotificationProvider>
+        <AppInner />
+      </NotificationProvider>
     </AuthProvider>
   </BrowserRouter>
 );
