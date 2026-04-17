@@ -153,7 +153,20 @@ func LikePost(c *gin.Context) {
 
 func GetStories(c *gin.Context) {
 	stories := []models.Story{}
-	if err := db.DB.Preload("User").Order("created_at desc").Find(&stories).Error; err != nil {
+	userID, _ := c.Get("userId")
+
+	// Get friend IDs
+	var friendIDs []uint
+	db.DB.Raw(`
+		SELECT user_id FROM friendships WHERE friend_id = ? AND status = 'accepted'
+		UNION
+		SELECT friend_id FROM friendships WHERE user_id = ? AND status = 'accepted'
+	`, userID, userID).Scan(&friendIDs)
+
+	// Include current user
+	allowedIDs := append(friendIDs, userID.(uint))
+
+	if err := db.DB.Preload("User").Where("user_id IN (?)", allowedIDs).Order("created_at desc").Find(&stories).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch stories"})
 		return
 	}
