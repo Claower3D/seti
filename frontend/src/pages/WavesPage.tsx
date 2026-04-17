@@ -230,11 +230,11 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
                   ? '1px solid rgba(255,255,255,0.2)'
                   : '1px solid rgba(0,245,255,0.5)',
                 borderRadius: '20px',
-                padding: isMobile ? '8px 18px' : '6px 14px',
+                padding: isMobile ? '6px 14px' : '6px 14px',
                 cursor: following ? 'default' : 'pointer',
                 color: following ? 'rgba(255,255,255,0.5)' : '#00f5ff',
                 fontWeight: '800',
-                fontSize: '0.75rem',
+                fontSize: isMobile ? '0.7rem' : '0.75rem',
                 backdropFilter: 'blur(10px)',
                 boxShadow: following ? 'none' : '0 0 12px rgba(0,245,255,0.2)',
                 transition: 'all 0.3s',
@@ -253,40 +253,39 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
         )}
       </div>
 
-      {/* Action buttons */}
-      <div style={{ position: 'absolute', right: '12px', bottom: isMobile ? '120px' : '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isMobile ? '24px' : '28px', zIndex: 15 }}>
+      <div style={{ position: 'absolute', right: '12px', bottom: isMobile ? '110px' : '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isMobile ? '16px' : '28px', zIndex: 15 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <motion.button whileTap={{ scale: 0.8 }} onClick={handleLike}
-            style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '60px' : '52px', height: isMobile ? '60px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
-            <Heart size={isMobile ? 32 : 26} fill={liked ? '#ff3060' : 'none'} color={liked ? '#ff3060' : 'white'} style={{ filter: liked ? 'drop-shadow(0 0 8px #ff3060)' : 'none', transition: 'all 0.2s' }} />
+            style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+            <Heart size={isMobile ? 24 : 26} fill={liked ? '#ff3060' : 'none'} color={liked ? '#ff3060' : 'white'} style={{ filter: liked ? 'drop-shadow(0 0 8px #ff3060)' : 'none', transition: 'all 0.2s' }} />
           </motion.button>
-          <span style={{ color: 'white', fontSize: isMobile ? '0.8rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{likesCount}</span>
+          <span style={{ color: 'white', fontSize: isMobile ? '0.7rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{likesCount}</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <motion.button whileTap={{ scale: 0.8 }} onClick={toggleComments}
-            style={{ background: showComment ? 'rgba(0,245,255,0.15)' : 'rgba(0,0,0,0.4)', border: showComment ? '1px solid rgba(0,245,255,0.4)' : 'none', borderRadius: '50%', width: isMobile ? '60px' : '52px', height: isMobile ? '60px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)', position: 'relative' }}>
-            <MessageCircle size={isMobile ? 32 : 26} color={showComment ? '#00f5ff' : 'white'} style={{ filter: showComment ? 'drop-shadow(0 0 8px #00f5ff)' : 'none', transition: 'all 0.2s' }} />
+            style={{ background: showComment ? 'rgba(0,245,255,0.15)' : 'rgba(0,0,0,0.4)', border: showComment ? '1px solid rgba(0,245,255,0.4)' : 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)', position: 'relative' }}>
+            <MessageCircle size={isMobile ? 24 : 26} color={showComment ? '#00f5ff' : 'white'} style={{ filter: showComment ? 'drop-shadow(0 0 8px #00f5ff)' : 'none', transition: 'all 0.2s' }} />
             {commentsCount > 0 && (
-              <div style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#00f5ff', color: 'black', borderRadius: '50%', width: isMobile ? '20px' : '18px', height: isMobile ? '20px' : '18px', fontSize: isMobile ? '0.7rem' : '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', boxShadow: '0 0 8px rgba(0,245,255,0.8)' }}>
+              <div style={{ position: 'absolute', top: '-1px', right: '-1px', background: '#00f5ff', color: 'black', borderRadius: '50%', width: isMobile ? '16px' : '18px', height: isMobile ? '16px' : '18px', fontSize: isMobile ? '0.6rem' : '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', boxShadow: '0 0 8px rgba(0,245,255,0.8)' }}>
                 {commentsCount > 99 ? '99+' : commentsCount}
               </div>
             )}
           </motion.button>
-          <span style={{ color: 'white', fontSize: isMobile ? '0.8rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{commentsCount}</span>
+          <span style={{ color: 'white', fontSize: isMobile ? '0.7rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{commentsCount}</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <motion.button whileTap={{ scale: 0.8 }} onClick={handleShare}
-            style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '60px' : '52px', height: isMobile ? '60px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
-            <Share2 size={isMobile ? 32 : 26} color="white" />
+            style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+            <Share2 size={isMobile ? 24 : 26} color="white" />
           </motion.button>
-          <span style={{ color: 'white', fontSize: isMobile ? '0.8rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>Поділитися</span>
+          <span style={{ color: 'white', fontSize: isMobile ? '0.7rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>Поділитися</span>
         </div>
 
         <motion.button whileTap={{ scale: 0.8 }} onClick={() => setMuted(m => !m)}
-          style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '60px' : '52px', height: isMobile ? '60px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
-          {muted ? <VolumeX size={isMobile ? 32 : 26} color="white" /> : <Volume2 size={isMobile ? 32 : 26} color="#00f5ff" style={{ filter: 'drop-shadow(0 0 6px #00f5ff)' }} />}
+          style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+          {muted ? <VolumeX size={isMobile ? 24 : 26} color="white" /> : <Volume2 size={isMobile ? 24 : 26} color="#00f5ff" style={{ filter: 'drop-shadow(0 0 6px #00f5ff)' }} />}
         </motion.button>
       </div>
 
@@ -463,8 +462,8 @@ export const WavesPage = () => {
             background: 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))', 
             border: '1px solid rgba(0,245,255,0.5)', 
             borderRadius: isMobile ? '50%' : '14px', 
-            width: isMobile ? '56px' : 'auto',
-            height: isMobile ? '56px' : 'auto',
+            width: isMobile ? '48px' : 'auto',
+            height: isMobile ? '48px' : 'auto',
             padding: isMobile ? '0' : '10px 16px', 
             cursor: 'pointer', 
             color: '#00f5ff', 
@@ -477,7 +476,7 @@ export const WavesPage = () => {
             boxShadow: '0 0 30px rgba(0,245,255,0.25)', 
             fontSize: '0.85rem' 
           }}>
-          <Plus size={isMobile ? 28 : 18} /> 
+          <Plus size={isMobile ? 24 : 18} /> 
           {!isMobile && 'Запустить волну'}
         </motion.button>
         <input ref={videoUploadRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={handleFileSelect} />
