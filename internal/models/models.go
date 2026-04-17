@@ -120,3 +120,17 @@ type WaveComment struct {
 	Content   string    `gorm:"not null" json:"content"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+type Notification struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	ReceiverID uint      `json:"receiverId"`
+	SenderID   uint      `json:"senderId"`
+	Sender     User      `gorm:"foreignKey:SenderID" json:"sender,omitempty"`
+	Type       string    `json:"type"` // "like", "comment"
+	WaveID     uint      `json:"waveId"`
+	Wave       Wave      `gorm:"foreignKey:WaveID" json:"wave,omitempty"`
+	Content    string    `json:"content"`
+	Read       bool      `gorm:"default:false" json:"read"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
