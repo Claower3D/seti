@@ -25,6 +25,16 @@ export const FeedPage = () => {
   const [isUploadingStory, setIsUploadingStory] = useState(false);
   const [storyProgress, setStoryProgress] = useState(0);
 
+  const fetchPosts = async () => {
+    try {
+      const res = await api.get('/posts');
+      setPosts(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch posts');
+      setPosts([]);
+    }
+  };
+
   const fetchStories = async () => {
     try { const res = await api.get('/stories'); setStories(res.data || []); } catch { setStories([]); }
   };
@@ -149,12 +159,12 @@ export const FeedPage = () => {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             <div 
               onClick={() => storyInputRef.current?.click()}
-              style={{ width: '74px', height: '74px', borderRadius: '24px', background: 'rgba(0,245,255,0.05)', border: '2px dashed rgba(0,245,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', position: 'relative' }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--primary-color)')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(0,245,255,0.3)')}
+              style={{ width: '74px', height: '74px', borderRadius: '24px', background: 'rgba(0,245,255,0.05)', border: '2px dashed rgba(0,245,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isUploadingStory ? 'wait' : 'pointer', transition: 'all 0.3s', position: 'relative', opacity: isUploadingStory ? 0.6 : 1 }}
+              onMouseEnter={e => !isUploadingStory && (e.currentTarget.style.borderColor = 'var(--primary-color)')}
+              onMouseLeave={e => !isUploadingStory && (e.currentTarget.style.borderColor = 'rgba(0,245,255,0.3)')}
             >
-              <img src={user?.avatar} alt="" style={{ width: '60px', height: '60px', borderRadius: '18px', opacity: 0.5 }} />
-              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', background: 'var(--primary-color)', color: 'black', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid var(--bg)', fontSize: '1.2rem', fontWeight: '900' }}>+</div>
+              <img src={user?.avatar} alt="" style={{ width: '60px', height: '60px', borderRadius: '18px', opacity: isUploadingStory ? 0.2 : 0.5 }} />
+              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', background: 'var(--primary-color)', color: 'black', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid var(--bg)', fontSize: '1.2rem', fontWeight: '900' }}>{isUploadingStory ? '...' : '+'}</div>
               <input type="file" ref={storyInputRef} hidden onChange={async (e) => {
                 const file = e.target.files?.[0]; if (!file) return;
                 const fd = new FormData(); fd.append('file', file);
