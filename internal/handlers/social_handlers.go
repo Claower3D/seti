@@ -150,3 +150,38 @@ func LikePost(c *gin.Context) {
     // For simplicity, returning just OK so frontend succeeds
     c.JSON(http.StatusOK, gin.H{"success": true})
 }
+
+func GetStories(c *gin.Context) {
+	stories := []models.Story{}
+	if err := db.DB.Preload("User").Order("created_at desc").Find(&stories).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch stories"})
+		return
+	}
+	c.JSON(http.StatusOK, stories)
+}
+
+type CreateStoryInput struct {
+	ImageURL string `json:"imageUrl" binding:"required"`
+}
+
+func CreateStory(c *gin.Context) {
+	var input CreateStoryInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, _ := c.Get("userId")
+	story := models.Story{
+		ImageURL: input.ImageURL,
+		UserID:   userID.(uint),
+	}
+
+	if err := db.DB.Create(&story).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create story"})
+		return
+	}
+
+	db.DB.Preload("User").First(&story, story.ID)
+	c.JSON(http.StatusCreated, story)
+}

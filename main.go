@@ -41,6 +41,8 @@ protected.Use(middleware.AuthMiddleware())
 {
 protected.GET("/users/search", handlers.SearchUsers)
 protected.GET("/me", handlers.GetMe)
+protected.GET("/stories", handlers.GetStories)
+protected.POST("/stories", handlers.CreateStory)
 protected.GET("/posts", handlers.GetPosts)
 protected.POST("/posts", handlers.CreatePost)
 protected.DELETE("/posts/:id", handlers.DeletePost)
