@@ -19,18 +19,35 @@ export const FeedPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [activeCommentPostId, setActiveCommentPostId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState('');
+  const [stories, setStories] = useState<any[]>([]);
+  const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null);
+  const storyInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingStory, setIsUploadingStory] = useState(false);
+  const [storyProgress, setStoryProgress] = useState(0);
 
-  const fetchPosts = async () => {
-    try {
-      const res = await api.get('/posts');
-      setPosts(res.data || []);
-    } catch (err) {
-      console.error('Failed to fetch posts');
-      setPosts([]);
-    }
+  const fetchStories = async () => {
+    try { const res = await api.get('/stories'); setStories(res.data || []); } catch { setStories([]); }
   };
 
-  useEffect(() => { fetchPosts(); }, []);
+  useEffect(() => { fetchPosts(); fetchStories(); }, []);
+
+  useEffect(() => {
+    let timer: any;
+    if (activeStoryIdx !== null) {
+      setStoryProgress(0);
+      timer = setInterval(() => {
+        setStoryProgress(prev => {
+          if (prev >= 100) {
+            if (activeStoryIdx < stories.length - 1) setActiveStoryIdx(activeStoryIdx + 1);
+            else setActiveStoryIdx(null);
+            return 0;
+          }
+          return prev + 1.2; // roughly 4-5 seconds
+        });
+      }, 50);
+    }
+    return () => clearInterval(timer);
+  }, [activeStoryIdx, stories.length]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -127,6 +144,42 @@ export const FeedPage = () => {
   return (
     <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
       <div className="feed-container">
+        {/* STORIES SECTION */}
+        <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '24px', marginBottom: '8px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            <div 
+              onClick={() => storyInputRef.current?.click()}
+              style={{ width: '74px', height: '74px', borderRadius: '24px', background: 'rgba(0,245,255,0.05)', border: '2px dashed rgba(0,245,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', position: 'relative' }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--primary-color)')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(0,245,255,0.3)')}
+            >
+              <img src={user?.avatar} alt="" style={{ width: '60px', height: '60px', borderRadius: '18px', opacity: 0.5 }} />
+              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', background: 'var(--primary-color)', color: 'black', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid var(--bg)', fontSize: '1.2rem', fontWeight: '900' }}>+</div>
+              <input type="file" ref={storyInputRef} hidden onChange={async (e) => {
+                const file = e.target.files?.[0]; if (!file) return;
+                const fd = new FormData(); fd.append('file', file);
+                setIsUploadingStory(true);
+                try {
+                  const res = await api.post('/upload', fd);
+                  await api.post('/stories', { imageUrl: res.data.url });
+                  fetchStories();
+                } catch { alert('Ошибка загрузки истории'); } finally { setIsUploadingStory(false); }
+              }} />
+            </div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Ваша история</span>
+          </div>
+
+          {stories.map((story, idx) => (
+            <div key={story.id} onClick={() => { setActiveStoryIdx(idx); setStoryProgress(0); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0, cursor: 'pointer' }}>
+              <div style={{ padding: '3px', borderRadius: '26px', background: 'linear-gradient(45deg, #00f5ff, #b400ff)', boxShadow: '0 0 15px rgba(0,245,255,0.3)' }}>
+                <div style={{ background: 'var(--bg)', borderRadius: '23px', padding: '2px' }}>
+                  <img src={story.user?.avatar} alt="" style={{ width: '64px', height: '64px', borderRadius: '20px', objectFit: 'cover' }} />
+                </div>
+              </div>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'white' }}>{story.user?.username}</span>
+            </div>
+          ))}
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -295,6 +348,51 @@ export const FeedPage = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* STORY VIEWER MODAL */}
+      <AnimatePresence>
+        {activeStoryIdx !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(20px)' }}
+          >
+            <div style={{ width: '100%', maxWidth: '450px', height: '100%', maxHeight: '800px', position: 'relative', overflow: 'hidden', borderRadius: '24px', border: '1px solid rgba(0,245,255,0.2)', boxShadow: '0 0 50px rgba(0,245,255,0.1)' }}>
+              {/* Progress Bars */}
+              <div style={{ position: 'absolute', top: '16px', left: '16px', right: '16px', display: 'flex', gap: '4px', zIndex: 10 }}>
+                {stories.map((_, i) => (
+                  <div key={i} style={{ flex: 1, height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ 
+                      width: i < activeStoryIdx ? '100%' : (i === activeStoryIdx ? `${storyProgress}%` : '0%'), 
+                      height: '100%', 
+                      background: 'var(--primary-color)',
+                      boxShadow: '0 0 8px var(--primary-color)'
+                    }} />
+                  </div>
+                ))}
+              </div>
+
+              {/* Header */}
+              <div style={{ position: 'absolute', top: '32px', left: '20px', right: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img src={stories[activeStoryIdx].user?.avatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '12px', border: '1px solid rgba(0,245,255,0.4)' }} />
+                  <span style={{ fontWeight: '800', color: 'white', fontSize: '0.9rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{stories[activeStoryIdx].user?.username}</span>
+                </div>
+                <button onClick={() => setActiveStoryIdx(null)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '8px', borderRadius: '50%', cursor: 'pointer', display: 'flex' }}>
+                   <X size={20} />
+                </button>
+              </div>
+
+              <img src={stories[activeStoryIdx].imageUrl} alt="story" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+
+              {/* Navigation overlays */}
+              <div onClick={() => activeStoryIdx > 0 && setActiveStoryIdx(activeStoryIdx - 1)} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', cursor: 'pointer', zIndex: 5 }} />
+              <div onClick={() => activeStoryIdx < stories.length - 1 ? setActiveStoryIdx(activeStoryIdx + 1) : setActiveStoryIdx(null)} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '30%', cursor: 'pointer', zIndex: 5 }} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

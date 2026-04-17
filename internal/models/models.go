@@ -83,3 +83,11 @@ type Comment struct {
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
+
+type Story struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserID    uint      `json:"userId"`
+	User      User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	ImageURL  string    `json:"imageUrl"`
+	CreatedAt time.Time `json:"createdAt"`
+}
