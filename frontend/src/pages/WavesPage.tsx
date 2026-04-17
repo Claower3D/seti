@@ -185,7 +185,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
           <motion.div 
             animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
             transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-            style={{ width: '50px', height: '50px', border: '3px solid rgba(0,245,255,0.1)', borderTopColor: '#00f5ff', borderRadius: '50%', boxShadow: '0 0 20px rgba(0,245,255,0.3)' }} 
+            style={{ width: '50px', height: '50px', border: '3px solid color-mix(in srgb, var(--primary), transparent 90%)', borderTopColor: 'var(--primary)', borderRadius: '50%', boxShadow: 'var(--glow)' }} 
           />
         </div>
       )}
@@ -356,7 +356,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: isMobile ? '80%' : '72%', background: 'rgba(8,10,20,0.97)', backdropFilter: 'blur(40px)', borderRadius: '24px 24px 0 0', border: '1px solid rgba(0,245,255,0.1)', display: 'flex', flexDirection: 'column', zIndex: 30 }}
+            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: isMobile ? '80%' : '72%', background: 'rgba(8,10,20,0.97)', backdropFilter: 'blur(40px)', borderRadius: '24px 24px 0 0', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', zIndex: 30 }}
           >
             {/* Header */}
             <div style={{ padding: '16px 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
@@ -402,8 +402,8 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
 
             {/* Input */}
             <div style={{ padding: '12px 16px 24px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
-              <img src={currentUser?.avatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.25)', flexShrink: 0 }} />
-              <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(0,245,255,0.15)', borderRadius: '25px', padding: '4px 4px 4px 16px' }}>
+              <img src={currentUser?.avatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--border)', flexShrink: 0 }} />
+              <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '25px', padding: '4px 4px 4px 16px' }}>
                 <input
                   ref={commentInputRef}
                   type="text"
@@ -416,8 +416,8 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
                 <motion.button whileTap={{ scale: 0.9 }} onClick={handleSendComment} disabled={!comment.trim() || sendingComment}
                   style={{ background: comment.trim() ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.05)', border: comment.trim() ? '1px solid rgba(0,245,255,0.4)' : '1px solid transparent', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: comment.trim() ? 'pointer' : 'default', flexShrink: 0, transition: 'all 0.2s', boxShadow: comment.trim() ? '0 0 12px rgba(0,245,255,0.2)' : 'none' }}>
                   {sendingComment
-                    ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ width: '16px', height: '16px', border: '2px solid transparent', borderTopColor: '#00f5ff', borderRadius: '50%' }} />
-                    : <Send size={16} color={comment.trim() ? '#00f5ff' : 'rgba(255,255,255,0.3)'} />
+                    ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ width: '16px', height: '16px', border: '2px solid transparent', borderTopColor: 'var(--primary)', borderRadius: '50%' }} />
+                    : <Send size={16} color={comment.trim() ? 'var(--primary)' : 'rgba(255,255,255,0.3)'} />
                   }
                 </motion.button>
               </div>
@@ -514,8 +514,8 @@ export const WavesPage = () => {
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: '16px' }}>
       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-        style={{ width: '40px', height: '40px', border: '3px solid transparent', borderTopColor: '#00f5ff', borderRadius: '50%', boxShadow: '0 0 20px rgba(0,245,255,0.5)' }} />
-      <span style={{ color: '#00f5ff', fontWeight: '700', textShadow: '0 0 10px rgba(0,245,255,0.6)' }}>Ловим сигналы...</span>
+        style={{ width: '40px', height: '40px', border: '3px solid transparent', borderTopColor: 'var(--primary)', borderRadius: '50%', boxShadow: 'var(--glow)' }} />
+      <span style={{ color: 'var(--primary)', fontWeight: '900', textShadow: 'var(--glow)' }}>Ловим сигналы...</span>
     </div>
   );
 
@@ -527,19 +527,19 @@ export const WavesPage = () => {
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
             onClick={() => videoUploadRef.current?.click()}
             style={{ 
-              background: 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))', 
-              border: '1px solid rgba(0,245,255,0.5)', 
+              background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 80%), color-mix(in srgb, var(--secondary), transparent 80%))', 
+              border: '1px solid var(--border-bright)', 
               borderRadius: '14px', 
               padding: '10px 16px', 
               cursor: 'pointer', 
-              color: '#00f5ff', 
+              color: 'var(--primary)', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
               gap: '8px', 
-              fontWeight: '700', 
+              fontWeight: '900', 
               backdropFilter: 'blur(20px)', 
-              boxShadow: '0 0 30px rgba(0,245,255,0.25)', 
+              boxShadow: 'var(--glow)', 
               fontSize: '0.85rem' 
             }}>
             <Plus size={18} /> 
@@ -551,12 +551,12 @@ export const WavesPage = () => {
 
       {waves.length === 0 ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ background: 'rgba(0,245,255,0.05)', border: '2px dashed rgba(0,245,255,0.3)', borderRadius: '24px', padding: '60px 40px', textAlign: 'center' }}>
-            <Zap size={60} color="rgba(0,245,255,0.3)" style={{ margin: '0 auto 16px' }} />
+          <div style={{ background: 'color-mix(in srgb, var(--primary), transparent 95%)', border: '2px dashed var(--border)', borderRadius: '24px', padding: '60px 40px', textAlign: 'center' }}>
+            <Zap size={60} color="color-mix(in srgb, var(--primary), transparent 70%)" style={{ margin: '0 auto 16px' }} />
             <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>Эфир пуст</div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px' }}>Запусти первую волну в SETI</div>
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => videoUploadRef.current?.click()}
-              style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))', border: '1px solid rgba(0,245,255,0.4)', borderRadius: '14px', padding: '12px 24px', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800', margin: '0 auto', boxShadow: '0 0 20px rgba(0,245,255,0.2)', fontSize: '0.95rem' }}>
+              style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 80%), color-mix(in srgb, var(--secondary), transparent 80%))', border: '1px solid var(--border-bright)', borderRadius: '14px', padding: '12px 24px', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '900', margin: '0 auto', boxShadow: 'var(--glow)', fontSize: '0.95rem' }}>
               <Upload size={20} /> Загрузить видео
             </motion.button>
           </div>
@@ -591,8 +591,8 @@ export const WavesPage = () => {
                 position: 'relative',
                 borderRadius: isMobile ? '0' : '24px',
                 overflow: 'hidden',
-                border: isMobile ? 'none' : '1px solid rgba(0,245,255,0.08)',
-                boxShadow: isMobile ? 'none' : '0 0 60px rgba(0,245,255,0.05), 0 30px 80px rgba(0,0,0,0.5)',
+                border: isMobile ? 'none' : '1px solid var(--border)',
+                boxShadow: isMobile ? 'none' : 'var(--glow)',
               }}
             >
               <WavePlayer wave={wave} isActive={idx === activeIdx} currentUser={user} isMobile={isMobile} />
@@ -607,23 +607,23 @@ export const WavesPage = () => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(20px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              style={{ background: 'rgba(10,12,20,0.98)', border: '1px solid rgba(0,245,255,0.25)', borderRadius: '28px', padding: isMobile ? '24px' : '32px', width: '100%', maxWidth: '440px', boxShadow: '0 0 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,245,255,0.1)' }}>
-              <div style={{ fontWeight: '900', fontSize: '1.3rem', background: 'linear-gradient(135deg, #00f5ff, #b400ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '8px' }}>
+              style={{ background: 'rgba(10,12,20,0.98)', border: '1px solid var(--border-bright)', borderRadius: '28px', padding: isMobile ? '24px' : '32px', width: '100%', maxWidth: '440px', boxShadow: '0 0 60px rgba(0,0,0,0.9), var(--glow)' }}>
+              <div style={{ fontWeight: '900', fontSize: '1.3rem', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '8px' }}>
                 Запустить волну
               </div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>
                 📡 {pendingFile?.name}
               </div>
               <textarea placeholder="Описание волны... (необязательно)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: '16px', padding: '14px 18px', color: 'white', fontSize: '0.9rem', outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '20px' }} />
+                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px 18px', color: 'white', fontSize: '0.9rem', outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '20px' }} />
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button onClick={() => { setShowUpload(false); setPendingFile(null); setNewDesc(''); }}
                   style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '13px', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '700', fontSize: '0.9rem' }}>
                   Отмена
                 </button>
                 <motion.button whileTap={{ scale: 0.97 }} onClick={handleUpload} disabled={uploading}
-                  style={{ flex: 2, background: uploading ? 'rgba(0,245,255,0.05)' : 'linear-gradient(135deg, rgba(0,245,255,0.25), rgba(180,0,255,0.25))', border: '1px solid rgba(0,245,255,0.4)', borderRadius: '14px', padding: '13px', cursor: uploading ? 'wait' : 'pointer', color: '#00f5ff', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '0.95rem', boxShadow: '0 0 20px rgba(0,245,255,0.1)' }}>
-                  {uploading ? (<><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ width: '18px', height: '18px', border: '2px solid transparent', borderTopColor: '#00f5ff', borderRadius: '50%' }} /> Передача...</>) : (<><Zap size={18} /> В эфир</>)}
+                  style={{ flex: 2, background: uploading ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 80%), color-mix(in srgb, var(--secondary), transparent 80%))', border: '1px solid var(--border-bright)', borderRadius: '14px', padding: '13px', cursor: uploading ? 'wait' : 'pointer', color: 'var(--primary)', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '0.95rem', boxShadow: 'var(--glow)' }}>
+                  {uploading ? (<><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ width: '18px', height: '18px', border: '2px solid transparent', borderTopColor: 'var(--primary)', borderRadius: '50%', boxShadow: 'var(--glow)' }} /> Передача...</>) : (<><Zap size={18} /> В эфир</>)}
                 </motion.button>
               </div>
             </motion.div>

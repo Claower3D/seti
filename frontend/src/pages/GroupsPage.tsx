@@ -106,9 +106,9 @@ export const GroupsPage = () => {
       </div>
       <div className="glass-panel" style={{ padding: '12px 16px', display: 'flex', gap: '10px', alignItems: 'center' }}>
         <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={sendFile} />
-        <button onClick={() => fileRef.current?.click()} style={{ background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: '10px', padding: '9px 12px', cursor: 'pointer', color: '#00f5ff', display: 'flex' }}>📎</button>
+        <button onClick={() => fileRef.current?.click()} style={{ background: 'color-mix(in srgb, var(--primary), transparent 92%)', border: '1px solid color-mix(in srgb, var(--primary), transparent 80%)', borderRadius: '10px', padding: '9px 12px', cursor: 'pointer', color: 'var(--primary)', display: 'flex', boxShadow: 'var(--glow)' }}>📎</button>
         <input className="input-field" style={{ flex: 1 }} placeholder="Сообщение..." value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} />
-        <button onClick={sendMessage} style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(180,0,255,0.2))', border: '1px solid rgba(0,245,255,0.3)', borderRadius: '10px', padding: '9px 14px', cursor: 'pointer', color: '#00f5ff', display: 'flex' }}><Send size={18} /></button>
+        <button onClick={sendMessage} style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 80%), color-mix(in srgb, var(--secondary), transparent 80%))', border: '1px solid var(--border-bright)', borderRadius: '10px', padding: '9px 14px', cursor: 'pointer', color: 'var(--primary)', display: 'flex', boxShadow: 'var(--glow)' }}><Send size={18} /></button>
       </div>
     </motion.div>
   );
@@ -116,16 +116,16 @@ export const GroupsPage = () => {
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ color: '#00f5ff', fontWeight: '800', fontSize: '1.4rem' }}>Группы</h2>
-        <button onClick={() => setShowCreate(true)} style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.15), rgba(180,0,255,0.15))', border: '1px solid rgba(0,245,255,0.3)', borderRadius: '12px', padding: '9px 16px', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
+        <h2 style={{ color: 'var(--primary)', fontWeight: '900', fontSize: '1.4rem', textShadow: 'var(--glow)' }}>Группы</h2>
+        <button onClick={() => setShowCreate(true)} style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 85%), color-mix(in srgb, var(--secondary), transparent 85%))', border: '1px solid var(--border-bright)', borderRadius: '12px', padding: '9px 16px', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', boxShadow: 'var(--glow)' }}>
           <Plus size={16} /> Создать
         </button>
       </div>
 
       {showCreate && (
-        <div className="glass-panel" style={{ padding: '20px', marginBottom: '20px', position: 'relative' }}>
+        <div className="glass-panel" style={{ padding: '20px', marginBottom: '20px', position: 'relative', border: '1px solid var(--border-bright)', boxShadow: 'var(--glow)' }}>
           <button onClick={() => setShowCreate(false)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}><X size={16} /></button>
-          <div style={{ fontWeight: '700', color: '#00f5ff', marginBottom: '14px' }}>Новая группа</div>
+          <div style={{ fontWeight: '900', color: 'var(--primary)', marginBottom: '14px', textShadow: 'var(--glow)' }}>Новая группа</div>
           <input className="input-field" placeholder="Название группы" value={newName} onChange={e => setNewName(e.target.value)} style={{ marginBottom: '10px', width: '100%' }} />
           <input className="input-field" placeholder="Описание (необязательно)" value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{ marginBottom: '14px', width: '100%' }} />
           <button onClick={createGroup} style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 80%), color-mix(in srgb, var(--secondary), transparent 80%))', border: '1px solid var(--border-bright)', borderRadius: '10px', padding: '10px 20px', cursor: 'pointer', color: 'var(--primary)', fontWeight: '900', boxShadow: 'var(--glow)' }}>Создать</button>

@@ -67,7 +67,7 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { i
             flexDirection: window.innerWidth < 768 ? 'column' : 'row',
             overflow: 'hidden',
             borderRadius: window.innerWidth < 768 ? '0' : '20px',
-            border: '1px solid rgba(0,245,255,0.2)',
+            border: '1px solid var(--border-bright)',
             boxShadow: '0 0 50px rgba(0,0,0,0.5)'
           }}
         >
@@ -89,7 +89,7 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { i
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#050608', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
             {/* Header */}
             <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <img src={displayUser?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (displayUser?.username || 'user')} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #00f5ff' }} />
+              <img src={displayUser?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (displayUser?.username || 'user')} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--border-bright)' }} />
               <div style={{ fontWeight: '800', color: 'white' }}>@{displayUser?.username || 'username'}</div>
               {!isMobile && <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>}
             </div>
@@ -109,7 +109,7 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { i
               )}
 
               {loadingComments ? (
-                <div style={{ textAlign: 'center', padding: '20px' }}><div className="pulse" style={{ width: '4px', height: '4px', background: '#00f5ff', margin: 'auto' }} /></div>
+                <div style={{ textAlign: 'center', padding: '20px' }}><div className="pulse" style={{ width: '4px', height: '4px', background: 'var(--primary)', margin: 'auto' }} /></div>
               ) : comments.length === 0 ? (
                 <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '40px 0', fontSize: '0.9rem' }}>Нет комментариев</div>
               ) : (
@@ -149,7 +149,7 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { i
                 onChange={e => setNewComment(e.target.value)}
                 style={{ flex: 1, background: 'none', border: 'none', color: 'white', fontSize: '0.9rem', outline: 'none' }} 
               />
-              <button type="submit" disabled={!newComment.trim()} style={{ background: 'none', border: 'none', color: '#00f5ff', fontWeight: '800', cursor: 'pointer', opacity: newComment.trim() ? 1 : 0.3 }}>Опубликовать</button>
+              <button type="submit" disabled={!newComment.trim()} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '900', cursor: 'pointer', opacity: newComment.trim() ? 1 : 0.3, textShadow: 'var(--glow)' }}>Опубликовать</button>
             </form>
           </div>
         </motion.div>
@@ -180,23 +180,23 @@ const FriendsModal = ({ isOpen, onClose, username }: { isOpen: boolean, onClose:
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
           style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }} />
         <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="glass-panel" style={{ position: 'relative', width: '100%', maxWidth: '400px', padding: '24px', border: '1px solid rgba(0,245,255,0.3)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+          className="glass-panel" style={{ position: 'relative', width: '100%', maxWidth: '400px', padding: '24px', border: '1px solid var(--border-bright)', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.8), var(--glow)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '900', color: '#00f5ff', textShadow: '0 0 10px rgba(0,245,255,0.3)' }}>Друзья</h3>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--primary)', textShadow: 'var(--glow)' }}>Друзья</h3>
             <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '20px' }}><div className="pulse" style={{ width: '4px', height: '4px', background: '#00f5ff', margin: 'auto' }} /></div>
+              <div style={{ textAlign: 'center', padding: '20px' }}><div className="pulse" style={{ width: '4px', height: '4px', background: 'var(--primary)', margin: 'auto' }} /></div>
             ) : friends.length === 0 ? (
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Нет друзей</p>
             ) : (
               friends.map(f => (
                 <Link key={f.id} to={`/profile/${f.username}`} onClick={onClose}
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', marginBottom: '8px', textDecoration: 'none', border: '1px solid transparent', transition: 'all 0.2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(0,245,255,0.2)')}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-bright)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}>
-                  <img src={f.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + f.username} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.3)' }} />
+                  <img src={f.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + f.username} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid var(--border)' }} />
                   <span style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>@{f.username}</span>
                 </Link>
               ))
