@@ -16,8 +16,8 @@ RUN apk add --no-cache gcc musl-dev && CGO_ENABLED=1 go mod tidy && CGO_ENABLED=
 
 # Final image
 FROM alpine:latest
-WORKDIR /app
 RUN apk --no-cache add ca-certificates
+RUN mkdir -p uploads
 COPY --from=backend-builder /app/main .
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 EXPOSE 8080
