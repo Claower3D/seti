@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Square, Edit2, Trash2, X, Play, Pause, CheckCheck } from 'lucide-react';
 
 const VoicePlayer = ({ src }: { src: string }) => {
@@ -44,11 +45,11 @@ const VoicePlayer = ({ src }: { src: string }) => {
 
 export const MessagesPage = () => {
   const { user } = useAuth();
+  const { ws, lastMessage } = useNotifications();
   const [friends, setFriends] = useState<any[]>([]);
   const [selectedFriend, setSelectedFriend] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
-  const [ws, setWs] = useState<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -59,6 +60,13 @@ export const MessagesPage = () => {
   const [editingMsgId, setEditingMsgId] = useState<number | null>(null);
   const [fullscreenMedia, setFullscreenMedia] = useState<{url: string, type: string} | null>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    (window as any).lastSelectedFriendId = selectedFriend?.id || null;
+    return () => {
+      (window as any).lastSelectedFriendId = null;
+    };
+  }, [selectedFriend]);
 
   useEffect(() => {
     if (friends.length > 0 && location.state?.selectedFriendId) {
@@ -78,40 +86,38 @@ export const MessagesPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!user?.id) return;
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socket = new WebSocket(`${protocol}//${window.location.host}/ws?userId=${user.id}`);
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      const action = data.action || 'send';
-      const msg = data.message || data;
+    if (!lastMessage) return;
+    
+    const data = lastMessage;
+    const action = data.action || 'send';
+    const msg = data.message || data;
 
-      setMessages(prev => {
-        if (action === 'delete') return prev.filter(m => m.id !== msg.id);
-        if (action === 'edit') return prev.map(m => m.id === msg.id ? { ...m, content: msg.content } : m);
-        if (action === 'read_receipt') {
-           if (selectedFriend && data.senderId === selectedFriend.id) {
-             return prev.map(m => m.receiverId === data.senderId ? { ...m, isRead: true } : m);
-           }
-           return prev;
-        }
-        const inChat = selectedFriend && (msg.senderId === selectedFriend.id || msg.receiverId === selectedFriend.id);
-        if (inChat && msg.senderId === selectedFriend.id) {
-           // We are in chat, mark incoming message as read
-           markAsRead(selectedFriend.id);
-        }
-        return inChat ? [...prev, msg] : prev;
-      });
-    };
-    setWs(socket);
-    return () => socket.close();
-  }, [user, selectedFriend]);
+    setMessages(prev => {
+      if (action === 'delete') return prev.filter(m => m.id !== msg.id);
+      if (action === 'edit') return prev.map(m => m.id === msg.id ? { ...m, content: msg.content } : m);
+      if (action === 'read_receipt') {
+          if (selectedFriend && data.senderId === selectedFriend.id) {
+            return prev.map(m => m.receiverId === data.senderId ? { ...m, isRead: true } : m);
+          }
+          return prev;
+      }
+      
+      const inChat = selectedFriend && (msg.senderId === selectedFriend.id || msg.receiverId === selectedFriend.id);
+      
+      if (inChat && msg.senderId === selectedFriend.id) {
+          markAsRead(selectedFriend.id);
+      }
+      
+      if (inChat && prev.some(m => m.id === msg.id && action === 'send')) return prev;
+      
+      return inChat ? [...prev, msg] : prev;
+    });
+  }, [lastMessage, selectedFriend]);
 
   useEffect(() => {
     if (!selectedFriend) return;
     api.get(`/messages/${selectedFriend.id}`).then(res => {
       setMessages(res.data || []);
-      // If there are unread messages from them, mark as read
       markAsRead(selectedFriend.id);
     });
   }, [selectedFriend]);
@@ -288,7 +294,6 @@ export const MessagesPage = () => {
                       key={i}
                       style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
 
-                      {/* ✅ ФИКС 1: msg-wrapper теперь ограничен по ширине и не растягивается */}
                       <div className="msg-wrapper" style={{
                         position: 'relative',
                         display: 'flex',
@@ -298,7 +303,6 @@ export const MessagesPage = () => {
                         maxWidth: isMobile ? '88%' : '70%',
                         minWidth: 0,
                       }}>
-                        {/* ✅ ФИКС 2: убран whiteSpace pre-wrap и wordBreak break-word — текст больше не режется */}
                         <div style={{
                           width: '100%',
                           padding: '12px 18px',
