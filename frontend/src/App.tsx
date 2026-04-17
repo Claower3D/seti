@@ -61,20 +61,39 @@ const Sidebar = () => {
 const Header = () => {
   const { user } = useAuth();
   const [requests, setRequests] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
 
-  const fetchRequests = async () => {
-    try { const res = await api.get('/friends/requests'); setRequests(res.data || []); } catch { setRequests([]); }
+  const fetchData = async () => {
+    try { 
+      const [reqRes, notifRes] = await Promise.all([
+        api.get('/friends/requests'),
+        api.get('/notifications')
+      ]);
+      setRequests(reqRes.data || []);
+      setNotifications(notifRes.data || []);
+    } catch { 
+      setRequests([]); 
+      setNotifications([]);
+    }
   };
 
-  const acceptRequest = async (id: number) => { await api.post('/friends/accept/' + id); fetchRequests(); };
-  const declineRequest = (id: number) => setRequests(prev => prev.filter(r => r.id !== id));
+  const acceptRequest = async (id: number) => { await api.post('/friends/accept/' + id); fetchData(); };
+  const declineRequest = async (id: number) => { await api.delete('/friends/request/' + id); fetchData(); };
+  const markRead = async (id: number) => { 
+    try {
+      await api.post(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch {}
+  };
 
   useEffect(() => {
-    if (user) { fetchRequests(); const t = setInterval(fetchRequests, 15000); return () => clearInterval(t); }
+    if (user) { fetchData(); const t = setInterval(fetchData, 15000); return () => clearInterval(t); }
   }, [user]);
 
   if (!user) return null;
+
+  const unreadCount = requests.length + notifications.filter(n => !n.read).length;
 
   return (
     <div className="glass-panel" style={{ padding: '12px 20px', marginBottom: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 'var(--radius)' }}>
@@ -85,34 +104,94 @@ const Header = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginLeft: '16px' }}>
         <div style={{ position: 'relative' }}>
           <button onClick={() => setShowNotifs(!showNotifs)}
-            className={requests.length > 0 ? 'pulse' : ''}
-            style={{ background: requests.length > 0 ? 'rgba(0,245,255,0.08)' : 'transparent', border: requests.length > 0 ? '1px solid rgba(0,245,255,0.2)' : '1px solid transparent', cursor: 'pointer', color: requests.length > 0 ? '#00f5ff' : 'var(--text-secondary)', padding: '8px', borderRadius: '12px', position: 'relative', transition: 'all 0.3s', display: 'flex' }}>
-            <Bell size={20} style={{ filter: requests.length > 0 ? 'drop-shadow(0 0 6px #00f5ff)' : 'none' }} />
-            {requests.length > 0 && (
+            className={unreadCount > 0 ? 'pulse' : ''}
+            style={{ 
+              background: unreadCount > 0 ? 'rgba(0,245,255,0.08)' : 'transparent', 
+              border: unreadCount > 0 ? '1px solid rgba(0,245,255,0.2)' : '1px solid transparent', 
+              cursor: 'pointer', 
+              color: unreadCount > 0 ? '#00f5ff' : 'var(--text-secondary)', 
+              padding: '8px', 
+              borderRadius: '12px', 
+              position: 'relative', 
+              transition: 'all 0.3s', 
+              display: 'flex' 
+            }}>
+            <Bell size={20} style={{ filter: unreadCount > 0 ? 'drop-shadow(0 0 6px #00f5ff)' : 'none' }} />
+            {unreadCount > 0 && (
               <div style={{ position: 'absolute', top: '4px', right: '4px', background: '#ff0090', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.58rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '800', boxShadow: '0 0 8px rgba(255,0,144,0.8)' }}>
-                {requests.length}
+                {unreadCount}
               </div>
             )}
           </button>
+          <AnimatePresence>
           {showNotifs && (
-            <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="glass-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '290px', zIndex: 1000, padding: '18px', background: 'rgba(10, 12, 20, 0.95)', border: '1px solid rgba(0,245,255,0.3)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,245,255,0.1)' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: '800', color: '#00f5ff', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.08em', textShadow: '0 0 8px rgba(0,245,255,0.6)' }}>
-                Заявки в друзья
+            <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.96 }}
+              className="glass-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '320px', zIndex: 1000, padding: '18px', background: 'rgba(10, 12, 20, 0.95)', border: '1px solid rgba(0,245,255,0.3)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,245,255,0.1)', maxHeight: '450px', overflowY: 'auto' }}>
+              
+              {/* Friend Requests Section */}
+              <div style={{ fontSize: '0.7rem', fontWeight: '800', color: '#00f5ff', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={12} /> Заявки в друзья
               </div>
               {requests.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Нет новых заявок</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '20px' }}>Нет новых заявок</p>
               ) : requests.map((r) => (
-                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '10px' }}>
                   <img src={r.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + r.username} alt=""
-                    style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.3)' }} />
-                  <span style={{ flex: 1, fontWeight: '600', fontSize: '0.85rem' }}>{r.username}</span>
-                  <button onClick={() => acceptRequest(r.id)} style={{ background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.3)', borderRadius: '8px', padding: '5px', cursor: 'pointer', color: '#00f5ff', display: 'flex' }}><Check size={14} /></button>
-                  <button onClick={() => declineRequest(r.id)} style={{ background: 'rgba(255,0,144,0.1)', border: '1px solid rgba(255,0,144,0.3)', borderRadius: '8px', padding: '5px', cursor: 'pointer', color: '#ff0090', display: 'flex' }}><X size={14} /></button>
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.3)' }} />
+                  <span style={{ flex: 1, fontWeight: '600', fontSize: '0.8rem', color: 'white' }}>{r.username}</span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button onClick={() => acceptRequest(r.id)} style={{ background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.3)', borderRadius: '6px', padding: '4px', cursor: 'pointer', color: '#00f5ff' }}><Check size={14} /></button>
+                    <button onClick={() => declineRequest(r.id)} style={{ background: 'rgba(255,0,144,0.1)', border: '1px solid rgba(255,0,144,0.3)', borderRadius: '6px', padding: '4px', cursor: 'pointer', color: '#ff0090' }}><X size={14} /></button>
+                  </div>
+                </div>
+              ))}
+
+              <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '16px 0' }} />
+
+              {/* Social Notifications Section */}
+              <div style={{ fontSize: '0.7rem', fontWeight: '800', color: '#b400ff', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Zap size={12} /> Уведомления
+              </div>
+              {notifications.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Нет новых событий</p>
+              ) : notifications.map((n) => (
+                <div 
+                  key={n.id} 
+                  onClick={() => !n.read && markRead(n.id)}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'flex-start', 
+                    gap: '10px', 
+                    marginBottom: '10px', 
+                    padding: '10px', 
+                    borderRadius: '10px', 
+                    background: n.read ? 'transparent' : 'rgba(180, 0, 255, 0.08)',
+                    border: n.read ? '1px solid transparent' : '1px solid rgba(180, 0, 255, 0.2)',
+                    cursor: n.read ? 'default' : 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <img src={n.sender?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + n.sender?.username} alt=""
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(180,0,255,0.3)' }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.75rem', color: 'white' }}>
+                      <span style={{ fontWeight: '800' }}>@{n.sender?.username}</span> {n.type === 'like' ? 'оценил вашу Волну' : 'прокомментировал вашу Волну'}
+                    </div>
+                    {n.content && (
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginTop: '4px', fontStyle: 'italic', borderLeft: '2px solid rgba(180,0,255,0.3)', paddingLeft: '8px' }}>
+                        "{n.content}"
+                      </div>
+                    )}
+                    <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', marginTop: '6px' }}>
+                      {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  {!n.read && <div style={{ width: '6px', height: '6px', background: '#b400ff', borderRadius: '50%', marginTop: '5px', boxShadow: '0 0 8px #b400ff' }} />}
                 </div>
               ))}
             </motion.div>
           )}
+          </AnimatePresence>
         </div>
         <Link to={`/profile/${user.username}`}>
           <img src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} alt=""

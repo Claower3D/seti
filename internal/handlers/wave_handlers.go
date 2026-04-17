@@ -68,11 +68,22 @@ func LikeWave(c *gin.Context) {
 		db.DB.Model(&models.Wave{}).Where("id = ?", waveID).UpdateColumn("likes_count", db.DB.Raw("likes_count - 1"))
 	} else {
 		// Like
-		var waveIDUint uint
-		db.DB.Raw("SELECT id FROM waves WHERE id = ?", waveID).Scan(&waveIDUint)
-		like = models.WaveLike{UserID: userID.(uint), WaveID: waveIDUint}
-		db.DB.Create(&like)
-		db.DB.Model(&models.Wave{}).Where("id = ?", waveID).UpdateColumn("likes_count", db.DB.Raw("likes_count + 1"))
+		var wave models.Wave
+		if err := db.DB.First(&wave, waveID).Error; err == nil {
+			like = models.WaveLike{UserID: userID.(uint), WaveID: wave.ID}
+			db.DB.Create(&like)
+			db.DB.Model(&models.Wave{}).Where("id = ?", waveID).UpdateColumn("likes_count", db.DB.Raw("likes_count + 1"))
+
+			// Notify owner
+			if wave.UserID != userID.(uint) {
+				db.DB.Create(&models.Notification{
+					ReceiverID: wave.UserID,
+					SenderID:   userID.(uint),
+					Type:       "like",
+					WaveID:     wave.ID,
+				})
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -116,6 +127,18 @@ func CreateWaveComment(c *gin.Context) {
 
 	// Update comments count
 	db.DB.Model(&models.Wave{}).Where("id = ?", waveID).UpdateColumn("comments_count", db.DB.Raw("comments_count + 1"))
+
+	// Notify owner
+	var wave models.Wave
+	if err := db.DB.First(&wave, waveID).Error; err == nil && wave.UserID != userID.(uint) {
+		db.DB.Create(&models.Notification{
+			ReceiverID: wave.UserID,
+			SenderID:   userID.(uint),
+			Type:       "comment",
+			WaveID:     wave.ID,
+			Content:    input.Content,
+		})
+	}
 
 	db.DB.Preload("User").First(&comment, comment.ID)
 	c.JSON(http.StatusCreated, comment)
