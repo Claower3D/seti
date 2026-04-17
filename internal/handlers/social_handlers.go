@@ -90,8 +90,8 @@ func UpdateProfile(c *gin.Context) {
 func GetUserProfile(c *gin.Context) {
 	username := c.Param("username")
 	var user models.User
-	if err := db.DB.Preload("Posts", func(db *gorm.DB) *gorm.DB { return db.Order("created_at desc") }).
-		Preload("Waves", func(db *gorm.DB) *gorm.DB { return db.Order("created_at desc") }).
+	if err := db.DB.Preload("Posts.User").
+		Preload("Waves.User").
 		Where("username = ?", username).First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
