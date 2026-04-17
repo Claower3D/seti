@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, X, Grid, Film, Zap } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
-const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile }: { isOpen: boolean, onClose: () => void, media: any, type: 'post' | 'wave', isMobile: boolean }) => {
+const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { isOpen: boolean, onClose: () => void, media: any, type: 'post' | 'wave', isMobile: boolean, owner: any }) => {
+  const displayUser = media?.user || owner;
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
   const [liked, setLiked] = useState(media?.liked || false);
@@ -87,8 +88,8 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile }: { isOpen: 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#050608', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
             {/* Header */}
             <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <img src={media.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (media.user?.username || 'user')} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #00f5ff' }} />
-              <div style={{ fontWeight: '800', color: 'white' }}>@{media.user?.username || 'username'}</div>
+              <img src={displayUser?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (displayUser?.username || 'user')} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #00f5ff' }} />
+              <div style={{ fontWeight: '800', color: 'white' }}>@{displayUser?.username || 'username'}</div>
               {!isMobile && <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>}
             </div>
 
@@ -97,9 +98,9 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile }: { isOpen: 
               {(type === 'post' && media.imageUrl) && (
                  <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ display: 'flex', gap: '12px' }}>
-                       <img src={media.user?.avatar} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                       <img src={displayUser?.avatar} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
                        <div>
-                          <span style={{ fontWeight: '800', color: 'white', marginRight: '8px' }}>{media.user?.username}</span>
+                          <span style={{ fontWeight: '800', color: 'white', marginRight: '8px' }}>{displayUser?.username}</span>
                           <span style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>{media.content}</span>
                        </div>
                     </div>
@@ -397,6 +398,7 @@ export const ProfilePage = () => {
         media={selectedMedia} 
         type={mediaType} 
         isMobile={isMobile}
+        owner={profileUser}
       />
     </div>
   );
