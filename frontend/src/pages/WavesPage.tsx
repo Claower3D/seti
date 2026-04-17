@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, Share2, Volume2, VolumeX, Plus, Play, Zap, Upload, Send, X } from 'lucide-react';
 import api from '../api/client';
@@ -33,8 +33,8 @@ const timeAgo = (dateStr: string) => {
   return `${Math.floor(diff / 86400)} д`;
 };
 
-const WavePlayer = ({ wave, isActive }: { wave: Wave; isActive: boolean }) => {
-  const { user } = useAuth();
+const WavePlayer = ({ wave, isActive, currentUser }: { wave: Wave; isActive: boolean; currentUser: any }) => {
+  useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const commentsBottomRef = useRef<HTMLDivElement>(null);
@@ -50,7 +50,11 @@ const WavePlayer = ({ wave, isActive }: { wave: Wave; isActive: boolean }) => {
   const [commentsCount, setCommentsCount] = useState(wave.commentsCount || 0);
   const [loadingComments, setLoadingComments] = useState(false);
   const [sendingComment, setSendingComment] = useState(false);
+  const [following, setFollowing] = useState(false);
+  const [followSent, setFollowSent] = useState(false);
   const dbTapRef = useRef<number>(0);
+
+  const isOwnWave = currentUser?.id === wave.user?.id;
 
   useEffect(() => {
     const v = videoRef.current;
@@ -138,6 +142,15 @@ const WavePlayer = ({ wave, isActive }: { wave: Wave; isActive: boolean }) => {
     setSendingComment(false);
   };
 
+  const handleFollow = async () => {
+    if (followSent || following || isOwnWave) return;
+    try {
+      await api.post(`/friends/request/${wave.user.id}`);
+      setFollowSent(true);
+      setFollowing(true);
+    } catch {}
+  };
+
   const handleShare = () => {
     const url = `${window.location.origin}/waves/${wave.id}`;
     navigator.clipboard.writeText(url).then(() => alert('Ссылка скопирована!')).catch(() => {});
@@ -201,10 +214,37 @@ const WavePlayer = ({ wave, isActive }: { wave: Wave; isActive: boolean }) => {
       <div style={{ position: 'absolute', bottom: '80px', left: '16px', right: '80px', zIndex: 15 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
           <img src={wave.user?.avatar} alt="" style={{ width: '42px', height: '42px', borderRadius: '50%', border: '2px solid rgba(0,245,255,0.5)', boxShadow: '0 0 15px rgba(0,245,255,0.3)' }} />
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ fontWeight: '900', color: 'white', fontSize: '1rem', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>@{wave.user?.username}</div>
             <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}><Zap size={10} style={{ display: 'inline', marginRight: '3px' }} />Signal Wave</div>
           </div>
+          {!isOwnWave && (
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={handleFollow}
+              style={{
+                background: following
+                  ? 'rgba(255,255,255,0.1)'
+                  : 'linear-gradient(135deg, rgba(0,245,255,0.25), rgba(180,0,255,0.25))',
+                border: following
+                  ? '1px solid rgba(255,255,255,0.2)'
+                  : '1px solid rgba(0,245,255,0.5)',
+                borderRadius: '20px',
+                padding: '6px 14px',
+                cursor: following ? 'default' : 'pointer',
+                color: following ? 'rgba(255,255,255,0.5)' : '#00f5ff',
+                fontWeight: '800',
+                fontSize: '0.75rem',
+                backdropFilter: 'blur(10px)',
+                boxShadow: following ? 'none' : '0 0 12px rgba(0,245,255,0.2)',
+                transition: 'all 0.3s',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              {following ? '✓ Запрос отправлен' : '+ Подписаться'}
+            </motion.button>
+          )}
         </div>
         {wave.description && (
           <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0, fontWeight: '500', textShadow: '0 1px 4px rgba(0,0,0,0.8)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
@@ -305,7 +345,7 @@ const WavePlayer = ({ wave, isActive }: { wave: Wave; isActive: boolean }) => {
 
             {/* Input */}
             <div style={{ padding: '12px 16px 24px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
-              <img src={user?.avatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.25)', flexShrink: 0 }} />
+              <img src={currentUser?.avatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(0,245,255,0.25)', flexShrink: 0 }} />
               <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(0,245,255,0.15)', borderRadius: '25px', padding: '4px 4px 4px 16px' }}>
                 <input
                   ref={commentInputRef}
@@ -333,17 +373,17 @@ const WavePlayer = ({ wave, isActive }: { wave: Wave; isActive: boolean }) => {
 };
 
 export const WavesPage = () => {
-  useAuth();
+  const { user } = useAuth();
   const [waves, setWaves] = useState<Wave[]>([]);
-  const [currentIdx, setCurrentIdx] = useState(0);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [newDesc, setNewDesc] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
   const videoUploadRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const touchStartY = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const fetchWaves = async () => {
     setLoading(true);
@@ -358,36 +398,21 @@ export const WavesPage = () => {
 
   useEffect(() => { fetchWaves(); }, []);
 
-  const goNext = useCallback(() => {
-    setCurrentIdx(i => Math.min(i + 1, waves.length - 1));
-  }, [waves.length]);
-
-  const goPrev = useCallback(() => {
-    setCurrentIdx(i => Math.max(i - 1, 0));
-  }, []);
-
+  // Track which wave is in view via IntersectionObserver
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown') goNext();
-      if (e.key === 'ArrowUp') goPrev();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [goNext, goPrev]);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const diff = touchStartY.current - e.changedTouches[0].clientY;
-    if (diff > 50) goNext();
-    else if (diff < -50) goPrev();
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-    if (e.deltaY > 30) goNext();
-    else if (e.deltaY < -30) goPrev();
-  };
+    if (!waves.length) return;
+    const observers: IntersectionObserver[] = [];
+    itemRefs.current.forEach((el, idx) => {
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveIdx(idx); },
+        { threshold: 0.6 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach(o => o.disconnect());
+  }, [waves]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -424,84 +449,67 @@ export const WavesPage = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ position: 'relative', height: 'calc(100vh - 80px)', overflow: 'hidden' }}>
-      {/* Upload Button */}
-      <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 50, display: 'flex', gap: '10px' }}>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+      {/* Upload button */}
+      <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 50 }}>
+        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           onClick={() => videoUploadRef.current?.click()}
-          style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(180,0,255,0.2))', border: '1px solid rgba(0,245,255,0.4)', borderRadius: '14px', padding: '10px 16px', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700', backdropFilter: 'blur(10px)', boxShadow: '0 0 20px rgba(0,245,255,0.15)', fontSize: '0.85rem' }}
-        >
+          style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(180,0,255,0.2))', border: '1px solid rgba(0,245,255,0.4)', borderRadius: '14px', padding: '10px 16px', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700', backdropFilter: 'blur(10px)', boxShadow: '0 0 20px rgba(0,245,255,0.15)', fontSize: '0.85rem' }}>
           <Plus size={18} /> Запустить волну
         </motion.button>
         <input ref={videoUploadRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={handleFileSelect} />
       </div>
 
-      {/* Wave counter */}
-      {waves.length > 0 && (
-        <div style={{ position: 'absolute', top: '18px', left: '50%', transform: 'translateX(-50%)', zIndex: 50, display: 'flex', gap: '6px' }}>
-          {waves.slice(Math.max(0, currentIdx - 2), currentIdx + 3).map((_, relI) => {
-            const absI = Math.max(0, currentIdx - 2) + relI;
-            return (
-              <div key={absI} onClick={() => setCurrentIdx(absI)} style={{ width: absI === currentIdx ? '24px' : '6px', height: '6px', borderRadius: '3px', background: absI === currentIdx ? '#00f5ff' : 'rgba(255,255,255,0.3)', cursor: 'pointer', transition: 'all 0.3s', boxShadow: absI === currentIdx ? '0 0 8px rgba(0,245,255,0.8)' : 'none' }} />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Main player area */}
+      {/* Empty state */}
       {waves.length === 0 ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: '20px' }}>
           <div style={{ background: 'rgba(0,245,255,0.05)', border: '2px dashed rgba(0,245,255,0.3)', borderRadius: '24px', padding: '60px 40px', textAlign: 'center' }}>
             <Zap size={60} color="rgba(0,245,255,0.3)" style={{ margin: '0 auto 16px' }} />
             <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>Эфир пуст</div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px' }}>Запусти первую волну в SETI</div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => videoUploadRef.current?.click()}
-              style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))', border: '1px solid rgba(0,245,255,0.4)', borderRadius: '14px', padding: '12px 24px', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800', margin: '0 auto', boxShadow: '0 0 20px rgba(0,245,255,0.2)', fontSize: '0.95rem' }}
-            >
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => videoUploadRef.current?.click()}
+              style={{ background: 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))', border: '1px solid rgba(0,245,255,0.4)', borderRadius: '14px', padding: '12px 24px', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800', margin: '0 auto', boxShadow: '0 0 20px rgba(0,245,255,0.2)', fontSize: '0.95rem' }}>
               <Upload size={20} /> Загрузить видео
             </motion.button>
           </div>
         </div>
       ) : (
+        /* ── TikTok-style CSS scroll-snap container ── */
         <div
-          ref={containerRef}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onWheel={handleWheel}
-          style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center' }}
+          ref={scrollContainerRef}
+          style={{
+            height: '100%',
+            overflowY: 'scroll',
+            scrollSnapType: 'y mandatory',
+            scrollBehavior: 'smooth',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            /* hide scrollbar */
+            msOverflowStyle: 'none',
+            scrollbarWidth: 'none',
+          }}
+          className="hide-scrollbar"
         >
-          <div style={{ width: '100%', maxWidth: '480px', height: '100%', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(0,245,255,0.1)', boxShadow: '0 0 60px rgba(0,245,255,0.05), 0 30px 80px rgba(0,0,0,0.5)', position: 'relative' }}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentIdx}
-                initial={{ opacity: 0, y: 60 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -60 }}
-                transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-                style={{ width: '100%', height: '100%' }}
-              >
-                <WavePlayer wave={waves[currentIdx]} isActive={true} />
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Nav arrows */}
-            {currentIdx > 0 && (
-              <motion.button whileTap={{ scale: 0.9 }} onClick={goPrev}
-                style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '50%', width: '40px', height: '40px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)', fontSize: '1.2rem', zIndex: 20 }}>
-                ↑
-              </motion.button>
-            )}
-            {currentIdx < waves.length - 1 && (
-              <motion.button whileTap={{ scale: 0.9 }} onClick={goNext}
-                style={{ position: 'absolute', bottom: '80px', left: '12px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '50%', width: '40px', height: '40px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)', fontSize: '1.2rem', zIndex: 20 }}>
-                ↓
-              </motion.button>
-            )}
-          </div>
+          {waves.map((wave, idx) => (
+            <div
+              key={wave.id}
+              ref={el => { itemRefs.current[idx] = el; }}
+              style={{
+                flexShrink: 0,
+                width: '100%',
+                maxWidth: '480px',
+                height: '100%',
+                scrollSnapAlign: 'start',
+                position: 'relative',
+                borderRadius: '24px',
+                overflow: 'hidden',
+                border: '1px solid rgba(0,245,255,0.08)',
+                boxShadow: '0 0 60px rgba(0,245,255,0.05), 0 30px 80px rgba(0,0,0,0.5)',
+              }}
+            >
+              <WavePlayer wave={wave} isActive={idx === activeIdx} currentUser={user} />
+            </div>
+          ))}
         </div>
       )}
 
@@ -518,15 +526,8 @@ export const WavesPage = () => {
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>
                 📡 {pendingFile?.name}
               </div>
-
-              <textarea
-                placeholder="Описание волны... (необязательно)"
-                value={newDesc}
-                onChange={(e) => setNewDesc(e.target.value)}
-                rows={3}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: '16px', padding: '14px 18px', color: 'white', fontSize: '0.9rem', outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '20px' }}
-              />
-
+              <textarea placeholder="Описание волны... (необязательно)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: '16px', padding: '14px 18px', color: 'white', fontSize: '0.9rem', outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '20px' }} />
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button onClick={() => { setShowUpload(false); setPendingFile(null); setNewDesc(''); }}
                   style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '13px', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '700', fontSize: '0.9rem' }}>
@@ -534,11 +535,7 @@ export const WavesPage = () => {
                 </button>
                 <motion.button whileTap={{ scale: 0.97 }} onClick={handleUpload} disabled={uploading}
                   style={{ flex: 2, background: uploading ? 'rgba(0,245,255,0.05)' : 'linear-gradient(135deg, rgba(0,245,255,0.25), rgba(180,0,255,0.25))', border: '1px solid rgba(0,245,255,0.4)', borderRadius: '14px', padding: '13px', cursor: uploading ? 'wait' : 'pointer', color: '#00f5ff', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '0.95rem', boxShadow: '0 0 20px rgba(0,245,255,0.1)' }}>
-                  {uploading ? (
-                    <><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ width: '18px', height: '18px', border: '2px solid transparent', borderTopColor: '#00f5ff', borderRadius: '50%' }} /> Передача...</>
-                  ) : (
-                    <><Zap size={18} /> В эфир</>
-                  )}
+                  {uploading ? (<><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ width: '18px', height: '18px', border: '2px solid transparent', borderTopColor: '#00f5ff', borderRadius: '50%' }} /> Передача...</>) : (<><Zap size={18} /> В эфир</>)}
                 </motion.button>
               </div>
             </motion.div>
