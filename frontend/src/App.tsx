@@ -15,6 +15,7 @@ import api from './api/client';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
   if (!user) return null;
   const navItems = [
@@ -36,8 +37,29 @@ const Sidebar = () => {
         {navItems.map((item) => (
           <Link to={item.path} key={item.name} style={{ textDecoration: 'none' }}>
             <div className={`nav-item ${location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path)) ? 'active' : ''}`}>
-              <item.icon size={20} />
-              <span>{item.name}</span>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                <item.icon size={20} />
+                <span>{item.name}</span>
+                {item.name === 'Сообщения' && unreadCount > 0 && (
+                  <motion.div 
+                    initial={{ scale: 0 }} 
+                    animate={{ scale: 1 }} 
+                    style={{ 
+                      marginLeft: 'auto', 
+                      background: 'var(--primary)', 
+                      color: 'black', 
+                      fontSize: '0.65rem', 
+                      fontWeight: '900', 
+                      padding: '2px 8px', 
+                      borderRadius: '10px', 
+                      boxShadow: 'var(--glow)',
+                      textShadow: 'none'
+                    }}
+                  >
+                    {unreadCount}
+                  </motion.div>
+                )}
+              </div>
             </div>
           </Link>
         ))}
