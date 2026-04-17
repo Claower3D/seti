@@ -71,6 +71,8 @@ protected.POST("/messages", handlers.CreateMessage)
 protected.GET("/waves", handlers.GetWaves)
 protected.POST("/waves", handlers.CreateWave)
 protected.POST("/waves/:id/like", handlers.LikeWave)
+protected.GET("/waves/:id/comments", handlers.GetWaveComments)
+protected.POST("/waves/:id/comments", handlers.CreateWaveComment)
 }
 }
 
