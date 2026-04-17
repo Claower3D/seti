@@ -175,9 +175,91 @@ func UpdatePost(c *gin.Context) {
 }
 
 func LikePost(c *gin.Context) {
-    // For simplicity, returning just OK so frontend succeeds
-    c.JSON(http.StatusOK, gin.H{"success": true})
+	userID, _ := c.Get("userId")
+	postID := c.Param("id")
+
+	var like models.PostLike
+	if err := db.DB.Where("user_id = ? AND post_id = ?", userID, postID).First(&like).Error; err == nil {
+		// Unlike
+		db.DB.Delete(&like)
+		db.DB.Model(&models.Post{}).Where("id = ?", postID).UpdateColumn("likes_count", db.DB.Raw("likes_count - 1"))
+	} else {
+		// Like
+		var post models.Post
+		if err := db.DB.First(&post, postID).Error; err == nil {
+			like = models.PostLike{UserID: userID.(uint), PostID: post.ID}
+			db.DB.Create(&like)
+			db.DB.Model(&models.Post{}).Where("id = ?", postID).UpdateColumn("likes_count", db.DB.Raw("likes_count + 1"))
+
+			// Notify owner
+			if post.UserID != userID.(uint) {
+				db.DB.Create(&models.Notification{
+					ReceiverID: post.UserID,
+					SenderID:   userID.(uint),
+					Type:       "like",
+					PostID:     post.ID,
+				})
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
+
+func GetPostComments(c *gin.Context) {
+	postID := c.Param("id")
+	var comments []models.Comment
+	if err := db.DB.Preload("User").Where("post_id = ?", postID).Order("created_at asc").Find(&comments).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch comments"})
+		return
+	}
+	c.JSON(http.StatusOK, comments)
+}
+
+func CreatePostComment(c *gin.Context) {
+	postID := c.Param("id")
+	userID, _ := c.Get("userId")
+
+	var input struct {
+		Content string `json:"content" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var pID uint
+	db.DB.Raw("SELECT id FROM posts WHERE id = ?", postID).Scan(&pID)
+
+	comment := models.Comment{
+		UserID:  userID.(uint),
+		PostID:  pID,
+		Content: input.Content,
+	}
+
+	if err := db.DB.Create(&comment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create comment"})
+		return
+	}
+
+	// Update comments count (if we add the field to model later, for now we can just count)
+	
+	// Notify owner
+	var post models.Post
+	if err := db.DB.First(&post, postID).Error; err == nil && post.UserID != userID.(uint) {
+		db.DB.Create(&models.Notification{
+			ReceiverID: post.UserID,
+			SenderID:   userID.(uint),
+			Type:       "comment",
+			PostID:     post.ID,
+			Content:    input.Content,
+		})
+	}
+
+	db.DB.Preload("User").First(&comment, comment.ID)
+	c.JSON(http.StatusCreated, comment)
+}
+
 
 func GetStories(c *gin.Context) {
 	stories := []models.Story{}

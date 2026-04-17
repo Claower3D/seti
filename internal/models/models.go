@@ -64,17 +64,27 @@ type GroupMember struct {
 }
 
 type Post struct {
-	ID        uint           `gorm:"primaryKey" json:"id"`
-	Content   string         `gorm:"not null" json:"content"`
-	UserID    uint           `json:"userId"`
-	User      User           `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	ImageURL  string         `json:"imageUrl"`
-	VideoURL  string         `json:"videoUrl"`
-	MediaType string         `json:"mediaType"` // "image", "video", "text"
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
-	Comments  []Comment      `json:"comments,omitempty"`
+	ID            uint           `gorm:"primaryKey" json:"id"`
+	Content       string         `gorm:"not null" json:"content"`
+	UserID        uint           `json:"userId"`
+	User          User           `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	ImageURL      string         `json:"imageUrl"`
+	VideoURL      string         `json:"videoUrl"`
+	MediaType     string         `json:"mediaType"` // "image", "video", "text"
+	LikesCount    int            `gorm:"default:0" json:"likesCount"`
+	CommentsCount int            `gorm:"default:0" json:"commentsCount"`
+	Liked         bool           `gorm:"-" json:"liked"`
+	CreatedAt     time.Time      `json:"createdAt"`
+	UpdatedAt     time.Time      `json:"updatedAt"`
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
+	Comments      []Comment      `json:"comments,omitempty"`
+}
+
+type PostLike struct {
+	ID        uint      `gorm:"primaryKey"`
+	UserID    uint      `gorm:"not null"`
+	PostID    uint      `gorm:"not null"`
+	CreatedAt time.Time
 }
 
 type Comment struct {
