@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, User as UserIcon, Camera, Shield, Palette } from 'lucide-react';
+import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -29,6 +30,8 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
   
   // Design State
   const [neonColor, setNeonColor] = useState(currentUser?.neonColor || '#00f5ff');
+  const [neonBrightness, setNeonBrightness] = useState(currentUser?.neonBrightness || 1.0);
+  const { updateUser } = useAuth();
   
   // Security State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -81,8 +84,9 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
     setError('');
     setSuccess('');
     try {
-      const res = await api.put('/profile', { username, bio, avatar, neonColor });
+      const res = await api.put('/profile', { username, bio, avatar, neonColor, neonBrightness });
       onUpdate(res.data);
+      updateUser(res.data);
       setSuccess('Профиль обновлен');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
@@ -238,7 +242,10 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                       {NEON_PRESETS.map(preset => (
                         <button
                           key={preset.color}
-                          onClick={() => setNeonColor(preset.color)}
+                          onClick={() => {
+                            setNeonColor(preset.color);
+                            updateUser({ ...currentUser, neonColor: preset.color, neonBrightness });
+                          }}
                           style={{
                             padding: '12px',
                             borderRadius: '12px',
@@ -260,19 +267,43 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                   </div>
 
                   <div>
+                    <label style={{ display: 'block', marginBottom: '16px', color: 'rgba(255,255,255,0.4)', fontWeight: '700', fontSize: '0.75rem', letterSpacing: '1px' }}>NEON INTENSITY (BRIGHTNESS)</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                       <Sun size={18} color={neonColor} style={{ filter: `drop-shadow(0 0 5px ${neonColor})` }} />
+                       <input 
+                         type="range" 
+                         min="0" 
+                         max="1.5" 
+                         step="0.05" 
+                         value={neonBrightness} 
+                         onChange={(e) => {
+                           const val = parseFloat(e.target.value);
+                           setNeonBrightness(val);
+                           updateUser({ ...currentUser, neonColor, neonBrightness: val });
+                         }}
+                         style={{ flex: 1, accentColor: neonColor, cursor: 'pointer' }}
+                       />
+                       <span style={{ minWidth: '40px', fontSize: '0.8rem', fontWeight: '800', color: neonColor }}>{Math.round(neonBrightness * 100)}%</span>
+                    </div>
+                  </div>
+
+                  <div>
                     <label style={{ display: 'block', marginBottom: '8px', color: 'rgba(255,255,255,0.4)', fontWeight: '700', fontSize: '0.75rem', letterSpacing: '1px' }}>CUSTOM HEX</label>
                     <div style={{ display: 'flex', gap: '10px' }}>
-                      <input type="text" className="input-field" value={neonColor} onChange={(e) => setNeonColor(e.target.value)} />
-                      <div style={{ width: '45px', borderRadius: '8px', background: neonColor }} />
+                      <input type="text" className="input-field" value={neonColor} onChange={(e) => {
+                        setNeonColor(e.target.value);
+                        updateUser({ ...currentUser, neonColor: e.target.value, neonBrightness });
+                      }} />
+                      <div style={{ width: '45px', borderRadius: '8px', background: neonColor, boxShadow: `0 0 10px ${neonColor}` }} />
                     </div>
                   </div>
 
                   <button 
                     onClick={handleGeneralSubmit} 
                     className="btn-primary" 
-                    style={{ background: neonColor, color: 'black', fontWeight: '900', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', marginTop: '20px', boxShadow: `0 0 20px ${neonColor}4d` }}
+                    style={{ background: neonColor, color: 'black', fontWeight: '900', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', marginTop: '10px', boxShadow: `0 0 20px ${neonColor}4d` }}
                   >
-                    Применить Дизайн
+                    Применить и Сохранить
                   </button>
                 </div>
               )}

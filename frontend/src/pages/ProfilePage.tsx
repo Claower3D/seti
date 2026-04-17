@@ -240,7 +240,7 @@ export const ProfilePage = () => {
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: '80px' }}>
       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-        style={{ width: '40px', height: '40px', border: '2px solid transparent', borderTopColor: '#00f5ff', borderRadius: '50%', boxShadow: '0 0 15px rgba(0,245,255,0.5)' }} />
+        style={{ width: '40px', height: '40px', border: '2px solid transparent', borderTopColor: 'var(--primary)', borderRadius: '50%', boxShadow: 'var(--glow)' }} />
     </div>
   );
 
@@ -248,10 +248,8 @@ export const ProfilePage = () => {
     <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-secondary)' }}>Пользователь не найден</div>
   );
 
-  const neon = profileUser.neonColor || '#00f5ff';
-
   return (
-    <div style={{ maxWidth: '935px', margin: '0 auto', padding: isMobile ? '0 10px' : '0 20px', '--user-neon': neon } as any}>
+    <div style={{ maxWidth: '935px', margin: '0 auto', padding: isMobile ? '0 10px' : '0 20px' }}>
       <div style={{ 
         display: 'flex', 
         gap: isMobile ? '20px' : '40px', 
@@ -262,7 +260,7 @@ export const ProfilePage = () => {
       }}>
         <div style={{ position: 'relative' }}>
           <img src={profileUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profileUser.username}
-            alt="avatar" style={{ width: isMobile ? '90px' : '110px', height: isMobile ? '90px' : '110px', borderRadius: '50%', border: `4px solid ${neon}33`, padding: '4px', objectFit: 'cover' }} />
+            alt="avatar" style={{ width: isMobile ? '90px' : '110px', height: isMobile ? '90px' : '110px', borderRadius: '50%', border: '2px solid var(--border)', padding: '4px', objectFit: 'cover' }} />
         </div>
         
         <div style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}>
@@ -276,19 +274,19 @@ export const ProfilePage = () => {
             <h1 style={{ fontSize: '1.8rem', fontWeight: '300', color: 'white' }}>{profileUser.username}</h1>
             {isOwnProfile && (
               <button onClick={() => setIsEditModalOpen(true)}
+                className="btn-primary"
                 style={{ 
                   width: '38px',
                   height: '38px',
                   borderRadius: '12px', 
-                  cursor: 'pointer', 
-                  background: neon, 
-                  color: '#050608',
-                  border: 'none',
-                  boxShadow: `0 0 15px ${neon}66`,
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'transform 0.2s'
+                  transition: 'transform 0.2s',
+                  background: 'var(--primary)',
+                  color: 'black',
+                  boxShadow: 'var(--glow-strong)'
                 }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'rotate(30deg)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'rotate(0deg)'}
@@ -329,8 +327,8 @@ export const ProfilePage = () => {
           <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
             style={{ 
               background: 'none', border: 'none', padding: '15px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px',
-              color: activeTab === tab.id ? neon : 'rgba(255,255,255,0.5)',
-              borderTop: activeTab === tab.id ? `2px solid ${neon}` : '2px solid transparent',
+              color: activeTab === tab.id ? 'var(--primary)' : 'rgba(255,255,255,0.5)',
+              borderTop: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
               marginTop: '-1px', transition: 'all 0.2s'
             }}>
             <tab.icon size={14} /> {tab.label}

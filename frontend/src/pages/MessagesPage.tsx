@@ -30,12 +30,12 @@ const VoicePlayer = ({ src }: { src: string }) => {
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.25)', padding: '8px 16px', borderRadius: '24px', width: '220px', border: '1px solid rgba(0,245,255,0.1)' }}>
-      <button onClick={toggle} style={{ background: '#00f5ff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(0,245,255,0.4)', flexShrink: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.25)', padding: '8px 16px', borderRadius: '24px', width: '220px', border: '1px solid var(--border)' }}>
+      <button onClick={toggle} style={{ background: 'var(--primary)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--glow)', flexShrink: 0 }}>
         {isPlaying ? <Pause size={14} fill="black" /> : <Play size={14} fill="black" style={{ marginLeft: '2px' }} />}
       </button>
       <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.15)', borderRadius: '2px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ width: `${progress}%`, height: '100%', background: '#00f5ff', borderRadius: '2px', transition: 'width 0.1s linear', boxShadow: '0 0 8px #00f5ff' }} />
+        <div style={{ width: `${progress}%`, height: '100%', background: 'var(--primary)', borderRadius: '2px', transition: 'width 0.1s linear', boxShadow: 'var(--glow-strong)' }} />
       </div>
       <audio ref={audioRef} src={src} onTimeUpdate={handleTimeUpdate} onEnded={handleEnded} />
     </div>
@@ -234,16 +234,16 @@ export const MessagesPage = () => {
             ) : friends.map(friend => (
               <div key={friend.id} onClick={() => setSelectedFriend(friend)}
                 style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
-                  background: selectedFriend?.id === friend.id ? 'rgba(0,245,255,0.08)' : 'transparent',
-                  border: selectedFriend?.id === friend.id ? '1px solid rgba(0,245,255,0.2)' : '1px solid transparent',
+                  background: selectedFriend?.id === friend.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
+                  border: selectedFriend?.id === friend.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
                   transition: 'all 0.3s', marginBottom: '8px' }}>
                 <div style={{ position: 'relative' }}>
                   <img src={friend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + friend.username}
-                    alt="avatar" style={{ width: '52px', height: '52px', borderRadius: '18px', objectFit: 'cover', border: selectedFriend?.id === friend.id ? '2px solid #00f5ff' : '2px solid transparent' }} />
+                    alt="avatar" style={{ width: '52px', height: '52px', borderRadius: '18px', objectFit: 'cover', border: selectedFriend?.id === friend.id ? '2px solid var(--primary)' : '2px solid transparent' }} />
                   <div style={{ position: 'absolute', bottom: -2, right: -2, width: '12px', height: '12px', background: '#00ff00', borderRadius: '50%', border: '2px solid var(--bg-color)', boxShadow: '0 0 10px #00ff00' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedFriend?.id === friend.id ? '#00f5ff' : 'white' }}>{friend.username}</div>
+                  <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedFriend?.id === friend.id ? 'var(--primary)' : 'white' }}>{friend.username}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Установлено соединение...</div>
                 </div>
               </div>
@@ -264,9 +264,9 @@ export const MessagesPage = () => {
                   </button>
                 )}
                 <img src={selectedFriend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedFriend.username}
-                  alt="avatar" style={{ width: '44px', height: '44px', borderRadius: '14px', border: '2px solid #00f5ff' }} />
+                  alt="avatar" style={{ width: '44px', height: '44px', borderRadius: '14px', border: '2px solid var(--primary)' }} />
                 <div>
-                  <div style={{ fontWeight: '900', fontSize: '1.1rem', color: '#00f5ff' }}>{selectedFriend.username}</div>
+                  <div style={{ fontWeight: '900', fontSize: '1.1rem', color: 'var(--primary)' }}>{selectedFriend.username}</div>
                   <div style={{ fontSize: '0.8rem', color: '#00ff00', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <div className="pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00ff00' }}></div> Online Signal
                   </div>
@@ -361,13 +361,13 @@ export const MessagesPage = () => {
               <form onSubmit={sendMessage} style={{ padding: isMobile ? '12px 16px' : '20px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(0,0,0,0.2)' }}>
                 <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={sendFile} />
                 <button type="button" onClick={() => fileRef.current?.click()}
-                  style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.2)', cursor: 'pointer', color: '#00f5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, background: 'color-mix(in srgb, var(--primary), transparent 92%)', border: '1px solid color-mix(in srgb, var(--primary), transparent 80%)', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Paperclip size={20} />
                 </button>
                 <input ref={inputRef} type="text" className="input-field"
                   placeholder={editingMsgId ? "Ред..." : (isMobile ? "Текст..." : "Введите сообщение в SETI...")}
                   value={input} onChange={(e) => setInput(e.target.value)}
-                  style={{ borderRadius: '20px', padding: isMobile ? '10px 16px' : '14px 24px', flex: 1, background: editingMsgId ? 'rgba(0,245,255,0.05)' : 'rgba(255,255,255,0.03)', border: editingMsgId ? '1px solid rgba(0,245,255,0.4)' : 'none', minWidth: 0 }} />
+                  style={{ borderRadius: '20px', padding: isMobile ? '10px 16px' : '14px 24px', flex: 1, background: editingMsgId ? 'color-mix(in srgb, var(--primary), transparent 95%)' : 'rgba(255,255,255,0.03)', border: editingMsgId ? '1px solid color-mix(in srgb, var(--primary), transparent 60%)' : 'none', minWidth: 0 }} />
 
                 {editingMsgId && (
                   <button type="button" onClick={() => { setEditingMsgId(null); setInput(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px' }}>

@@ -7,6 +7,8 @@ interface User {
   email: string;
   avatar: string;
   bio: string;
+  neonColor?: string;
+  neonBrightness?: number;
 }
 
 interface AuthContextType {
@@ -14,6 +16,7 @@ interface AuthContextType {
   token: string | null;
   login: (token: string, user: User) => void;
   logout: () => void;
+  updateUser: (newUser: User) => void;
   loading: boolean;
 }
 
@@ -23,6 +26,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+
+  // Theme application logic
+  useEffect(() => {
+    const applyTheme = () => {
+      const root = document.documentElement;
+      const color = user?.neonColor || '#00f5ff';
+      const brightness = user?.neonBrightness !== undefined ? user.neonBrightness : 1.0;
+      
+      root.style.setProperty('--primary', color);
+      root.style.setProperty('--glow-opacity', brightness.toString());
+      
+      // Calculate a complementary secondary color (optional but nice)
+      // For now, we use the primary color with lower opacity for general glows
+      root.style.setProperty('--primary-glow', `${color}${Math.round(brightness * 255).toString(16).padStart(2, '0')}`);
+    };
+
+    applyTheme();
+  }, [user]);
 
   useEffect(() => {
     const fetchMe = async () => {
@@ -51,8 +72,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const updateUser = (newUser: User) => {
+    setUser(prev => prev ? { ...prev, ...newUser } : newUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
