@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, User as UserIcon, AlignLeft, Camera, Upload, Shield, Palette, Settings } from 'lucide-react';
+import { X, Save, User as UserIcon, Camera, Shield, Palette } from 'lucide-react';
 
 interface EditProfileModalProps {
   isOpen: boolean;
