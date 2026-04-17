@@ -361,44 +361,74 @@ export const FeedPage = () => {
 
       {/* STORY VIEWER MODAL */}
       <AnimatePresence>
-        {activeStoryIdx !== null && (
+        {activeStoryIdx !== null && stories[activeStoryIdx] && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(20px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(5,5,15,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(40px)' }}
           >
-            <div style={{ width: '100%', maxWidth: '450px', height: '100%', maxHeight: '800px', position: 'relative', overflow: 'hidden', borderRadius: '24px', border: '1px solid rgba(0,245,255,0.2)', boxShadow: '0 0 50px rgba(0,245,255,0.1)' }}>
-              {/* Progress Bars */}
-              <div style={{ position: 'absolute', top: '16px', left: '16px', right: '16px', display: 'flex', gap: '4px', zIndex: 10 }}>
-                {stories.map((_, i) => (
-                  <div key={i} style={{ flex: 1, height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{ 
-                      width: i < activeStoryIdx ? '100%' : (i === activeStoryIdx ? `${storyProgress}%` : '0%'), 
-                      height: '100%', 
-                      background: 'var(--primary-color)',
-                      boxShadow: '0 0 8px var(--primary-color)'
-                    }} />
+            {/* Blurred Background Layer */}
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: -1 }}>
+              <img src={stories[activeStoryIdx].imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(60px) brightness(0.4)', transform: 'scale(1.2)' }} />
+            </div>
+
+            <div style={{ width: '100%', maxWidth: '450px', height: '100%', maxHeight: '850px', position: 'relative', overflow: 'hidden', borderRadius: '32px', border: '1px solid rgba(0,245,255,0.15)', boxShadow: '0 40px 100px rgba(0,0,0,0.8), 0 0 50px rgba(0,245,255,0.05)', background: '#000' }}>
+              
+              {/* Progress Bars (Per User) */}
+              {(() => {
+                const currentUserStories = stories.filter(s => s.userId === stories[activeStoryIdx].userId);
+                const currentIdxInUser = currentUserStories.findIndex(s => s.id === stories[activeStoryIdx].id);
+                
+                return (
+                  <div style={{ position: 'absolute', top: '16px', left: '16px', right: '16px', display: 'flex', gap: '6px', zIndex: 10 }}>
+                    {currentUserStories.map((_, i) => (
+                      <div key={i} style={{ flex: 1, height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '10px', overflow: 'hidden' }}>
+                        <div style={{ 
+                          width: i < currentIdxInUser ? '100%' : (i === currentIdxInUser ? `${storyProgress}%` : '0%'), 
+                          height: '100%', 
+                          background: 'linear-gradient(90deg, #00f5ff, #b400ff)',
+                          boxShadow: '0 0 10px rgba(0,245,255,0.8)'
+                        }} />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
 
               {/* Header */}
-              <div style={{ position: 'absolute', top: '32px', left: '20px', right: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+              <div style={{ position: 'absolute', top: '36px', left: '20px', right: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <img src={stories[activeStoryIdx].user?.avatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '12px', border: '1px solid rgba(0,245,255,0.4)' }} />
-                  <span style={{ fontWeight: '800', color: 'white', fontSize: '0.9rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{stories[activeStoryIdx].user?.username}</span>
+                  <img src={stories[activeStoryIdx].user?.avatar} alt="" style={{ width: '40px', height: '40px', borderRadius: '14px', border: '2px solid rgba(0,245,255,0.4)', boxShadow: '0 0 15px rgba(0,245,255,0.2)' }} />
+                  <div>
+                    <div style={{ fontWeight: '900', color: 'white', fontSize: '1rem', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{stories[activeStoryIdx].user?.username}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}>Signal Active • SETI</div>
+                  </div>
                 </div>
-                <button onClick={() => setActiveStoryIdx(null)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '8px', borderRadius: '50%', cursor: 'pointer', display: 'flex' }}>
+                <button onClick={() => setActiveStoryIdx(null)} style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
                    <X size={20} />
                 </button>
               </div>
 
-              <img src={stories[activeStoryIdx].imageUrl} alt="story" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={stories[activeStoryIdx].imageUrl} alt="story" style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black' }} />
+
+              {/* Interaction Footer */}
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 20px 40px', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)', display: 'flex', gap: '16px', alignItems: 'center', zIndex: 20 }}>
+                <input 
+                  type="text" 
+                  placeholder="Ответить на историю..." 
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '25px', padding: '12px 20px', color: 'white', fontSize: '0.9rem', outline: 'none', backdropFilter: 'blur(10px)' }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div style={{ display: 'flex', gap: '18px' }}>
+                  <Heart size={26} color="white" style={{ cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
+                  <Share2 size={26} color="white" onClick={(e) => { e.stopPropagation(); handleShare(stories[activeStoryIdx].id); }} style={{ cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
+                </div>
+              </div>
 
               {/* Navigation overlays */}
-              <div onClick={() => activeStoryIdx > 0 && setActiveStoryIdx(activeStoryIdx - 1)} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', cursor: 'pointer', zIndex: 5 }} />
-              <div onClick={() => activeStoryIdx < stories.length - 1 ? setActiveStoryIdx(activeStoryIdx + 1) : setActiveStoryIdx(null)} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '30%', cursor: 'pointer', zIndex: 5 }} />
+              <div onClick={() => activeStoryIdx > 0 && setActiveStoryIdx(activeStoryIdx - 1)} style={{ position: 'absolute', left: 0, top: 0, bottom: '100px', width: '35%', cursor: 'pointer', zIndex: 5 }} />
+              <div onClick={() => activeStoryIdx < stories.length - 1 ? setActiveStoryIdx(activeStoryIdx + 1) : setActiveStoryIdx(null)} style={{ position: 'absolute', right: 0, top: 0, bottom: '100px', width: '35%', cursor: 'pointer', zIndex: 5 }} />
             </div>
           </motion.div>
         )}
