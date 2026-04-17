@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Share2, Volume2, VolumeX, Plus, Play, Pause, Zap, Upload } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Volume2, VolumeX, Plus, Play, Zap, Upload } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
@@ -244,7 +244,7 @@ const WavePlayer = ({
 };
 
 export const WavesPage = () => {
-  const { user } = useAuth();
+  useAuth();
   const [waves, setWaves] = useState<Wave[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [loading, setLoading] = useState(true);
