@@ -190,3 +190,10 @@ func CreateMessage(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, msg)
 }
+
+func GetUnreadMessageCount(c *gin.Context) {
+	userID, _ := c.Get("userId")
+	var count int64
+	db.DB.Model(&models.Message{}).Where("receiver_id = ? AND is_read = ?", userID, false).Count(&count)
+	c.JSON(http.StatusOK, gin.H{"count": count})
+}

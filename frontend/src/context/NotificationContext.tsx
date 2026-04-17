@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { useAuth } from './AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../api/client';
 
 interface Toast {
     id: string;
@@ -17,6 +18,8 @@ interface NotificationContextType {
     toasts: Toast[];
     removeToast: (id: string) => void;
     lastMessage: any;
+    unreadCount: number;
+    refreshUnreadCount: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -26,8 +29,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [ws, setWs] = useState<WebSocket | null>(null);
     const [toasts, setToasts] = useState<Toast[]>([]);
     const [lastMessage, setLastMessage] = useState<any>(null);
+    const [unreadCount, setUnreadCount] = useState<number>(0);
     const location = useLocation();
     const wsRef = useRef<WebSocket | null>(null);
+
+    const refreshUnreadCount = async () => {
+        try {
+            const res = await api.get('/messages/unread-count');
+            setUnreadCount(res.data.count || 0);
+        } catch {}
+    };
+
+    useEffect(() => {
+        if (user) refreshUnreadCount();
+    }, [user]);
 
     useEffect(() => {
         if (!user?.id) {
@@ -53,8 +68,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
             setLastMessage(data);
 
+            if (action === 'read_receipt' || action === 'read') {
+                refreshUnreadCount();
+            }
+
             // Logic to show popup
             if (action === 'send' && msg.senderId !== user.id) {
+                // Increment unread count globally if it's a new incoming message
+                setUnreadCount(prev => prev + 1);
+
                 // DON'T show popup if we are already in the chat with this person
                 const isCurrentChat = location.pathname === '/messages' && 
                                     (new URLSearchParams(window.location.search).get('withId') === msg.senderId.toString() || 
@@ -99,7 +121,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
 
     return (
-        <NotificationContext.Provider value={{ ws, toasts, removeToast, lastMessage }}>
+        <NotificationContext.Provider value={{ ws, toasts, removeToast, lastMessage, unreadCount, refreshUnreadCount }}>
             {children}
             <GlobalToasts />
         </NotificationContext.Provider>
