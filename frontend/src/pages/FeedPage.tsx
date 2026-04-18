@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Image as ImageIcon, Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit3, Check, X } from 'lucide-react';
+import { StoryCameraModal } from '../components/StoryCameraModal';
 
 export const FeedPage = () => {
   const { user } = useAuth();
@@ -22,8 +23,8 @@ export const FeedPage = () => {
   const [commentText, setCommentText] = useState('');
   const [stories, setStories] = useState<any[]>([]);
   const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null);
-  const storyInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingStory, setIsUploadingStory] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [storyProgress, setStoryProgress] = useState(0);
   const [isStoryPaused, setIsStoryPaused] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -65,7 +66,7 @@ export const FeedPage = () => {
             else setActiveStoryIdx(null);
             return 0;
           }
-          return prev + 1.2; // roughly 4-5 seconds
+          return prev + 1.2;
         });
       }, 50);
     }
@@ -102,8 +103,8 @@ export const FeedPage = () => {
     if (!content.trim() && !attachedMedia) return;
     setIsPosting(true);
     try {
-      const res = await api.post('/posts', { 
-        content, 
+      const res = await api.post('/posts', {
+        content,
         imageUrl: attachedMedia?.type === 'image' ? attachedMedia.url : '',
         videoUrl: attachedMedia?.type === 'video' ? attachedMedia.url : '',
         mediaType: attachedMedia?.type || 'text'
@@ -121,11 +122,9 @@ export const FeedPage = () => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const isVideo = file.type.startsWith('video/');
     const formData = new FormData();
     formData.append('file', file);
-    
     setIsUploading(true);
     try {
       const res = await api.post('/upload', formData, {
@@ -179,12 +178,22 @@ export const FeedPage = () => {
 
   const submitComment = (postId: number) => {
     if (!commentText.trim()) return;
-    // For now, optimistic local update since we just want it to "work" in UI
-    setPosts(prev => prev.map(p => 
+    setPosts(prev => prev.map(p =>
       p.id === postId ? { ...p, comments: [...(p.comments || []), { id: Date.now(), content: commentText, user: user }] } : p
     ));
     setCommentText('');
     setActiveCommentPostId(null);
+  };
+
+  const handleStoryUpload = async (file: File) => {
+    const fd = new FormData(); fd.append('file', file);
+    setIsUploadingStory(true);
+    try {
+      const res = await api.post('/upload', fd);
+      await api.post('/stories', { imageUrl: res.data.url });
+      fetchStories();
+      setIsCameraOpen(false);
+    } catch { alert('Ошибка загрузки истории'); } finally { setIsUploadingStory(false); }
   };
 
   return (
@@ -193,24 +202,14 @@ export const FeedPage = () => {
         {/* STORIES SECTION */}
         <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '24px', marginBottom: '8px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-            <div 
-              onClick={() => storyInputRef.current?.click()}
+            <div
+              onClick={() => setIsCameraOpen(true)}
               style={{ width: '74px', height: '74px', borderRadius: '24px', background: 'rgba(255,255,255,0.03)', border: '2px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isUploadingStory ? 'wait' : 'pointer', transition: 'all 0.3s', position: 'relative', opacity: isUploadingStory ? 0.6 : 1 }}
               onMouseEnter={e => !isUploadingStory && (e.currentTarget.style.borderColor = 'var(--primary)')}
               onMouseLeave={e => !isUploadingStory && (e.currentTarget.style.borderColor = 'var(--border)')}
             >
               <img src={user?.avatar} alt="" style={{ width: '60px', height: '60px', borderRadius: '18px', opacity: isUploadingStory ? 0.2 : 0.5 }} />
               <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', background: 'var(--primary)', color: 'black', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid var(--bg)', fontSize: '1.2rem', fontWeight: '900', boxShadow: 'var(--glow)' }}>{isUploadingStory ? '...' : '+'}</div>
-              <input type="file" ref={storyInputRef} hidden onChange={async (e) => {
-                const file = e.target.files?.[0]; if (!file) return;
-                const fd = new FormData(); fd.append('file', file);
-                setIsUploadingStory(true);
-                try {
-                  const res = await api.post('/upload', fd);
-                  await api.post('/stories', { imageUrl: res.data.url });
-                  fetchStories();
-                } catch { alert('Ошибка загрузки истории'); } finally { setIsUploadingStory(false); }
-              }} />
             </div>
             <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Ваша история</span>
           </div>
@@ -250,7 +249,7 @@ export const FeedPage = () => {
               ) : (
                 <img src={attachedMedia.url} alt="attachment preview" style={{ maxHeight: '200px', borderRadius: '12px', border: '1px solid rgba(0, 245, 255, 0.3)' }} />
               )}
-              <button 
+              <button
                 onClick={() => setAttachedMedia(null)}
                 style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', color: 'white', cursor: 'pointer', padding: '4px', display: 'flex', boxShadow: '0 0 10px rgba(0,0,0,0.5)' }}
               >
@@ -370,13 +369,13 @@ export const FeedPage = () => {
                       <span>{post.likesCount > 0 ? post.likesCount : 'Лайк'}</span>
                     </button>
                     <button onClick={() => setActiveCommentPostId(activeCommentPostId === post.id ? null : post.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
-                      <MessageCircle size={24} /> <span>Коммент</span>
+                      <MessageCircle size={24} /> <span>Комментарий</span>
                     </button>
                     <button onClick={() => handleShare(post.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
                       <Share2 size={24} /> <span>Share</span>
                     </button>
                   </div>
-                  
+
                   <AnimatePresence>
                     {activeCommentPostId === post.id && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
@@ -412,31 +411,22 @@ export const FeedPage = () => {
             exit={{ opacity: 0 }}
             style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(30px)' }}
           >
-
             <div style={{ width: '100%', maxWidth: '450px', height: '100%', maxHeight: '850px', position: 'relative', overflow: 'hidden', borderRadius: '32px', border: '1px solid rgba(var(--primary-rgb), 0.15)', boxShadow: '0 40px 100px rgba(0,0,0,0.8), 0 0 50px rgba(var(--primary-rgb), 0.05)', background: '#000' }}>
-              
-              {/* Progress Bars (Per User) */}
+
               {(() => {
                 const currentUserStories = stories.filter(s => s.userId === stories[activeStoryIdx].userId);
                 const currentIdxInUser = currentUserStories.findIndex(s => s.id === stories[activeStoryIdx].id);
-                
                 return (
                   <div style={{ position: 'absolute', top: '16px', left: '16px', right: '16px', display: 'flex', gap: '6px', zIndex: 10 }}>
                     {currentUserStories.map((_, i) => (
                       <div key={i} style={{ flex: 1, height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '10px', overflow: 'hidden' }}>
-                        <div style={{ 
-                          width: i < currentIdxInUser ? '100%' : (i === currentIdxInUser ? `${storyProgress}%` : '0%'), 
-                          height: '100%', 
-                          background: 'linear-gradient(90deg, var(--primary), var(--secondary))',
-                          boxShadow: 'var(--glow)'
-                        }} />
+                        <div style={{ width: i < currentIdxInUser ? '100%' : (i === currentIdxInUser ? `${storyProgress}%` : '0%'), height: '100%', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', boxShadow: 'var(--glow)' }} />
                       </div>
                     ))}
                   </div>
                 );
               })()}
 
-              {/* Header */}
               <div style={{ position: 'absolute', top: '36px', left: '20px', right: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <img src={stories[activeStoryIdx].user?.avatar} alt="" style={{ width: '40px', height: '40px', borderRadius: '14px', border: '2px solid rgba(0,245,255,0.4)', boxShadow: '0 0 15px rgba(0,245,255,0.2)' }} />
@@ -445,50 +435,44 @@ export const FeedPage = () => {
                     <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}>Signal Active • SETI</div>
                   </div>
                 </div>
-                <button onClick={() => setActiveStoryIdx(null)} style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                <button onClick={() => setActiveStoryIdx(null)} style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                    <X size={20} />
                 </button>
               </div>
 
-              <img 
-                src={stories[activeStoryIdx].imageUrl} 
-                alt="story" 
-                onMouseDown={() => setIsStoryPaused(true)}
-                onMouseUp={() => setIsStoryPaused(false)}
-                onMouseLeave={() => setIsStoryPaused(false)}
-                onTouchStart={() => setIsStoryPaused(true)}
-                onTouchEnd={() => setIsStoryPaused(false)}
-                style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black', cursor: 'pointer' }} 
+              <img src={stories[activeStoryIdx].imageUrl} alt="story"
+                onMouseDown={() => setIsStoryPaused(true)} onMouseUp={() => setIsStoryPaused(false)}
+                onMouseLeave={() => setIsStoryPaused(false)} onTouchStart={() => setIsStoryPaused(true)} onTouchEnd={() => setIsStoryPaused(false)}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black', cursor: 'pointer' }}
               />
 
-              {/* Interaction Footer */}
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 20px 40px', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)', display: 'flex', gap: '16px', alignItems: 'center', zIndex: 20 }}>
-                <input 
-                  type="text" 
-                  placeholder="Ответить на историю..." 
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  onFocus={() => setIsStoryPaused(true)}
-                  onBlur={() => setIsStoryPaused(false)}
+                <input type="text" placeholder="Ответить на историю..." value={replyText} onChange={(e) => setReplyText(e.target.value)}
+                  onFocus={() => setIsStoryPaused(true)} onBlur={() => setIsStoryPaused(false)}
                   onKeyDown={(e) => e.key === 'Enter' && handleStoryReply()}
                   style={{ flex: 1, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '25px', padding: '12px 20px', color: 'white', fontSize: '0.9rem', outline: 'none', backdropFilter: 'blur(10px)' }}
                   onClick={(e) => e.stopPropagation()}
                 />
                 <div style={{ display: 'flex', gap: '18px' }}>
-                  <Send size={26} color={replyText.trim() ? "var(--primary-color)" : "white"} onClick={(e) => { e.stopPropagation(); handleStoryReply(); }} style={{ cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))', transition: 'all 0.2s' }} />
-                  <Share2 size={26} color="white" onClick={(e) => { e.stopPropagation(); handleShare(stories[activeStoryIdx].id); }} style={{ cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
+                  <Send size={26} color={replyText.trim() ? "var(--primary-color)" : "white"} onClick={(e) => { e.stopPropagation(); handleStoryReply(); }} style={{ cursor: 'pointer' }} />
+                  <Share2 size={26} color="white" onClick={(e) => { e.stopPropagation(); handleShare(stories[activeStoryIdx].id); }} style={{ cursor: 'pointer' }} />
                 </div>
               </div>
 
-              {/* Navigation overlays */}
               <div onClick={() => activeStoryIdx > 0 && setActiveStoryIdx(activeStoryIdx - 1)} style={{ position: 'absolute', left: 0, top: 0, bottom: '100px', width: '35%', cursor: 'pointer', zIndex: 5 }} />
               <div onClick={() => activeStoryIdx < stories.length - 1 ? setActiveStoryIdx(activeStoryIdx + 1) : setActiveStoryIdx(null)} style={{ position: 'absolute', right: 0, top: 0, bottom: '100px', width: '35%', cursor: 'pointer', zIndex: 5 }} />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* STORY CAMERA MODAL */}
+      <StoryCameraModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onUpload={handleStoryUpload}
+        isUploading={isUploadingStory}
+      />
     </div>
   );
 };
-
-
