@@ -29,7 +29,7 @@ export const AppDownloadPage = () => {
           </div>
         </div>
 
-        <a href="https://github.com/Claower3D/seti/actions" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+        <a href="https://github.com/Claower3D/seti/releases/download/latest/seti-app.apk" style={{ textDecoration: 'none' }}>
            <button style={{ 
                background: 'var(--primary)', 
                color: 'black', 
@@ -49,12 +49,12 @@ export const AppDownloadPage = () => {
            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
            >
              <Download size={24} />
-             Скачать APK из облака
+             Скачать APK напрямую
            </button>
         </a>
         
         <p style={{ marginTop: '24px', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', maxWidth: '400px', margin: '24px auto 0' }}>
-          * Сборка приложения происходит автоматически в облаке GitHub Actions. Нажмите кнопку выше, перейдите в открывшуюся вкладку "Actions", выберите последнюю успешную сборку "Build Android APK" и скачайте файл "android-apk" из раздела Artifacts.
+          * Сборка приложения автоматически обновляется. Нажатие на кнопку немедленно начнет загрузку .apk файла на ваше устройство. В случае предупреждения безопасности, разрешите установку из неизвестных источников.
         </p>
 
       </motion.div>
