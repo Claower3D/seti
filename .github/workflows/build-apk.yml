@@ -10,6 +10,7 @@ jobs:
   build:
     name: Build APK
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'chore: auto-build apk')"
 
     steps:
     - name: Checkout code
@@ -51,20 +52,19 @@ jobs:
       working-directory: frontend/android
       run: ./gradlew assembleDebug
 
-    - name: Rename APK file
-      run: mv frontend/android/app/build/outputs/apk/debug/app-debug.apk seti-app.apk
+    - name: Move APK to Public Folder
+      run: mv frontend/android/app/build/outputs/apk/debug/app-debug.apk frontend/public/seti-app.apk
 
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: android-apk
-        path: seti-app.apk
-
-    - name: Create or Update Latest Release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: latest
-        name: "SETI App (Latest Build)"
-        files: seti-app.apk
+    - name: Commit and Push APK to Repository
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add frontend/public/seti-app.apk
+        if ! git diff --staged --quiet; then
+          git commit -m "chore: auto-build apk"
+          git push
+        else
+          echo "No changes in APK detected, skipping commit."
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
