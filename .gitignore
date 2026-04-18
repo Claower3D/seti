@@ -34,3 +34,4 @@ dist/
 .idea/
 *.swp
 *.swo
+internal/firebase-key.json
