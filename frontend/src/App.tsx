@@ -11,6 +11,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { GroupsPage } from './pages/GroupsPage';
 import { WavesPage } from './pages/WavesPage';
 import { AppDownloadPage } from './pages/AppDownloadPage';
+import { UpdateModal } from './components/UpdateModal';
 import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, ArrowDownCircle, Plus } from 'lucide-react';
 import api from './api/client';
 
@@ -308,6 +309,7 @@ function AppInner() {
 
   return (
     <div className="main-layout">
+      <UpdateModal />
       <Sidebar />
       <div 
         style={{ flex: 1, minWidth: 0 }} 
