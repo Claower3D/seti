@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { useAuth } from './AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import api from '../api/client';
 
 interface Toast {
@@ -112,6 +114,24 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     setTimeout(() => {
                         removeToast(id);
                     }, 5000);
+
+                    // If we're on mobile, trigger the native Android status-bar notification!
+                    if (Capacitor.isNativePlatform()) {
+                        LocalNotifications.schedule({
+                            notifications: [
+                                {
+                                    title: "Новое сообщение от " + (msg.sender?.username || 'Друг'),
+                                    body: msg.content || 'Отправил файл',
+                                    id: Math.floor(Math.random() * 1000000),
+                                    schedule: { at: new Date(Date.now() + 100) }, // Trigger almost immediately
+                                    sound: undefined, // Uses default device sound
+                                    attachments: undefined,
+                                    actionTypeId: "",
+                                    extra: null
+                                }
+                            ]
+                        }).catch(console.error);
+                    }
                 }
             }
         };
