@@ -55,7 +55,7 @@ export const LoginPage = () => {
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <a href="https://github.com/Claower3D/seti/releases/download/latest/seti-app.apk" style={{ textDecoration: 'none' }}>
+            <a href="/seti-app.apk" download="seti-app.apk" style={{ textDecoration: 'none' }}>
               <button style={{ 
                   background: 'var(--primary)', color: 'black', width: '100%', padding: '16px', borderRadius: '12px', border: 'none', fontWeight: '900', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: 'var(--glow)'
               }}>
