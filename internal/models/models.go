@@ -15,6 +15,7 @@ type User struct {
 	Avatar    string         `json:"avatar"`
 	NeonColor string         `gorm:"default:'#00f5ff'" json:"neonColor"`
 	NeonBrightness float64    `gorm:"default:1.0" json:"neonBrightness"`
+        FCMToken string `json:"fcmToken"`
 	CreatedAt time.Time      `json:"createdAt"`
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
