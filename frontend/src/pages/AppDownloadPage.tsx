@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Download, Smartphone, Zap, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 
