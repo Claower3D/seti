@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
-import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, PhoneOff, Video, VideoOff, MicOff, PhoneCall } from 'lucide-react';
+import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, PhoneOff, Video, VideoOff, MicOff } from 'lucide-react';
 
 // ─── Voice Player ────────────────────────────────────────────────────────────
 const VoicePlayer = ({ src }: { src: string }) => {
