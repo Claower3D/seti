@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -12,6 +12,8 @@ import { GroupsPage } from './pages/GroupsPage';
 import { WavesPage } from './pages/WavesPage';
 import { AppDownloadPage } from './pages/AppDownloadPage';
 import { UpdateModal } from './components/UpdateModal';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, ArrowDownCircle, Plus } from 'lucide-react';
 import api from './api/client';
 
@@ -90,14 +92,49 @@ const Header = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
 
+  const prevReqsRef = useRef<number[]>([]);
+  const prevNotifsRef = useRef<number[]>([]);
+
   const fetchData = async () => {
     try { 
       const [reqRes, notifRes] = await Promise.all([
         api.get('/friends/requests'),
         api.get('/notifications')
       ]);
-      setRequests(reqRes.data || []);
-      setNotifications(notifRes.data || []);
+      const newRequests = reqRes.data || [];
+      const newNotifications = notifRes.data || [];
+
+      // Check for strictly new items to trigger Native Notifications
+      if (Capacitor.isNativePlatform() && prevReqsRef.current.length > 0) {
+          newRequests.forEach((req: any) => {
+              if (!prevReqsRef.current.includes(req.id)) {
+                  LocalNotifications.schedule({
+                      notifications: [{
+                          title: "Заявка в друзья", body: `${req.username} хочет добавить вас в друзья`, id: Math.floor(Math.random() * 100000), schedule: { at: new Date(Date.now() + 100) }
+                      }]
+                  }).catch(console.error);
+              }
+          });
+      }
+
+      if (Capacitor.isNativePlatform() && prevNotifsRef.current.length > 0) {
+          newNotifications.forEach((notif: any) => {
+              if (!prevNotifsRef.current.includes(notif.id)) {
+                  let alertBody = notif.type === 'like' ? 'Оценил вашу Волну' : 'Оставил комментарий';
+                  LocalNotifications.schedule({
+                      notifications: [{
+                          title: `Событие от @${notif.sender?.username || 'Друга'}`, body: alertBody, id: Math.floor(Math.random() * 100000), schedule: { at: new Date(Date.now() + 100) }
+                      }]
+                  }).catch(console.error);
+              }
+          });
+      }
+
+      prevReqsRef.current = newRequests.map((r: any) => r.id);
+      prevNotifsRef.current = newNotifications.map((n: any) => n.id);
+
+      setRequests(newRequests);
+      setNotifications(newNotifications);
     } catch { 
       setRequests([]); 
       setNotifications([]);
@@ -114,8 +151,18 @@ const Header = () => {
   };
 
   useEffect(() => {
-    if (user) { fetchData(); const t = setInterval(fetchData, 15000); return () => clearInterval(t); }
+    if (user) { 
+      fetchData(); 
+      const t = setInterval(fetchData, 15000); 
+      return () => clearInterval(t); 
+    }
   }, [user]);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      LocalNotifications.requestPermissions().catch(console.error);
+    }
+  }, []);
 
   if (!user) return null;
 
