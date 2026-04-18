@@ -54,8 +54,21 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             return;
         }
 
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const socket = new WebSocket(`${protocol}//${window.location.host}/ws?userId=${user.id}`);
+        let wsUrl = '';
+        const apiBase = import.meta.env.VITE_API_URL;
+        
+        if (apiBase) {
+            // Use provided API URL for Mobile/APK builds to reach backend
+            const url = new URL(apiBase, window.location.origin);
+            const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+            wsUrl = `${protocol}//${url.host}/ws?userId=${user.id}`;
+        } else {
+            // Default Web behavior
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            wsUrl = `${protocol}//${window.location.host}/ws?userId=${user.id}`;
+        }
+
+        const socket = new WebSocket(wsUrl);
 
         socket.onopen = () => {
             console.log('Global WebSocket connected');
