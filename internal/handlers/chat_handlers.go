@@ -125,6 +125,14 @@ func WebSocketHandler(c *gin.Context) {
 				ReplyStoryURL: msgData.ReplyStoryURL,
 			}
 			db.DB.Create(&chatMsg)
+                        // Send push notification
+                        var receiver models.User
+                        db.DB.First(&receiver, msgData.ReceiverID)
+                        if receiver.FCMToken != "" {
+                                var sender models.User
+                                db.DB.First(&sender, userID)
+                                go SendPushNotification(receiver.FCMToken, sender.Username, msgData.Content)
+                        }
 			// Preload sender info for notifications
 			db.DB.Preload("Sender").First(&chatMsg, chatMsg.ID)
 		}

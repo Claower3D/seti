@@ -15,6 +15,7 @@ import (
 func main() {
 _ = godotenv.Load()
 db.InitDB()
+        handlers.InitFCM()
 
 r := gin.Default()
 r.Static("/uploads", "./uploads")
@@ -79,7 +80,8 @@ protected.POST("/waves/:id/like", handlers.LikeWave)
 protected.GET("/waves/:id/comments", handlers.GetWaveComments)
 protected.POST("/waves/:id/comments", handlers.CreateWaveComment)
 
-		protected.GET("/notifications", handlers.GetNotifications)
+		protected.POST("/fcm-token", handlers.RegisterFCMToken)
+                protected.GET("/notifications", handlers.GetNotifications)
 		protected.POST("/notifications/:id/read", handlers.MarkNotificationRead)
 }
 }
