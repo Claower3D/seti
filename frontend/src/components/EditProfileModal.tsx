@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun } from 'lucide-react';
+import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface EditProfileModalProps {
@@ -31,7 +31,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
   // Design State
   const [neonColor, setNeonColor] = useState(currentUser?.neonColor || '#00f5ff');
   const [neonBrightness, setNeonBrightness] = useState(currentUser?.neonBrightness || 1.0);
-  const { updateUser } = useAuth();
+  const { updateUser, logout } = useAuth();
   
   // Security State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -323,9 +323,20 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                     <input type="password" className="input-field" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
                   </div>
 
-                  <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ background: '#ff3060', color: 'white', fontWeight: '900', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', marginTop: '10px', boxShadow: '0 0 20px rgba(255,48,96,0.3)' }}>
+                  <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ background: neonColor, color: 'black', fontWeight: '900', border: 'none', padding: '14px', borderRadius: '12px', cursor: 'pointer', marginTop: '10px', boxShadow: `0 0 20px ${neonColor}33` }}>
                     Обновить пароль
                   </button>
+
+                  <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '700', fontSize: '0.75rem', letterSpacing: '1px' }}>АККАУНТ</label>
+                    <button 
+                      type="button" 
+                      onClick={() => { onClose(); logout(); }} 
+                      style={{ background: 'rgba(255,48,96,0.1)', color: '#ff3060', border: '1px solid rgba(255,48,96,0.3)', padding: '14px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', transition: 'all 0.2s' }}
+                    >
+                      <LogOut size={18} /> Выйти со всех устройств
+                    </button>
+                  </div>
                 </form>
               )}
             </div>
