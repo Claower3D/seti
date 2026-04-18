@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"log"
+	"os"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
@@ -12,7 +13,14 @@ import (
 var fcmClient *messaging.Client
 
 func InitFCM() {
-	opt := option.WithCredentialsFile("./internal/firebase-key.json")
+	creds := os.Getenv("FIREBASE_CREDENTIALS")
+	var opt option.ClientOption
+	if creds != "" {
+		opt = option.WithCredentialsJSON([]byte(creds))
+	} else {
+		opt = option.WithCredentialsFile("./internal/firebase-key.json")
+	}
+
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		log.Printf("FCM init error: %v", err)
@@ -47,5 +55,7 @@ func SendPushNotification(token, title, body string) {
 	_, err := fcmClient.Send(context.Background(), message)
 	if err != nil {
 		log.Printf("FCM send error: %v", err)
+	} else {
+		log.Printf("FCM notification sent to token: %s", token[:10])
 	}
 }
