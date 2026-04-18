@@ -42,11 +42,11 @@ jobs:
       env:
         VITE_API_URL: ${{ secrets.RAILWAY_URL }}
 
-    - name: Sync Capacitor
+    - name: Copy Assets to Android
       working-directory: frontend
       run: |
-        chmod +x android/gradlew
-        npx cap sync android
+        rm -rf android/app/src/main/assets/public
+        cp -R dist android/app/src/main/assets/public
 
     - name: Build Android APK
       working-directory: frontend/android
