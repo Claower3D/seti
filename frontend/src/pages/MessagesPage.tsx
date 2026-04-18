@@ -139,7 +139,7 @@ const CallScreen = ({
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const [callDuration, setCallDuration] = useState(0);
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState(!isIncoming);
 
   useEffect(() => {
     if (remoteStream && remoteVideoRef.current) {
