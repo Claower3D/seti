@@ -5,6 +5,8 @@ const config: CapacitorConfig = {
   appName: 'SETI',
   webDir: 'dist',
   server: {
+    url: 'https://seti-production.up.railway.app',
+    cleartext: false,
     androidScheme: 'https'
   },
   plugins: {
