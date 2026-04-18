@@ -10,7 +10,8 @@ import { FriendsPage } from './pages/FriendsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { GroupsPage } from './pages/GroupsPage';
 import { WavesPage } from './pages/WavesPage';
-import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, Plus } from 'lucide-react';
+import { AppDownloadPage } from './pages/AppDownloadPage';
+import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, ArrowDownCircle, Plus } from 'lucide-react';
 import api from './api/client';
 
 const Sidebar = () => {
@@ -24,6 +25,7 @@ const Sidebar = () => {
     { name: 'Друзья', icon: Users, path: '/friends' },
     { name: 'Волны', icon: Radio, path: '/waves' },
     { name: 'Мой профиль', icon: User, path: `/profile/${user.username}` },
+    { name: 'Приложение', icon: ArrowDownCircle, path: '/app' },
   ];
   return (
     <div className="sidebar glass-panel">
@@ -329,6 +331,7 @@ function AppInner() {
             <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
             <Route path="/waves" element={<ProtectedRoute><WavesPage /></ProtectedRoute>} />
             <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/app" element={<ProtectedRoute><AppDownloadPage /></ProtectedRoute>} />
           </Routes>
         </AnimatePresence>
       </div>
