@@ -123,8 +123,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             ws.send(JSON.stringify({ action: 'call_offer', receiverId: friend.id, offer, isVideo: video }));
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to start call:', err);
+            alert('Не удалось получить доступ к камере или микрофону. Убедитесь, что они не используются другим приложением.');
             endCall();
         }
     }, [ws, endCall]);
@@ -158,8 +159,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
             ws.send(JSON.stringify({ action: 'call_answer', receiverId: callFriend.id, answer }));
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to accept call:', err);
+            alert('Не удалось получить доступ к камере или микрофону. Убедитесь, что они не используются другим приложением.');
             endCall();
         }
     }, [ws, callFriend, callIsVideo, endCall]);
@@ -249,6 +251,8 @@ const CallScreen = () => {
         callFriend, callIsVideo, callState, isMuted, isVideoOff, isSpeaker,
         localStream, remoteStream, acceptCall, endCall, toggleMute, toggleVideo, toggleSpeaker 
     } = useCall();
+    
+    if (!callFriend) return null;
     
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const localVideoRef = useRef<HTMLVideoElement>(null);
