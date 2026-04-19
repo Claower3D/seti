@@ -7,7 +7,8 @@ const config: CapacitorConfig = {
   server: {
     url: 'https://seti-production.up.railway.app',
     cleartext: false,
-    androidScheme: 'https'
+    androidScheme: 'https',
+    allowMixedContent: true
   },
   plugins: {
     SplashScreen: {
