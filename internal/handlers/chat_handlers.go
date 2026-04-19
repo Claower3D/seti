@@ -83,6 +83,22 @@ func WebSocketHandler(c *gin.Context) {
 			msgData.Action = "send"
 		}
 
+		// ─── WebRTC Signaling Relay ───
+		if msgData.Action == "call_offer" || msgData.Action == "call_answer" || \
+		   msgData.Action == "call_ice" || msgData.Action == "call_end" {
+		
+			var signalingData map[string]interface{}
+			json.Unmarshal(message, &signalingData)
+			signalingData["senderId"] = userID
+
+			mu.Lock()
+			if receiver, ok := clients[msgData.ReceiverID]; ok {
+				receiver.Conn.WriteJSON(signalingData)
+			}
+			mu.Unlock()
+			continue
+		}
+
 		var chatMsg models.Message
 
 		if msgData.Action == "delete" {

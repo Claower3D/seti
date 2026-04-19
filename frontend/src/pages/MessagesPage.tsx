@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
-import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, PhoneOff, Video, VideoOff, MicOff } from 'lucide-react';
+import { useCall } from '../context/CallContext';
+import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, Video } from 'lucide-react';
 
 // ─── Voice Player ────────────────────────────────────────────────────────────
 const VoicePlayer = ({ src }: { src: string }) => {
@@ -125,135 +126,7 @@ const VoiceRecorder = ({ onSend, onCancel }: { onSend: (blob: Blob) => void; onC
   );
 };
 
-// ─── Call Screen ─────────────────────────────────────────────────────────────
-const CallScreen = ({
-  friend, isVideo, isIncoming, onAccept, onDecline, onEnd,
-  localStream, remoteStream, isMuted, isVideoOff, onToggleMute, onToggleVideo
-}: {
-  friend: any; isVideo: boolean; isIncoming: boolean;
-  onAccept?: () => void; onDecline: () => void; onEnd: () => void;
-  localStream: MediaStream | null; remoteStream: MediaStream | null;
-  isMuted: boolean; isVideoOff: boolean;
-  onToggleMute: () => void; onToggleVideo: () => void;
-}) => {
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const [callDuration, setCallDuration] = useState(0);
-  const [connected, setConnected] = useState(!isIncoming);
 
-  useEffect(() => {
-    if (remoteStream && remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = remoteStream;
-      setConnected(true);
-    }
-  }, [remoteStream]);
-
-  useEffect(() => {
-    if (localStream && localVideoRef.current) {
-      localVideoRef.current.srcObject = localStream;
-    }
-  }, [localStream]);
-
-  useEffect(() => {
-    if (!connected) return;
-    const t = setInterval(() => setCallDuration(d => d + 1), 1000);
-    return () => clearInterval(t);
-  }, [connected]);
-
-  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, zIndex: 3000, background: isVideo ? '#000' : 'linear-gradient(135deg, #0a0a1a, #0d1a2e)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-
-      {/* Remote video (background for video calls) */}
-      {isVideo && remoteStream && (
-        <video ref={remoteVideoRef} autoPlay playsInline
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-      )}
-
-      {/* Blur overlay */}
-      {isVideo && !remoteStream && (
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #0a0a1a, #0d1a2e)' }} />
-      )}
-
-      {/* Content */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '40px 24px' }}>
-        {/* Avatar */}
-        <motion.div
-          animate={!connected ? { scale: [1, 1.08, 1] } : {}}
-          transition={{ repeat: Infinity, duration: 2 }}
-          style={{ position: 'relative' }}>
-          {/* Ripple rings when ringing */}
-          {!connected && [1, 2, 3].map(i => (
-            <motion.div key={i}
-              animate={{ scale: [1, 2.5], opacity: [0.4, 0] }}
-              transition={{ repeat: Infinity, duration: 2, delay: i * 0.6 }}
-              style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid var(--primary)', margin: '-20px' }} />
-          ))}
-          <img src={friend.avatar} alt="" style={{ width: '120px', height: '120px', borderRadius: '40px', border: '3px solid var(--primary)', boxShadow: '0 0 40px rgba(0,242,255,0.4)', position: 'relative', zIndex: 1 }} />
-        </motion.div>
-
-        <div style={{ textAlign: 'center' }}>
-          <h2 style={{ color: 'white', fontWeight: '900', fontSize: '1.8rem', marginBottom: '8px', textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>{friend.username}</h2>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', letterSpacing: '0.05em' }}>
-            {isIncoming && !connected ? (
-              isVideo ? '📹 Входящий видеозвонок' : '📞 Входящий звонок'
-            ) : connected ? (
-              `🟢 ${fmt(callDuration)}`
-            ) : (
-              isVideo ? '📹 Видеозвонок...' : '📞 Вызов...'
-            )}
-          </p>
-        </div>
-      </div>
-
-      {/* Local video pip */}
-      {isVideo && localStream && (
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-          style={{ position: 'absolute', bottom: '160px', right: '20px', width: '120px', height: '180px', borderRadius: '20px', overflow: 'hidden', border: '2px solid var(--primary)', boxShadow: '0 0 20px rgba(0,242,255,0.3)', zIndex: 20 }}>
-          <video ref={localVideoRef} autoPlay playsInline muted
-            style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} />
-        </motion.div>
-      )}
-
-      {/* Controls */}
-      <div style={{ position: 'absolute', bottom: '60px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '24px', zIndex: 20 }}>
-        {isIncoming && !connected ? (
-          // Incoming call — accept / decline
-          <>
-            <motion.button whileTap={{ scale: 0.9 }} onClick={onDecline}
-              style={{ width: '72px', height: '72px', borderRadius: '50%', background: '#ff3060', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 30px rgba(255,48,96,0.5)' }}>
-              <PhoneOff size={30} />
-            </motion.button>
-            <motion.button whileTap={{ scale: 0.9 }} onClick={onAccept}
-              style={{ width: '72px', height: '72px', borderRadius: '50%', background: '#00c853', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 30px rgba(0,200,83,0.5)' }}>
-              <Phone size={30} />
-            </motion.button>
-          </>
-        ) : (
-          // Active call controls
-          <>
-            {isVideo && (
-              <motion.button whileTap={{ scale: 0.9 }} onClick={onToggleVideo}
-                style={{ width: '60px', height: '60px', borderRadius: '50%', background: isVideoOff ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                {isVideoOff ? <VideoOff size={24} /> : <Video size={24} />}
-              </motion.button>
-            )}
-            <motion.button whileTap={{ scale: 0.9 }} onClick={onToggleMute}
-              style={{ width: '60px', height: '60px', borderRadius: '50%', background: isMuted ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
-            </motion.button>
-            <motion.button whileTap={{ scale: 0.9 }} onClick={onEnd}
-              style={{ width: '72px', height: '72px', borderRadius: '50%', background: '#ff3060', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 30px rgba(255,48,96,0.5)' }}>
-              <PhoneOff size={30} />
-            </motion.button>
-          </>
-        )}
-      </div>
-    </motion.div>
-  );
-};
 
 // ─── Main MessagesPage ────────────────────────────────────────────────────────
 export const MessagesPage = () => {
@@ -272,136 +145,12 @@ export const MessagesPage = () => {
   const [fullscreenMedia, setFullscreenMedia] = useState<{url: string, type: string} | null>(null);
   const location = useLocation();
 
-  // ── WebRTC state ──
-  const [callState, setCallState] = useState<'idle' | 'outgoing' | 'incoming' | 'active'>('idle');
-  const [callIsVideo, setCallIsVideo] = useState(false);
-  const [callFriend, setCallFriend] = useState<any>(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const pendingOfferRef = useRef<RTCSessionDescriptionInit | null>(null);
+  const { startCall } = useCall();
 
-  const iceServers = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
 
-  // ── Start call ──
-  const startCall = useCallback(async (friend: any, video: boolean) => {
-    if (!ws) return;
-    setCallFriend(friend);
-    setCallIsVideo(video);
-    setCallState('outgoing');
-
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
-    setLocalStream(stream);
-
-    const pc = new RTCPeerConnection({ iceServers });
-    pcRef.current = pc;
-    stream.getTracks().forEach(t => pc.addTrack(t, stream));
-
-    const remoteS = new MediaStream();
-    setRemoteStream(remoteS);
-    pc.ontrack = (e) => { e.streams[0].getTracks().forEach(t => remoteS.addTrack(t)); };
-
-    pc.onicecandidate = (e) => {
-      if (e.candidate && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ action: 'call_ice', receiverId: friend.id, candidate: e.candidate }));
-      }
-    };
-
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    ws.send(JSON.stringify({ action: 'call_offer', receiverId: friend.id, offer, isVideo: video }));
-  }, [ws]);
-
-  // ── Accept call ──
-  const acceptCall = useCallback(async () => {
-    if (!ws || !callFriend || !pendingOfferRef.current) return;
-    setCallState('active');
-
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: callIsVideo });
-    setLocalStream(stream);
-
-    const pc = new RTCPeerConnection({ iceServers });
-    pcRef.current = pc;
-    stream.getTracks().forEach(t => pc.addTrack(t, stream));
-
-    const remoteS = new MediaStream();
-    setRemoteStream(remoteS);
-    pc.ontrack = (e) => { e.streams[0].getTracks().forEach(t => remoteS.addTrack(t)); };
-
-    pc.onicecandidate = (e) => {
-      if (e.candidate && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ action: 'call_ice', receiverId: callFriend.id, candidate: e.candidate }));
-      }
-    };
-
-    await pc.setRemoteDescription(pendingOfferRef.current);
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    ws.send(JSON.stringify({ action: 'call_answer', receiverId: callFriend.id, answer }));
-  }, [ws, callFriend, callIsVideo]);
-
-  // ── End call ──
-  const endCall = useCallback(() => {
-    if (ws && callFriend && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ action: 'call_end', receiverId: callFriend.id }));
-    }
-    if (localStream) localStream.getTracks().forEach(t => t.stop());
-    if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
-    setLocalStream(null);
-    setRemoteStream(null);
-    setCallState('idle');
-    setCallFriend(null);
-    setIsMuted(false);
-    setIsVideoOff(false);
-  }, [ws, callFriend, localStream]);
-
-  // ── Toggle mute ──
-  const toggleMute = () => {
-    if (!localStream) return;
-    localStream.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
-    setIsMuted(m => !m);
-  };
-
-  // ── Toggle video ──
-  const toggleVideo = () => {
-    if (!localStream) return;
-    localStream.getVideoTracks().forEach(t => { t.enabled = !t.enabled; });
-    setIsVideoOff(v => !v);
-  };
-
-  // ── Handle WS call signaling ──
   useEffect(() => {
     if (!lastMessage) return;
     const data = lastMessage;
-
-    if (data.action === 'call_offer') {
-      const callerFriend = friends.find(f => f.id === data.senderId) || { id: data.senderId, username: 'Звонок', avatar: '' };
-      setCallFriend(callerFriend);
-      setCallIsVideo(!!data.isVideo);
-      pendingOfferRef.current = data.offer;
-      setCallState('incoming');
-      return;
-    }
-    if (data.action === 'call_answer' && pcRef.current) {
-      pcRef.current.setRemoteDescription(data.answer);
-      setCallState('active');
-      return;
-    }
-    if (data.action === 'call_ice' && pcRef.current) {
-      pcRef.current.addIceCandidate(data.candidate).catch(() => {});
-      return;
-    }
-    if (data.action === 'call_end') {
-      if (localStream) localStream.getTracks().forEach(t => t.stop());
-      if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
-      setLocalStream(null); setRemoteStream(null);
-      setCallState('idle'); setCallFriend(null);
-      return;
-    }
-
-    // regular message handling
     const action = data.action || 'send';
     const msg = data.message || data;
     setMessages(prev => {
@@ -680,25 +429,6 @@ export const MessagesPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Call Screen */}
-      <AnimatePresence>
-        {callState !== 'idle' && callFriend && (
-          <CallScreen
-            friend={callFriend}
-            isVideo={callIsVideo}
-            isIncoming={callState === 'incoming'}
-            onAccept={acceptCall}
-            onDecline={endCall}
-            onEnd={endCall}
-            localStream={localStream}
-            remoteStream={remoteStream}
-            isMuted={isMuted}
-            isVideoOff={isVideoOff}
-            onToggleMute={toggleMute}
-            onToggleVideo={toggleVideo}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 };

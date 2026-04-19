@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider, useNotifications } from './context/NotificationContext';
+import { CallProvider } from './context/CallContext';
 import { LoginPage, RegisterPage } from './pages/AuthPages';
 import { FeedPage } from './pages/FeedPage';
 import { MessagesPage } from './pages/MessagesPage';
@@ -393,7 +394,9 @@ const Root = () => (
   <BrowserRouter>
     <AuthProvider>
       <NotificationProvider>
-        <AppInner />
+        <CallProvider>
+          <AppInner />
+        </CallProvider>
       </NotificationProvider>
     </AuthProvider>
   </BrowserRouter>
