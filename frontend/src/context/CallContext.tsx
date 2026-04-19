@@ -290,10 +290,22 @@ const CallScreen = () => {
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
             }}
         >
-            {/* Background for video calls */}
-            {callIsVideo && remoteStream && (
-                <video ref={remoteVideoRef} autoPlay playsInline 
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            {/* Remote media element (hidden for audio-only calls, fullscreen for video) */}
+            {remoteStream && (
+                <video 
+                    ref={remoteVideoRef} 
+                    autoPlay 
+                    playsInline 
+                    style={{ 
+                        position: 'absolute', 
+                        inset: 0, 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover',
+                        display: callIsVideo ? 'block' : 'none',
+                        zIndex: 0
+                    }} 
+                />
             )}
             
             <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
