@@ -2,6 +2,29 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useNotifications } from './NotificationContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+
+// ─── Native Audio Plugin Bridge ───────────────────────────────────────────────
+// This calls into AudioPlugin.java on Android via Capacitor.
+// On web these calls are safely ignored.
+const NativeAudio = {
+    async setCallMode(active: boolean) {
+        if (!Capacitor.isNativePlatform()) return;
+        try {
+            await (Capacitor as any).Plugins.AudioPlugin.setCallMode({ active });
+        } catch (e) {
+            console.warn('[AudioPlugin] setCallMode failed:', e);
+        }
+    },
+    async setSpeakerOn(enabled: boolean) {
+        if (!Capacitor.isNativePlatform()) return;
+        try {
+            await (Capacitor as any).Plugins.AudioPlugin.setSpeakerOn({ enabled });
+        } catch (e) {
+            console.warn('[AudioPlugin] setSpeakerOn failed:', e);
+        }
+    },
+};
 
 interface CallContextType {
     callState: 'idle' | 'outgoing' | 'incoming' | 'active';
@@ -30,7 +53,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [callIsVideo, setCallIsVideo] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
-    const [isSpeaker, setIsSpeaker] = useState(true); // Default to speaker for web calls
+    // On mobile: default speaker OFF (earpiece mode), user can toggle ON.
+    // On web: default speaker ON (no earpiece concept).
+    const [isSpeaker, setIsSpeaker] = useState(!Capacitor.isNativePlatform());
     
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
@@ -49,11 +74,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Initialize audio elements for tones
     useEffect(() => {
-        const ring = new Audio('https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3'); // Incoming call
+        const ring = new Audio('https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3');
         ring.loop = true;
         ringtoneRef.current = ring;
 
-        const dial = new Audio('https://assets.mixkit.co/active_storage/sfx/1358/1358-preview.mp3'); // Dialing tone
+        const dial = new Audio('https://assets.mixkit.co/active_storage/sfx/1358/1358-preview.mp3');
         dial.loop = true;
         dialtoneRef.current = dial;
         
@@ -69,6 +94,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const playDialtone = () => dialtoneRef.current?.play().catch(() => {});
     const stopDialtone = () => { if (dialtoneRef.current) { dialtoneRef.current.pause(); dialtoneRef.current.currentTime = 0; } };
 
+    // ─── End Call ─────────────────────────────────────────────────────────────
     const endCall = useCallback(() => {
         if (ws && callFriend && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ action: 'call_end', receiverId: callFriend.id }));
@@ -76,6 +102,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         stopRingtone();
         stopDialtone();
+
+        // Deactivate native audio mode
+        NativeAudio.setCallMode(false);
 
         if (localStream) {
             localStream.getTracks().forEach(t => t.stop());
@@ -91,14 +120,23 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCallFriend(null);
         setIsMuted(false);
         setIsVideoOff(false);
+        // Reset speaker state for next call
+        setIsSpeaker(!Capacitor.isNativePlatform());
     }, [ws, callFriend, localStream]);
 
+    // ─── Start Call (Caller side) ──────────────────────────────────────────────
     const startCall = useCallback(async (friend: any, video: boolean) => {
         if (!ws) return;
         setCallFriend(friend);
         setCallIsVideo(video);
         setCallState('outgoing');
         playDialtone();
+
+        // Activate Android audio in-call mode. Speaker defaults to OFF (earpiece)
+        // so the caller can hold the phone like a normal call.
+        await NativeAudio.setCallMode(true);
+        await NativeAudio.setSpeakerOn(false);
+        setIsSpeaker(false);
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
@@ -130,10 +168,17 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [ws, endCall]);
 
+    // ─── Accept Call (Receiver side) ──────────────────────────────────────────
     const acceptCall = useCallback(async () => {
         if (!ws || !callFriend || !pendingOfferRef.current) return;
         setCallState('active');
         stopRingtone();
+
+        // Activate Android audio in-call mode with speaker ON so the other
+        // person is heard immediately without having to tap the button.
+        await NativeAudio.setCallMode(true);
+        await NativeAudio.setSpeakerOn(true);
+        setIsSpeaker(true);
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: callIsVideo });
@@ -166,6 +211,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [ws, callFriend, callIsVideo, endCall]);
 
+    // When caller receives answer, speaker defaults ON too
+    // (handled in message effect below when state goes 'active')
+
     const toggleMute = () => {
         if (!localStream) return;
         localStream.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
@@ -178,13 +226,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsVideoOff(v => !v);
     };
 
+    // ─── Toggle Speaker — now ACTUALLY switches on Android ────────────────────
     const toggleSpeaker = () => {
-        setIsSpeaker(s => !s);
-        // On web, actual speaker switching is hard without specific hardware API support (setSinkId)
-        // We'll just toggle the state for UI and potentially use native Capacitor plugin in future.
+        const next = !isSpeaker;
+        setIsSpeaker(next);
+        NativeAudio.setSpeakerOn(next);
     };
 
-    // Handle incoming signaling messages
+    // ─── Handle incoming signaling messages ───────────────────────────────────
     useEffect(() => {
         if (!lastMessage) return;
         const data = lastMessage;
@@ -203,6 +252,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             pcRef.current.setRemoteDescription(data.answer);
             setCallState('active');
             stopDialtone();
+            // Caller: when answer received, turn speaker ON so they can hear too
+            NativeAudio.setSpeakerOn(true);
+            setIsSpeaker(true);
             return;
         }
 
@@ -214,12 +266,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.action === 'call_end') {
             stopRingtone();
             stopDialtone();
+            NativeAudio.setCallMode(false);
             if (localStream) localStream.getTracks().forEach(t => t.stop());
             if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
             setLocalStream(null);
             setRemoteStream(null);
             setCallState('idle');
             setCallFriend(null);
+            setIsSpeaker(!Capacitor.isNativePlatform());
             return;
         }
     }, [lastMessage, callState, localStream]);
@@ -245,7 +299,7 @@ export const useCall = () => {
     return context;
 };
 
-// ─── Global Call Screen Component ───
+// ─── Global Call Screen Component ─────────────────────────────────────────────
 const CallScreen = () => {
     const { 
         callFriend, callIsVideo, callState, isMuted, isVideoOff, isSpeaker,
@@ -256,7 +310,15 @@ const CallScreen = () => {
     
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const localVideoRef = useRef<HTMLVideoElement>(null);
+    const remoteAudioRef = useRef<HTMLAudioElement>(null);
     const [duration, setDuration] = useState(0);
+
+    // For audio-only calls, attach the remote stream to an <audio> element
+    useEffect(() => {
+        if (remoteStream && remoteAudioRef.current && !callIsVideo) {
+            remoteAudioRef.current.srcObject = remoteStream;
+        }
+    }, [remoteStream, callIsVideo]);
 
     useEffect(() => {
         if (remoteStream && remoteVideoRef.current) {
@@ -290,8 +352,13 @@ const CallScreen = () => {
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
             }}
         >
-            {/* Remote media element (hidden for audio-only calls, fullscreen for video) */}
-            {remoteStream && (
+            {/* Hidden audio element for audio-only calls — ensures sound plays through Android AudioManager */}
+            {!callIsVideo && (
+                <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: 'none' }} />
+            )}
+
+            {/* Remote video — fullscreen for video calls */}
+            {remoteStream && callIsVideo && (
                 <video 
                     ref={remoteVideoRef} 
                     autoPlay 
@@ -302,7 +369,6 @@ const CallScreen = () => {
                         width: '100%', 
                         height: '100%', 
                         objectFit: 'cover',
-                        display: callIsVideo ? 'block' : 'none',
                         zIndex: 0
                     }} 
                 />
