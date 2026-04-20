@@ -2,6 +2,49 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Image as ImageIcon, RotateCcw, Zap, ZapOff, Send, Video } from 'lucide-react';
 
+// Isolated components to prevent unnecessary re-renders during recording
+const CameraPreview = React.memo(({ videoRef, facingMode }: { videoRef: any, facingMode: string }) => (
+  <video 
+    ref={videoRef} 
+    autoPlay 
+    playsInline 
+    muted
+    style={{ 
+      width: '100%', 
+      height: '100%', 
+      objectFit: 'cover', 
+      transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
+      willChange: 'transform'
+    }} 
+  />
+));
+
+const RecordingProgress = React.memo(({ seconds, max }: { seconds: number, max: number }) => (
+  <>
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'rgba(255,255,255,0.2)', zIndex: 15 }}>
+      <motion.div
+        initial={{ width: '0%' }}
+        animate={{ width: `${(seconds / max) * 100}%` }}
+        transition={{ duration: 1, ease: 'linear' }}
+        style={{ height: '100%', background: '#ff3060', boxShadow: '0 0 8px #ff3060' }} 
+      />
+    </div>
+    <div style={{ position: 'absolute', top: '16px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,48,96,0.9)', borderRadius: '20px', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 15 }}>
+      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'white', animation: 'running-pulse 1s infinite' }} />
+      <span style={{ color: 'white', fontWeight: '800', fontSize: '0.9rem' }}>
+        {seconds}с / {max}с
+      </span>
+    </div>
+    <style>{`
+      @keyframes running-pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.7; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+    `}</style>
+  </>
+));
+
 interface StoryCameraModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -184,41 +227,11 @@ export const StoryCameraModal: React.FC<StoryCameraModalProps> = ({ isOpen, onCl
                     </button>
                   </div>
                 ) : (
-                  <video 
-                    ref={videoRef} 
-                    autoPlay 
-                    playsInline 
-                    muted
-                    style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      objectFit: 'cover', 
-                      transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
-                      willChange: 'transform' // Hardware acceleration
-                    }} 
-                  />
+                  <CameraPreview videoRef={videoRef} facingMode={facingMode} />
                 )}
 
-                {/* Recording progress bar */}
-                {isRecordingVideo && (
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'rgba(255,255,255,0.2)', zIndex: 15 }}>
-                    <motion.div
-                      initial={{ width: '0%' }}
-                      animate={{ width: `${(recordSeconds / MAX_VIDEO_SEC) * 100}%` }}
-                      transition={{ duration: 1, ease: 'linear' }}
-                      style={{ height: '100%', background: '#ff3060', boxShadow: '0 0 8px #ff3060' }} />
-                  </div>
-                )}
-
-                {/* Recording timer badge */}
-                {isRecordingVideo && (
-                  <div style={{ position: 'absolute', top: '16px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,48,96,0.9)', borderRadius: '20px', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 15 }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'white', animation: 'pulse 1s infinite' }} />
-                    <span style={{ color: 'white', fontWeight: '800', fontSize: '0.9rem' }}>
-                      {recordSeconds}с / {MAX_VIDEO_SEC}с
-                    </span>
-                  </div>
-                )}
+                {/* Recording UI */}
+                {isRecordingVideo && <RecordingProgress seconds={recordSeconds} max={MAX_VIDEO_SEC} />}
 
                 {/* TOP BAR */}
                 {!isRecordingVideo && (
@@ -245,7 +258,18 @@ export const StoryCameraModal: React.FC<StoryCameraModalProps> = ({ isOpen, onCl
                 )}
 
                 {/* BOTTOM CONTROLS */}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '32px 40px 52px', background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+                <div style={{ 
+                  position: 'absolute', 
+                  bottom: 0, 
+                  left: 0, 
+                  right: 0, 
+                  padding: '32px 40px 52px', 
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: isRecordingVideo ? 'center' : 'space-between', 
+                  zIndex: 10 
+                }}>
 
                   {/* Gallery */}
                   {!isRecordingVideo && (
