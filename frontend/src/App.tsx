@@ -349,7 +349,6 @@ function AppInner() {
   const location = useLocation();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const isWavesPage = location.pathname === '/waves';
-  const isMessagesPage = location.pathname.startsWith('/messages');
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -375,15 +374,14 @@ function AppInner() {
       <div 
         style={{ 
           flex: 1, 
-          minWidth: 0, 
-          paddingTop: (isMessagesPage && !isWavesPage) ? 'calc(env(safe-area-inset-top, 0px) + 20px)' : undefined 
+          minWidth: 0
         }} 
         className={`main-content ${isWavesPage ? 'waves-layout' : ''}`}
       >
         <div className="desktop-only">
-          {!isMessagesPage && <Header />}
+          <Header />
         </div>
-        {!isWavesPage && !isMessagesPage && (
+        {!isWavesPage && (
           <div className="mobile-only">
             <Header />
           </div>
