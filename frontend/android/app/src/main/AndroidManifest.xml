@@ -31,10 +31,28 @@
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Microphone & Camera — required for WebRTC calls -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Audio routing (speaker / earpiece switching) -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- Keep screen & CPU on during a call -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Know about incoming system phone calls so we can pause our VoIP call -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!-- Keep audio session alive when app goes to background -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+
+    <!-- Push notifications for incoming calls (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Bluetooth headset support -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
 </manifest>
