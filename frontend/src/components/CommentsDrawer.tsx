@@ -100,7 +100,7 @@ const CommentsDrawer: React.FC<Props> = ({ itemId, type, isOpen, onClose, onComm
               inset: 0,
               background: 'rgba(0, 0, 0, 0.4)',
               backdropFilter: 'blur(8px)',
-              zIndex: 1000
+              zIndex: 2400
             }}
           />
 
@@ -120,7 +120,7 @@ const CommentsDrawer: React.FC<Props> = ({ itemId, type, isOpen, onClose, onComm
               backdropFilter: 'blur(30px)',
               borderTop: '1px solid var(--border-bright)',
               borderRadius: '24px 24px 0 0',
-              zIndex: 1001,
+              zIndex: 2500,
               display: 'flex',
               flexDirection: 'column',
               boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.5)'
@@ -273,7 +273,7 @@ const CommentsDrawer: React.FC<Props> = ({ itemId, type, isOpen, onClose, onComm
 
             {/* Input Footer */}
             <div style={{
-              padding: '16px 20px 32px',
+              padding: '16px 20px calc(16px + env(safe-area-inset-bottom, 24px))',
               borderTop: '1px solid rgba(255, 255, 255, 0.05)',
               background: 'rgba(10, 12, 18, 0.95)',
               display: 'flex',
