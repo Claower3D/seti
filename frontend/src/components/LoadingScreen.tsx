@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import SetiLogo from './SetiLogo';
 
 const LoadingScreen = () => {
   const [telemetry, setTelemetry] = useState<string[]>([]);
@@ -122,7 +123,7 @@ const LoadingScreen = () => {
             backdropFilter: 'blur(10px)',
           }}
         >
-          <img src="/logo.png" alt="SETI" style={{ width: '88px', height: '88px', filter: 'drop-shadow(0 0 10px #00f5ff)' }} />
+          <SetiLogo size={88} />
         </motion.div>
       </div>
 

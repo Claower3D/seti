@@ -7,6 +7,7 @@ import { CallProvider } from './context/CallContext';
 import { UpdateModal } from './components/UpdateModal';
 import LoadingScreen from './components/LoadingScreen';
 import ErrorPlaceholder from './components/ErrorPlaceholder';
+import SetiLogo from './components/SetiLogo';
 
 // Lazy load pages for performance (SETI Optimization)
 const FeedPage = React.lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
@@ -42,7 +43,7 @@ const Sidebar = () => {
     <div className="sidebar glass-panel">
       <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '12px', padding: '0 4px' }}>
         <div className="pulse" style={{ width: '42px', height: '42px', padding: 0 }}>
-          <img src="/logo.png" alt="SETI LOGO" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 8px var(--primary))' }} />
+          <SetiLogo size={42} />
         </div>
         <span style={{ fontSize: '1.6rem', fontWeight: '900', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>SETI</span>
       </div>
@@ -179,7 +180,7 @@ const Header = () => {
   return (
     <div className="glass-panel" style={{ padding: '12px 20px', marginBottom: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 'var(--radius)', gap: '16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <img src="/logo.png" alt="SETI" style={{ width: '32px', height: '32px', filter: 'drop-shadow(0 0 5px var(--primary))' }} />
+        <SetiLogo size={32} />
         <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
           <Search size={15} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
           <input type="text" className="input-field" placeholder="Поиск в SETI..." style={{ paddingLeft: '40px', padding: '10px 16px 10px 40px', fontSize: '0.85rem' }} />

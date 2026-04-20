@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, User, LogIn, Smartphone, Globe, Download, Fingerprint } from 'lucide-react';
+import SetiLogo from '../components/SetiLogo';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -88,7 +89,7 @@ export const LoginPage = () => {
         style={{ width: '100%', maxWidth: '440px', padding: '3rem 2.5rem', border: '1px solid rgba(0, 242, 255, 0.2)', boxShadow: '0 0 40px rgba(0, 0, 0, 0.5)' }}
       >
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <img src="/logo.png" alt="SETI LOGO" style={{ width: '80px', height: '80px', marginBottom: '16px', filter: 'drop-shadow(0 0 15px var(--primary))' }} />
+          <SetiLogo size={80} style={{ marginBottom: '16px' }} />
           <h1 style={{ fontSize: '3rem', fontWeight: '900', letterSpacing: '-2px', marginBottom: '8px' }} className="neon-text">SETI</h1>
           <h2 style={{ fontSize: '1.4rem', fontWeight: '700', marginBottom: '8px', color: 'white' }}>Идентификация</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Введите ключи доступа для входа в сеть</p>
@@ -176,7 +177,7 @@ export const RegisterPage = () => {
           style={{ width: '100%', maxWidth: '440px', padding: '3rem 2.5rem', border: '1px solid rgba(189, 0, 255, 0.2)', boxShadow: '0 0 40px rgba(0, 0, 0, 0.5)' }}
         >
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <img src="/logo.png" alt="SETI LOGO" style={{ width: '80px', height: '80px', marginBottom: '16px', filter: 'drop-shadow(0 0 15px #bd00ff)' }} />
+            <SetiLogo size={80} style={{ marginBottom: '16px' }} />
             <h1 style={{ fontSize: '3rem', fontWeight: '900', letterSpacing: '-2px', marginBottom: '8px' }} className="neon-text-purple">SETI</h1>
             <h2 style={{ fontSize: '1.4rem', fontWeight: '700', marginBottom: '8px', color: 'white' }}>Новая Сущность</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Создайте свой цифровой отпечаток</p>
