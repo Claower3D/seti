@@ -274,7 +274,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
       </div>
 
       {/* User info */}
-      <div style={{ position: 'absolute', bottom: isMobile ? '80px' : '80px', left: '16px', right: isMobile ? '80px' : '80px', zIndex: 15 }}>
+      <div style={{ position: 'absolute', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 90px)' : '80px', left: '16px', right: isMobile ? '80px' : '80px', zIndex: 15 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
           <img src={wave.user?.avatar} alt="" style={{ width: isMobile ? '48px' : '42px', height: isMobile ? '48px' : '42px', borderRadius: '50%', border: '2px solid var(--border-bright)', boxShadow: 'var(--glow)' }} />
           <div style={{ flex: 1 }}>
@@ -313,7 +313,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
         )}
       </div>
 
-      <div style={{ position: 'absolute', right: '12px', bottom: isMobile ? '110px' : '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isMobile ? '16px' : '28px', zIndex: 15 }}>
+      <div style={{ position: 'absolute', right: '12px', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 120px)' : '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isMobile ? '16px' : '28px', zIndex: 15 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <motion.button whileTap={{ scale: 0.8 }} onClick={handleLike}
             style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
