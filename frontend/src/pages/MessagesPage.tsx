@@ -5,7 +5,7 @@ import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useCall } from '../context/CallContext';
-import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, Video, Plus, Users, Shield, Info, Settings, FileText, LogOut } from 'lucide-react';
+import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, Video, Plus, Users, Shield, Info, Settings, FileText, LogOut, Archive, Inbox } from 'lucide-react';
 // ... rest of the imports and components ...
 // (Note: I will only replace the specific block but I need to make sure Shield is in imports)
 
@@ -168,6 +168,24 @@ export const MessagesPage = () => {
   const [editGroupDesc, setEditGroupDesc] = useState('');
   const [editGroupAvatar, setEditGroupAvatar] = useState('');
   const [isUpdatingGroup, setIsUpdatingGroup] = useState(false);
+  const [viewArchived, setViewArchived] = useState(false);
+
+  const archiveConversation = async (type: 'friend'|'group', id: number, archived: boolean) => {
+    try {
+      await api.post('/conversations/archive', { type, id, archived });
+      if (type === 'friend') {
+        setFriends(friends.map(f => f.id === id ? { ...f, isArchived: archived } : f));
+      } else {
+        setGroups(groups.map(g => g.id === id ? { ...g, isArchived: archived } : g));
+      }
+      if (archived && ((selectedFriend?.id === id && type === 'friend') || (selectedGroup?.id === id && type === 'group'))) {
+        setSelectedFriend(null);
+        setSelectedGroup(null);
+      }
+    } catch {
+      alert('Ошибка при архивации');
+    }
+  };
 
   useEffect(() => {
     if (selectedGroup) {
@@ -414,6 +432,31 @@ export const MessagesPage = () => {
             )}
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+            {/* Archive Toggle Banner */}
+            {(() => {
+              const archivedCount = friends.filter(f => f.isArchived).length + groups.filter(g => g.isArchived).length;
+              if (archivedCount > 0 && !viewArchived) {
+                return (
+                  <div onClick={() => setViewArchived(true)}
+                    style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', borderRadius: '16px', background: 'rgba(255,255,255,0.03)', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.05)', transition: 'all 0.2s' }}>
+                    <Archive size={20} color="var(--primary)" />
+                    <div style={{ flex: 1, fontWeight: '700', fontSize: '0.9rem' }}>Архивные чаты</div>
+                    <div style={{ background: 'var(--primary)', color: 'black', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px', fontWeight: '900' }}>{archivedCount}</div>
+                  </div>
+                );
+              }
+              if (viewArchived) {
+                return (
+                  <div onClick={() => setViewArchived(false)}
+                    style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', borderRadius: '16px', background: 'color-mix(in srgb, var(--primary), transparent 90%)', marginBottom: '16px', border: '1px solid var(--primary)', transition: 'all 0.2s' }}>
+                    <Inbox size={20} color="var(--primary)" />
+                    <div style={{ flex: 1, fontWeight: '700', fontSize: '0.9rem', color: 'var(--primary)' }}>Вернуться в чаты</div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px 12px', opacity: 0.8 }}>
               <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--primary)' }}>Кластеры</span>
               <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowCreateCluster(true)}
@@ -422,12 +465,13 @@ export const MessagesPage = () => {
               </motion.button>
             </div>
             
-            {groups.map(group => (
+            {groups.filter(g => g.isArchived === viewArchived).map(group => (
                <div key={`g-${group.id}`} onClick={() => setSelectedGroup(group)}
+               className="chat-item"
                style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
                  background: selectedGroup?.id === group.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
                  border: selectedGroup?.id === group.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
-                 transition: 'all 0.3s', marginBottom: '8px' }}>
+                 transition: 'all 0.3s', marginBottom: '8px', position: 'relative' }}>
                 <div style={{ position: 'relative' }}>
                   <div style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: selectedGroup?.id === group.id ? 'var(--glow)' : 'none' }}>
                     <Users size={24} color="black" />
@@ -437,35 +481,45 @@ export const MessagesPage = () => {
                   <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedGroup?.id === group.id ? 'var(--primary)' : 'white' }}>{group.name}</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Групповой сигнал активен</div>
                 </div>
+                
+                <button className="archive-btn" onClick={(e) => { e.stopPropagation(); archiveConversation('group', group.id, !viewArchived); }}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', padding: '6px', color: 'white', cursor: 'pointer', display: 'none' }}>
+                  {viewArchived ? <Inbox size={14} /> : <Archive size={14} />}
+                </button>
               </div>
             ))}
 
             <div style={{ height: '2px', background: 'rgba(255,255,255,0.05)', margin: '16px 8px 24px' }} />
             
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--primary)', padding: '0 8px 12px', display: 'block', opacity: 0.8 }}>Прямые сигналы</span>
-            
-            {friends.length === 0 && groups.length === 0 ? (
-              <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                <MessageSquare size={48} style={{ marginBottom: '16px', opacity: 0.3 }} />
-                <p>Нет активных сессий</p>
-              </div>
-            ) : friends.map(friend => (
+            {friends.filter(f => f.isArchived === viewArchived).map(friend => (
               <div key={`f-${friend.id}`} onClick={() => setSelectedFriend(friend)}
+                className="chat-item"
                 style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
                   background: selectedFriend?.id === friend.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
                   border: selectedFriend?.id === friend.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
-                  transition: 'all 0.3s', marginBottom: '8px' }}>
+                  transition: 'all 0.3s', marginBottom: '8px', position: 'relative' }}>
                 <div style={{ position: 'relative' }}>
-                  <img src={friend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + friend.username}
-                    alt="avatar" style={{ width: '52px', height: '52px', borderRadius: '18px', objectFit: 'cover', border: selectedFriend?.id === friend.id ? '2px solid var(--primary)' : '2px solid transparent' }} />
-                  <div style={{ position: 'absolute', bottom: -2, right: -2, width: '12px', height: '12px', background: 'var(--primary)', borderRadius: '50%', border: '2px solid var(--bg)', boxShadow: 'var(--glow)' }} />
+                  <img src={friend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + friend.username} 
+                    alt="" style={{ width: '52px', height: '52px', borderRadius: '18px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', boxShadow: selectedFriend?.id === friend.id ? 'var(--glow)' : 'none' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedFriend?.id === friend.id ? 'var(--primary)' : 'white' }}>{friend.username}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Установлено соединение...</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{friend.bio || 'Персональный канал'}</div>
                 </div>
+
+                <button className="archive-btn" onClick={(e) => { e.stopPropagation(); archiveConversation('friend', friend.id, !viewArchived); }}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', padding: '6px', color: 'white', cursor: 'pointer', display: 'none' }}>
+                  {viewArchived ? <Inbox size={14} /> : <Archive size={14} />}
+                </button>
               </div>
             ))}
+
+            {friends.filter(f => f.isArchived === viewArchived).length === 0 && groups.filter(g => g.isArchived === viewArchived).length === 0 && (
+              <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                {viewArchived ? <Archive size={48} style={{ marginBottom: '16px', opacity: 0.3 }} /> : <MessageSquare size={48} style={{ marginBottom: '16px', opacity: 0.3 }} />}
+                <p>{viewArchived ? 'Архив пуст' : 'Нет активных сессий'}</p>
+              </div>
+            )}
           </div>
         </div>
       )}

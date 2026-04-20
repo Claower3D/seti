@@ -710,3 +710,14 @@ body::after {
     touch-action: none; /* Block browser gestures like pull-to-refresh */
   }
 }
+
+.chat-item:hover .archive-btn {
+  display: flex !important;
+  opacity: 1;
+}
+
+.archive-btn:hover {
+  background: var(--primary) !important;
+  color: black !important;
+  box-shadow: var(--glow);
+}

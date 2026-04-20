@@ -1,4 +1,4 @@
-﻿package handlers
+package handlers
 
 import (
 "fmt"
@@ -68,13 +68,18 @@ userID, _ := c.Get("userId")
 friends := []models.User{}
 
 db.DB.Raw(`
-SELECT u.* FROM users u
-JOIN friendships f ON (f.user_id = u.id OR f.friend_id = u.id)
-WHERE (f.user_id = ? OR f.friend_id = ?)
-AND f.status = 'accepted'
-AND u.id != ?
-AND u.deleted_at IS NULL
-`, userID, userID, userID).Scan(&friends)
+    SELECT u.*, 
+    CASE 
+        WHEN f.user_id = ? THEN f.is_archived_by_sender 
+        ELSE f.is_archived_by_receiver 
+    END AS is_archived
+    FROM users u
+    JOIN friendships f ON (f.user_id = u.id OR f.friend_id = u.id)
+    WHERE (f.user_id = ? OR f.friend_id = ?)
+    AND f.status = 'accepted'
+    AND u.id != ?
+    AND u.deleted_at IS NULL
+    `, userID, userID, userID, userID).Scan(&friends)
 
 c.JSON(http.StatusOK, friends)
 }

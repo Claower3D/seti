@@ -158,6 +158,24 @@ func WebSocketHandler(c *gin.Context) {
                         }
 			// Preload sender info for notifications
 			db.DB.Preload("Sender").First(&chatMsg, chatMsg.ID)
+
+			// Auto-unarchive logic
+			if chatMsg.GroupID != nil {
+				db.DB.Model(&models.GroupMember{}).
+					Where("group_id = ? AND user_id = ?", *chatMsg.GroupID, userID).
+					Update("is_archived", false)
+				db.DB.Model(&models.GroupMember{}).
+					Where("group_id = ? AND user_id = ?", *chatMsg.GroupID, chatMsg.ReceiverID).
+					Update("is_archived", false)
+			} else {
+				db.DB.Model(&models.Friendship{}).
+					Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)", 
+						userID, chatMsg.ReceiverID, chatMsg.ReceiverID, userID).
+					Updates(map[string]interface{}{
+						"is_archived_by_sender":   false,
+						"is_archived_by_receiver": false,
+					})
+			}
 		}
 
 		outData := map[string]interface{}{
@@ -262,4 +280,43 @@ func GetUnreadMessageCount(c *gin.Context) {
 	var count int64
 	db.DB.Model(&models.Message{}).Where("receiver_id = ? AND is_read = ?", userID, false).Count(&count)
 	c.JSON(http.StatusOK, gin.H{"count": count})
+}
+
+func ArchiveConversation(c *gin.Context) {
+	userID, _ := c.Get("userId")
+	var input struct {
+		Type     string `json:"type" binding:"required"` // "friend" or "group"
+		ID       uint   `json:"id" binding:"required"`
+		Archived bool   `json:"archived"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if input.Type == "friend" {
+		// Update friendship based on who is sender/receiver
+		err := db.DB.Model(&models.Friendship{}).
+			Where("(user_id = ? AND friend_id = ?)", userID, input.ID).
+			Update("is_archived_by_sender", input.Archived).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to archive"})
+			return
+		}
+		db.DB.Model(&models.Friendship{}).
+			Where("(user_id = ? AND friend_id = ?)", input.ID, userID).
+			Update("is_archived_by_receiver", input.Archived)
+
+	} else if input.Type == "group" {
+		err := db.DB.Model(&models.GroupMember{}).
+			Where("group_id = ? AND user_id = ?", input.ID, userID).
+			Update("is_archived", input.Archived).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to archive"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Action successful"})
 }

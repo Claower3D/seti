@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, User, LogIn, Smartphone, Globe, Download, Fingerprint } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import SetiLogo from '../components/SetiLogo';
 
 export const LoginPage = () => {
@@ -16,8 +17,8 @@ export const LoginPage = () => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    // Only detect mobile devices
-    if (window.innerWidth <= 768) {
+    // Only detect mobile devices and hide if already in native app
+    if (window.innerWidth <= 768 && !Capacitor.isNativePlatform()) {
       setShowAppPrompt(true);
     }
   }, []);
@@ -56,7 +57,7 @@ export const LoginPage = () => {
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <a href="/seti-app.apk" download="seti-app.apk" style={{ textDecoration: 'none' }}>
+            <a href="https://github.com/Claower3D/seti/releases/latest/download/SETI.apk" download style={{ textDecoration: 'none' }}>
               <button style={{ 
                   background: 'var(--primary)', color: 'black', width: '100%', padding: '16px', borderRadius: '12px', border: 'none', fontWeight: '900', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: 'var(--glow)'
               }}>

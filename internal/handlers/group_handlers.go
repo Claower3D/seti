@@ -52,6 +52,15 @@ func GetGroups(c *gin.Context) {
 	var groups []models.Group
 	if len(groupIDs) > 0 {
 		db.DB.Preload("Owner").Preload("Members.User").Where("id IN ?", groupIDs).Find(&groups)
+		
+		// Map archived status from members to groups
+		memberMap := make(map[uint]bool)
+		for _, m := range members {
+			memberMap[m.GroupID] = m.IsArchived
+		}
+		for i := range groups {
+			groups[i].IsArchived = memberMap[groups[i].ID]
+		}
 	}
 	if groups == nil {
 		groups = []models.Group{}

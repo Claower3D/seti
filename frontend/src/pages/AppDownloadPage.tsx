@@ -30,7 +30,7 @@ export const AppDownloadPage = () => {
           </div>
         </div>
 
-        <a href="/seti-app.apk" download="seti-app.apk" style={{ textDecoration: 'none' }}>
+        <a href="https://github.com/Claower3D/seti/releases/latest/download/SETI.apk" download style={{ textDecoration: 'none' }}>
            <button style={{ 
                background: 'var(--primary)', 
                color: 'black', 

@@ -23,6 +23,7 @@ type User struct {
 	Posts     []Post         `json:"posts,omitempty"`
 	Waves     []Wave         `json:"waves,omitempty"`
 	Friends   []User         `gorm:"many2many:friendships;" json:"friends,omitempty"`
+	IsArchived bool          `gorm:"-" json:"isArchived"`
 }
 
 type Friendship struct {
@@ -30,6 +31,8 @@ type Friendship struct {
 	UserID    uint   `gorm:"not null"`
 	FriendID  uint   `gorm:"not null"`
 	Status    string `gorm:"default:'pending'"`
+	IsArchivedBySender   bool `gorm:"default:false" json:"isArchivedBySender"`
+	IsArchivedByReceiver bool `gorm:"default:false" json:"isArchivedByReceiver"`
 	CreatedAt time.Time
 }
 
@@ -58,6 +61,7 @@ type Group struct {
 	Members     []GroupMember `json:"members,omitempty"`
 	CreatedAt   time.Time     `json:"createdAt"`
 	UpdatedAt   time.Time     `json:"updatedAt"`
+	IsArchived  bool          `gorm:"-" json:"isArchived"`
 }
 
 type GroupMember struct {
@@ -66,6 +70,7 @@ type GroupMember struct {
 	UserID    uint      `gorm:"not null" json:"userId"`
 	User      User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Role      string    `gorm:"default:'member'" json:"role"`
+	IsArchived bool      `gorm:"default:false" json:"isArchived"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
