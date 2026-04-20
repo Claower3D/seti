@@ -361,8 +361,12 @@ function AppInner() {
       <UpdateModal />
       <Sidebar />
       <div 
-        style={{ flex: 1, minWidth: 0 }} 
-        className={`main-content ${(isWavesPage || isMessagesPage) ? 'waves-layout' : ''}`}
+        style={{ 
+          flex: 1, 
+          minWidth: 0, 
+          paddingTop: (isMessagesPage && !isWavesPage) ? 'calc(env(safe-area-inset-top, 0px) + 20px)' : undefined 
+        }} 
+        className={`main-content ${isWavesPage ? 'waves-layout' : ''}`}
       >
         <div className="desktop-only">
           {!isMessagesPage && <Header />}
