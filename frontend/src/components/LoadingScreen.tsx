@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Zap } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const LoadingScreen = () => {
   const [telemetry, setTelemetry] = useState<string[]>([]);
@@ -123,7 +122,7 @@ const LoadingScreen = () => {
             backdropFilter: 'blur(10px)',
           }}
         >
-          <Zap size={60} color="#00f5ff" style={{ filter: 'drop-shadow(0 0 15px #00f5ff)' }} />
+          <img src="/logo.png" alt="SETI" style={{ width: '88px', height: '88px', filter: 'drop-shadow(0 0 10px #00f5ff)' }} />
         </motion.div>
       </div>
 

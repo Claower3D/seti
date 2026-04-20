@@ -1,5 +1,5 @@
 
-import { Download, Smartphone, Zap, Shield } from 'lucide-react';
+import { Download, Zap, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const AppDownloadPage = () => {
@@ -7,8 +7,8 @@ export const AppDownloadPage = () => {
     <div className="glass-panel" style={{ minHeight: 'calc(100vh - 140px)', padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }}>
         <div style={{ marginBottom: '24px', display: 'inline-block' }}>
-          <div className="pulse" style={{ background: 'color-mix(in srgb, var(--primary), transparent 80%)', border: '1px solid var(--primary)', padding: '24px', borderRadius: '24px', boxShadow: 'var(--glow-strong)' }}>
-            <Smartphone size={64} style={{ color: 'var(--primary)', filter: 'var(--glow)' }} />
+          <div className="pulse" style={{ background: 'color-mix(in srgb, var(--primary), transparent 80%)', border: '1px solid var(--primary)', padding: '12px', borderRadius: '24px', boxShadow: 'var(--glow-strong)' }}>
+            <img src="/logo.png" alt="SETI" style={{ width: '88px', height: '88px', filter: 'drop-shadow(0 0 10px var(--primary))' }} />
           </div>
         </div>
         <h1 className="neon-text" style={{ fontSize: '2.5rem', marginBottom: '16px' }}>SETI Mobile App</h1>

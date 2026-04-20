@@ -177,10 +177,13 @@ const Header = () => {
   const unreadCount = requests.length + notifications.filter(n => !n.read).length;
 
   return (
-    <div className="glass-panel" style={{ padding: '12px 20px', marginBottom: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 'var(--radius)' }}>
-      <div style={{ position: 'relative', flex: 1, maxWidth: '420px' }}>
-        <Search size={15} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-        <input type="text" className="input-field" placeholder="Поиск в SETI..." style={{ paddingLeft: '40px', padding: '10px 16px 10px 40px', fontSize: '0.85rem' }} />
+    <div className="glass-panel" style={{ padding: '12px 20px', marginBottom: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 'var(--radius)', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <img src="/logo.png" alt="SETI" style={{ width: '32px', height: '32px', filter: 'drop-shadow(0 0 5px var(--primary))' }} />
+        <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
+          <Search size={15} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <input type="text" className="input-field" placeholder="Поиск в SETI..." style={{ paddingLeft: '40px', padding: '10px 16px 10px 40px', fontSize: '0.85rem' }} />
+        </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginLeft: '16px' }}>
         <div style={{ position: 'relative' }}>
