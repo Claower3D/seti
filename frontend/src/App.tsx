@@ -13,6 +13,7 @@ import { GroupsPage } from './pages/GroupsPage';
 import { WavesPage } from './pages/WavesPage';
 import { AppDownloadPage } from './pages/AppDownloadPage';
 import { UpdateModal } from './components/UpdateModal';
+import LoadingScreen from './components/LoadingScreen';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, ArrowDownCircle, Plus } from 'lucide-react';
@@ -338,15 +339,7 @@ const MobileNav = () => {
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { token, loading } = useAuth();
-  if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <div className="glass-panel" style={{ padding: '28px 48px', display: 'flex', alignItems: 'center', gap: '18px', border: '1px solid var(--border-bright)' }}>
-        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          style={{ width: '28px', height: '28px', border: '2px solid transparent', borderTopColor: 'var(--primary)', borderRadius: '50%', boxShadow: 'var(--glow)' }} />
-        <span style={{ color: 'var(--primary)', fontWeight: '900', textShadow: 'var(--glow)', fontSize: '1rem', letterSpacing: '1px' }}>Загрузка SETI...</span>
-      </div>
-    </div>
-  );
+  if (loading) return <LoadingScreen />;
   if (!token) return <Navigate to="/login" />;
   return <>{children}</>;
 };
