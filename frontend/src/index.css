@@ -4,6 +4,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 :root {
@@ -278,6 +279,7 @@ body::after {
   letter-spacing: 0.02em;
   position: relative;
   overflow: hidden;
+  user-select: none;
 }
 
 .btn-primary::before {
@@ -624,14 +626,14 @@ body::after {
 
   .main-content {
     padding: 16px;
-    padding-bottom: 80px;
+    padding-bottom: 100px;
   }
 }
 
 @media (max-width: 480px) {
   .main-content {
     padding: 12px;
-    padding-bottom: 80px;
+    padding-bottom: 100px;
   }
 }
 

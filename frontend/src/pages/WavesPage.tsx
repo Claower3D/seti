@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Share2, Volume2, VolumeX, Plus, Play, Zap, Upload, Send, X } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Volume2, VolumeX, Plus, Play, Zap, Upload } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import CommentsDrawer from '../components/CommentsDrawer';
 
 interface Wave {
   id: number;
@@ -17,27 +18,9 @@ interface Wave {
   createdAt: string;
 }
 
-interface WaveComment {
-  id: number;
-  content: string;
-  userId: number;
-  user: { id: number; username: string; avatar: string };
-  createdAt: string;
-}
-
-const timeAgo = (dateStr: string) => {
-  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
-  if (diff < 60) return 'только что';
-  if (diff < 3600) return `${Math.floor(diff / 60)} мин`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} ч`;
-  return `${Math.floor(diff / 86400)} д`;
-};
-
 const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isActive: boolean; currentUser: any; isMobile: boolean }) => {
   useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const commentInputRef = useRef<HTMLInputElement>(null);
-  const commentsBottomRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [liked, setLiked] = useState(wave.liked);
@@ -45,11 +28,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
   const [showHeart, setShowHeart] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showComment, setShowComment] = useState(false);
-  const [comment, setComment] = useState('');
-  const [comments, setComments] = useState<WaveComment[]>([]);
   const [commentsCount, setCommentsCount] = useState(wave.commentsCount || 0);
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [sendingComment, setSendingComment] = useState(false);
   const [following, setFollowing] = useState(false); // Check if they are friends/following
   const [followLoading, setFollowLoading] = useState(false);
   const [videoLoading, setVideoLoading] = useState(true);
@@ -70,30 +49,9 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
     }
   }, [isActive]);
 
-  const loadComments = async () => {
-    if (loadingComments) return;
-    setLoadingComments(true);
-    try {
-      const res = await api.get(`/waves/${wave.id}/comments`);
-      setComments(res.data || []);
-    } catch {}
-    setLoadingComments(false);
-  };
-
   const toggleComments = () => {
-    const next = !showComment;
-    setShowComment(next);
-    if (next && comments.length === 0) loadComments();
+    setShowComment(!showComment);
   };
-
-  useEffect(() => {
-    if (showComment) {
-      setTimeout(() => {
-        commentsBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-        commentInputRef.current?.focus();
-      }, 400);
-    }
-  }, [showComment, comments.length]);
 
   const togglePlay = () => {
     const v = videoRef.current;
@@ -131,16 +89,8 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
     } catch {}
   };
 
-  const handleSendComment = async () => {
-    if (!comment.trim() || sendingComment) return;
-    setSendingComment(true);
-    try {
-      const res = await api.post(`/waves/${wave.id}/comments`, { content: comment });
-      setComments(prev => [...prev, res.data]);
-      setCommentsCount(c => c + 1);
-      setComment('');
-    } catch {}
-    setSendingComment(false);
+  const handleCommentAdded = (newCount: number) => {
+    setCommentsCount(newCount);
   };
 
   const toggleFollow = async () => {
@@ -400,83 +350,14 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
       </div>
 
       {/* Comment drawer */}
-      <AnimatePresence>
-        {showComment && (
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            onClick={(e) => e.stopPropagation()}
-            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: isMobile ? '80%' : '72%', background: 'rgba(8,10,20,0.97)', backdropFilter: 'blur(40px)', borderRadius: '24px 24px 0 0', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', zIndex: 30 }}
-          >
-            {/* Header */}
-            <div style={{ padding: '16px 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-              <div>
-                <div style={{ width: '40px', height: '4px', background: 'rgba(255,255,255,0.15)', borderRadius: '2px', marginBottom: '12px' }} />
-                <div style={{ fontWeight: '900', color: 'white', fontSize: '1rem' }}>
-                  Комментарии <span style={{ color: 'var(--primary)', textShadow: 'var(--glow)' }}>({commentsCount})</span>
-                </div>
-              </div>
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowComment(false)}
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', width: '36px', height: '36px', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={18} />
-              </motion.button>
-            </div>
-
-            {/* Comments list */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {loadingComments ? (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
-                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                    style={{ width: '28px', height: '28px', border: '2px solid transparent', borderTopColor: 'var(--primary)', borderRadius: '50%', boxShadow: 'var(--glow)' }} />
-                </div>
-              ) : comments.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
-                  <MessageCircle size={36} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-                  <div style={{ fontSize: '0.9rem' }}>Будь первым, кто оставит комментарий</div>
-                </div>
-              ) : comments.map(c => (
-                <motion.div key={c.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  style={{ display: 'flex', gap: isMobile ? '10px' : '12px', alignItems: 'flex-start' }}>
-                  <img src={c.user?.avatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--border)', flexShrink: 0 }} />
-                  <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '10px 14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                      <span style={{ fontWeight: '800', fontSize: '0.85rem', color: 'var(--primary)', textShadow: 'var(--glow)' }}>@{c.user?.username}</span>
-                      <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)' }}>{timeAgo(c.createdAt)}</span>
-                    </div>
-                    <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.9rem', margin: 0, lineHeight: '1.5' }}>{c.content}</p>
-                  </div>
-                </motion.div>
-              ))}
-              <div ref={commentsBottomRef} />
-            </div>
-
-            {/* Input */}
-            <div style={{ padding: '12px 16px 24px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
-              <img src={currentUser?.avatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--border)', flexShrink: 0 }} />
-              <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '25px', padding: '4px 4px 4px 16px' }}>
-                <input
-                  ref={commentInputRef}
-                  type="text"
-                  value={comment}
-                  onChange={e => setComment(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSendComment()}
-                  placeholder="Написать комментарий..."
-                  style={{ flex: 1, background: 'none', border: 'none', color: 'white', fontSize: '0.9rem', outline: 'none' }}
-                />
-                <motion.button whileTap={{ scale: 0.9 }} onClick={handleSendComment} disabled={!comment.trim() || sendingComment}
-                  style={{ background: comment.trim() ? 'linear-gradient(135deg, rgba(0,245,255,0.3), rgba(180,0,255,0.3))' : 'rgba(255,255,255,0.05)', border: comment.trim() ? '1px solid rgba(0,245,255,0.4)' : '1px solid transparent', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: comment.trim() ? 'pointer' : 'default', flexShrink: 0, transition: 'all 0.2s', boxShadow: comment.trim() ? '0 0 12px rgba(0,245,255,0.2)' : 'none' }}>
-                  {sendingComment
-                    ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ width: '16px', height: '16px', border: '2px solid transparent', borderTopColor: 'var(--primary)', borderRadius: '50%' }} />
-                    : <Send size={16} color={comment.trim() ? 'var(--primary)' : 'rgba(255,255,255,0.3)'} />
-                  }
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <CommentsDrawer
+        isOpen={showComment}
+        onClose={() => setShowComment(false)}
+        itemId={wave.id}
+        type="wave"
+        currentUser={currentUser}
+        onCommentAdded={handleCommentAdded}
+      />
     </div>
   );
 };

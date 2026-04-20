@@ -5,6 +5,7 @@ import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Image as ImageIcon, Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit3, Check, X } from 'lucide-react';
 import { StoryCameraModal } from '../components/StoryCameraModal';
+import CommentsDrawer from '../components/CommentsDrawer';
 
 export const FeedPage = () => {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ export const FeedPage = () => {
   const [attachedMedia, setAttachedMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [activeCommentPostId, setActiveCommentPostId] = useState<number | null>(null);
+  const [isCommentsDrawerOpen, setIsCommentsDrawerOpen] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [stories, setStories] = useState<any[]>([]);
   const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null);
@@ -176,13 +178,20 @@ export const FeedPage = () => {
     }
   };
 
+  const handleCommentsClick = (postId: number) => {
+    setActiveCommentPostId(postId);
+    if (isMobile) {
+      setIsCommentsDrawerOpen(true);
+    }
+  };
+
   const submitComment = (postId: number) => {
     if (!commentText.trim()) return;
     setPosts(prev => prev.map(p =>
       p.id === postId ? { ...p, comments: [...(p.comments || []), { id: Date.now(), content: commentText, user: user }] } : p
     ));
     setCommentText('');
-    setActiveCommentPostId(null);
+    if (!isMobile) setActiveCommentPostId(null);
   };
 
   const handleStoryUpload = async (file: File) => {
@@ -361,23 +370,37 @@ export const FeedPage = () => {
                     </>
                   )}
 
-                  <div style={{ display: 'flex', gap: '32px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
-                    <button onClick={() => handleLike(post.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)', color: post.liked ? '#ff3060' : 'var(--text-secondary)' }}
+                  <div style={{ display: 'flex', gap: isMobile ? '0' : '32px', justifyContent: isMobile ? 'space-around' : 'flex-start', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                    <motion.button 
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => handleLike(post.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', gap: isMobile ? '6px' : '10px', fontWeight: '700', transition: 'var(--transition)', color: post.liked ? '#ff3060' : 'var(--text-secondary)', padding: isMobile ? '10px' : '0' }}
                       className="post-action-btn">
-                      <Heart size={24} fill={post.liked ? '#ff3060' : 'none'} style={{ filter: post.liked ? 'drop-shadow(0 0 6px #ff3060)' : 'none' }} />
-                      <span>{post.likesCount > 0 ? post.likesCount : 'Лайк'}</span>
-                    </button>
-                    <button onClick={() => setActiveCommentPostId(activeCommentPostId === post.id ? null : post.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
-                      <MessageCircle size={24} /> <span>Комментарий</span>
-                    </button>
-                    <button onClick={() => handleShare(post.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', transition: 'var(--transition)' }} className="post-action-btn">
-                      <Share2 size={24} /> <span>Share</span>
-                    </button>
+                      <Heart size={isMobile ? 26 : 24} fill={post.liked ? '#ff3060' : 'none'} style={{ filter: post.liked ? 'drop-shadow(0 0 6px #ff3060)' : 'none' }} />
+                      <span style={{ fontSize: isMobile ? '0.75rem' : '1rem' }}>{post.likesCount > 0 ? post.likesCount : (isMobile ? 'Like' : 'Лайк')}</span>
+                    </motion.button>
+                    
+                    <motion.button 
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => handleCommentsClick(post.id)} 
+                      style={{ background: 'none', border: 'none', color: activeCommentPostId === post.id && !isMobile ? 'var(--primary)' : 'var(--text-secondary)', cursor: 'pointer', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', gap: isMobile ? '6px' : '10px', fontWeight: '700', transition: 'var(--transition)', padding: isMobile ? '10px' : '0' }} 
+                      className="post-action-btn">
+                      <MessageCircle size={isMobile ? 26 : 24} /> 
+                      <span style={{ fontSize: isMobile ? '0.75rem' : '1rem' }}>{isMobile ? 'Comments' : 'Комментарий'}</span>
+                    </motion.button>
+
+                    <motion.button 
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => handleShare(post.id)} 
+                      style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', gap: isMobile ? '6px' : '10px', fontWeight: '700', transition: 'var(--transition)', padding: isMobile ? '10px' : '0' }} 
+                      className="post-action-btn">
+                      <Share2 size={isMobile ? 26 : 24} /> 
+                      <span style={{ fontSize: isMobile ? '0.75rem' : '1rem' }}>{isMobile ? 'Share' : 'Share'}</span>
+                    </motion.button>
                   </div>
 
                   <AnimatePresence>
-                    {activeCommentPostId === post.id && (
+                    {activeCommentPostId === post.id && !isMobile && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
                         {(post.comments || []).map((c: any) => (
                            <div key={c.id} style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
@@ -473,6 +496,17 @@ export const FeedPage = () => {
         onUpload={handleStoryUpload}
         isUploading={isUploadingStory}
       />
+
+      {/* MOBILE COMMENTS DRAWER */}
+      {isMobile && activeCommentPostId && (
+        <CommentsDrawer
+          isOpen={isCommentsDrawerOpen}
+          onClose={() => setIsCommentsDrawerOpen(false)}
+          itemId={activeCommentPostId}
+          type="post"
+          currentUser={user}
+        />
+      )}
     </div>
   );
 };
