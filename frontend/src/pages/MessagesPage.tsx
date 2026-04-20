@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -131,7 +131,52 @@ const VoiceRecorder = ({ onSend, onCancel }: { onSend: (blob: Blob) => void; onC
 
 
 
-// ─── Main MessagesPage ────────────────────────────────────────────────────────
+// ─── Swipeable Chat Item ────────────────────────────────────────────────────
+interface SwipeableChatItemProps {
+  children: React.ReactNode;
+  onAction: () => void;
+  actionIcon: React.ReactNode;
+  type: 'archive' | 'unarchive';
+}
+
+const SwipeableChatItem = ({ children, onAction, actionIcon, type }: SwipeableChatItemProps) => {
+  const controls = useAnimation();
+  const [isSwiping, setIsSwiping] = useState(false);
+
+  const handleDragEnd = (_: any, info: any) => {
+    if (info.offset.x < -80) {
+      onAction();
+      controls.start({ x: 0 });
+    } else {
+      controls.start({ x: 0 });
+    }
+    setTimeout(() => setIsSwiping(false), 100);
+  };
+
+  return (
+    <div style={{ position: 'relative', marginBottom: '8px', overflow: 'hidden', borderRadius: '16px' }}>
+      {/* Background Action Layer */}
+      <div className={`swipe-action-bg ${type}`} style={{ opacity: isSwiping ? 1 : 0.4 }}>
+        <div style={{ color: 'white', marginRight: '-40px' }}>
+          {actionIcon}
+        </div>
+      </div>
+
+      {/* Foreground Draggable Content */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: -100, right: 0 }}
+        dragElastic={0.1}
+        animate={controls}
+        onDragStart={() => setIsSwiping(true)}
+        onDragEnd={handleDragEnd}
+        style={{ position: 'relative', zIndex: 2, touchAction: 'pan-y' }}
+      >
+        {children}
+      </motion.div>
+    </div>
+  );
+};
 export const MessagesPage = () => {
   const { user } = useAuth();
   const { ws, lastMessage } = useNotifications();
@@ -466,52 +511,66 @@ export const MessagesPage = () => {
             </div>
             
             {groups.filter(g => g.isArchived === viewArchived).map(group => (
-               <div key={`g-${group.id}`} onClick={() => setSelectedGroup(group)}
-               className="chat-item"
-               style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
-                 background: selectedGroup?.id === group.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
-                 border: selectedGroup?.id === group.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
-                 transition: 'all 0.3s', marginBottom: '8px', position: 'relative' }}>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: selectedGroup?.id === group.id ? 'var(--glow)' : 'none' }}>
-                    <Users size={24} color="black" />
-                  </div>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedGroup?.id === group.id ? 'var(--primary)' : 'white' }}>{group.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Групповой сигнал активен</div>
-                </div>
-                
-                <button className="archive-btn" onClick={(e) => { e.stopPropagation(); archiveConversation('group', group.id, !viewArchived); }}
-                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', padding: '6px', color: 'white', cursor: 'pointer', display: 'none' }}>
-                  {viewArchived ? <Inbox size={14} /> : <Archive size={14} />}
-                </button>
-              </div>
+               <SwipeableChatItem 
+                 key={`g-${group.id}`}
+                 onAction={() => archiveConversation('group', group.id, !viewArchived)}
+                 actionIcon={viewArchived ? <Inbox size={20} /> : <Archive size={20} />}
+                 type={viewArchived ? 'unarchive' : 'archive'}
+               >
+                 <div onClick={() => setSelectedGroup(group)}
+                  className="chat-item"
+                  style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
+                    background: selectedGroup?.id === group.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
+                    border: selectedGroup?.id === group.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
+                    transition: 'all 0.3s' }}>
+                   <div style={{ position: 'relative' }}>
+                     <div style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: selectedGroup?.id === group.id ? 'var(--glow)' : 'none' }}>
+                       <Users size={24} color="black" />
+                     </div>
+                   </div>
+                   <div style={{ flex: 1, minWidth: 0 }}>
+                     <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedGroup?.id === group.id ? 'var(--primary)' : 'white' }}>{group.name}</div>
+                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Групповой сигнал активен</div>
+                   </div>
+                   
+                   <button className="archive-btn" onClick={(e) => { e.stopPropagation(); archiveConversation('group', group.id, !viewArchived); }}
+                     style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', padding: '6px', color: 'white', cursor: 'pointer', display: 'none' }}>
+                     {viewArchived ? <Inbox size={14} /> : <Archive size={14} />}
+                   </button>
+                 </div>
+               </SwipeableChatItem>
             ))}
 
             <div style={{ height: '2px', background: 'rgba(255,255,255,0.05)', margin: '16px 8px 24px' }} />
             
             {friends.filter(f => f.isArchived === viewArchived).map(friend => (
-              <div key={`f-${friend.id}`} onClick={() => setSelectedFriend(friend)}
-                className="chat-item"
-                style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
-                  background: selectedFriend?.id === friend.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
-                  border: selectedFriend?.id === friend.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
-                  transition: 'all 0.3s', marginBottom: '8px', position: 'relative' }}>
-                <div style={{ position: 'relative' }}>
-                  <img src={friend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + friend.username} 
-                    alt="" style={{ width: '52px', height: '52px', borderRadius: '18px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', boxShadow: selectedFriend?.id === friend.id ? 'var(--glow)' : 'none' }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedFriend?.id === friend.id ? 'var(--primary)' : 'white' }}>{friend.username}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{friend.bio || 'Персональный канал'}</div>
-                </div>
+              <SwipeableChatItem 
+                key={`f-${friend.id}`}
+                onAction={() => archiveConversation('friend', friend.id, !viewArchived)}
+                actionIcon={viewArchived ? <Inbox size={20} /> : <Archive size={20} />}
+                type={viewArchived ? 'unarchive' : 'archive'}
+              >
+                <div onClick={() => setSelectedFriend(friend)}
+                  className="chat-item"
+                  style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
+                    background: selectedFriend?.id === friend.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
+                    border: selectedFriend?.id === friend.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
+                    transition: 'all 0.3s' }}>
+                  <div style={{ position: 'relative' }}>
+                    <img src={friend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + friend.username} 
+                      alt="" style={{ width: '52px', height: '52px', borderRadius: '18px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', boxShadow: selectedFriend?.id === friend.id ? 'var(--glow)' : 'none' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedFriend?.id === friend.id ? 'var(--primary)' : 'white' }}>{friend.username}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{friend.bio || 'Персональный канал'}</div>
+                  </div>
 
-                <button className="archive-btn" onClick={(e) => { e.stopPropagation(); archiveConversation('friend', friend.id, !viewArchived); }}
-                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', padding: '6px', color: 'white', cursor: 'pointer', display: 'none' }}>
-                  {viewArchived ? <Inbox size={14} /> : <Archive size={14} />}
-                </button>
-              </div>
+                  <button className="archive-btn" onClick={(e) => { e.stopPropagation(); archiveConversation('friend', friend.id, !viewArchived); }}
+                    style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', padding: '6px', color: 'white', cursor: 'pointer', display: 'none' }}>
+                    {viewArchived ? <Inbox size={14} /> : <Archive size={14} />}
+                  </button>
+                </div>
+              </SwipeableChatItem>
             ))}
 
             {friends.filter(f => f.isArchived === viewArchived).length === 0 && groups.filter(g => g.isArchived === viewArchived).length === 0 && (

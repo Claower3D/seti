@@ -721,3 +721,26 @@ body::after {
   color: black !important;
   box-shadow: var(--glow);
 }
+
+.swipe-action-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.swipe-action-bg.archive {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary), transparent 70%));
+}
+
+.swipe-action-bg.unarchive {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--secondary), transparent 70%));
+}
