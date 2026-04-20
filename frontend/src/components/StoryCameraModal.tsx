@@ -99,7 +99,10 @@ export const StoryCameraModal: React.FC<StoryCameraModalProps> = ({ isOpen, onCl
       ? 'video/webm'
       : 'video/mp4';
 
-    const mr = new MediaRecorder(streamRef.current, { mimeType });
+    const mr = new MediaRecorder(streamRef.current, { 
+      mimeType,
+      videoBitsPerSecond: 2500000 // 2.5 Mbps for smooth recording
+    });
     mediaRecorderRef.current = mr;
     mr.ondataavailable = (e) => { if (e.data.size > 0) videoChunksRef.current.push(e.data); };
     mr.onstop = () => {
@@ -109,7 +112,7 @@ export const StoryCameraModal: React.FC<StoryCameraModalProps> = ({ isOpen, onCl
       const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
       setCapturedFile(new File([blob], `story_video_${Date.now()}.${ext}`, { type: mimeType }));
     };
-    mr.start(100);
+    mr.start(); // Remove interval for better performance
 
     recordTimerRef.current = setInterval(() => {
       setRecordSeconds(s => {
@@ -164,7 +167,7 @@ export const StoryCameraModal: React.FC<StoryCameraModalProps> = ({ isOpen, onCl
     <AnimatePresence>
       {isOpen && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 3500, background: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ width: '100%', height: '100%', maxWidth: '450px', position: 'relative', overflow: 'hidden' }}>
 
             <canvas ref={canvasRef} style={{ display: 'none' }} />
@@ -181,8 +184,19 @@ export const StoryCameraModal: React.FC<StoryCameraModalProps> = ({ isOpen, onCl
                     </button>
                   </div>
                 ) : (
-                  <video ref={videoRef} autoPlay playsInline muted
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }} />
+                  <video 
+                    ref={videoRef} 
+                    autoPlay 
+                    playsInline 
+                    muted
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover', 
+                      transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
+                      willChange: 'transform' // Hardware acceleration
+                    }} 
+                  />
                 )}
 
                 {/* Recording progress bar */}

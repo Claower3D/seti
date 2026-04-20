@@ -209,7 +209,16 @@ export const FeedPage = () => {
     <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
       <div className="feed-container">
         {/* STORIES SECTION */}
-        <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '24px', marginBottom: '8px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
+        <div style={{ 
+          display: 'flex', 
+          gap: '16px', 
+          overflowX: 'auto', 
+          paddingBottom: '24px', 
+          marginBottom: '8px', 
+          scrollbarWidth: 'none', 
+          msOverflowStyle: 'none',
+          justifyContent: stories.length < 4 && !isMobile ? 'center' : 'flex-start'
+        }} className="hide-scrollbar">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             <div
               onClick={() => setIsCameraOpen(true)}
@@ -432,7 +441,7 @@ export const FeedPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(30px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(45px)' }}
           >
             <div style={{ width: '100%', maxWidth: '450px', height: '100%', maxHeight: '850px', position: 'relative', overflow: 'hidden', borderRadius: '32px', border: '1px solid rgba(var(--primary-rgb), 0.15)', boxShadow: '0 40px 100px rgba(0,0,0,0.8), 0 0 50px rgba(var(--primary-rgb), 0.05)', background: '#000' }}>
 
@@ -469,7 +478,18 @@ export const FeedPage = () => {
                 style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black', cursor: 'pointer' }}
               />
 
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 20px 40px', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)', display: 'flex', gap: '16px', alignItems: 'center', zIndex: 20 }}>
+              <div style={{ 
+                position: 'absolute', 
+                bottom: 0, 
+                left: 0, 
+                right: 0, 
+                padding: isMobile ? '24px 20px calc(env(safe-area-inset-bottom, 24px) + 20px)' : '24px 20px 40px', 
+                background: 'linear-gradient(to top, rgba(0,0,0,0.95), transparent)', 
+                display: 'flex', 
+                gap: '16px', 
+                alignItems: 'center', 
+                zIndex: 20 
+              }}>
                 <input type="text" placeholder="Ответить на историю..." value={replyText} onChange={(e) => setReplyText(e.target.value)}
                   onFocus={() => setIsStoryPaused(true)} onBlur={() => setIsStoryPaused(false)}
                   onKeyDown={(e) => e.key === 'Enter' && handleStoryReply()}
