@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Share2, Volume2, VolumeX, Plus, Play, Zap, Upload } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Volume2, VolumeX, Plus, Play, Zap, Upload, Trash2 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import CommentsDrawer from '../components/CommentsDrawer';
@@ -18,7 +18,7 @@ interface Wave {
   createdAt: string;
 }
 
-const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isActive: boolean; currentUser: any; isMobile: boolean }) => {
+const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave: Wave; isActive: boolean; currentUser: any; isMobile: boolean; onDelete: (id: number) => void }) => {
   useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -111,6 +111,12 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
   const handleShare = () => {
     const url = `${window.location.origin}/waves/${wave.id}`;
     navigator.clipboard.writeText(url).then(() => alert('Ссылка скопирована!')).catch(() => {});
+  };
+
+  const handleDelete = async () => {
+    if (confirm('Удалить эту Волну?')) {
+      onDelete(wave.id);
+    }
   };
 
   return (
@@ -348,6 +354,13 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
           style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
           {muted ? <VolumeX size={isMobile ? 24 : 26} color="white" /> : <Volume2 size={isMobile ? 24 : 26} color="var(--primary)" style={{ filter: 'var(--glow)' }} />}
         </motion.button>
+
+        {isOwnWave && (
+          <motion.button whileTap={{ scale: 0.8 }} onClick={handleDelete}
+            style={{ background: 'rgba(255,0,85,0.15)', border: '1px solid rgba(255,0,85,0.3)', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+            <Trash2 size={isMobile ? 24 : 26} color="#ff0055" />
+          </motion.button>
+        )}
       </div>
 
       {/* Comment drawer */}
@@ -445,6 +458,15 @@ export const WavesPage = () => {
     setUploading(false);
   };
 
+  const handleDeleteWave = async (id: number) => {
+    try {
+      await api.delete(`/waves/${id}`);
+      setWaves(prev => prev.filter(w => w.id !== id));
+    } catch {
+      alert('Ошибка при удалении Волны');
+    }
+  };
+
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: '16px' }}>
       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
@@ -529,7 +551,7 @@ export const WavesPage = () => {
                 boxShadow: isMobile ? 'none' : 'var(--glow)',
               }}
             >
-              <WavePlayer wave={wave} isActive={idx === activeIdx} currentUser={user} isMobile={isMobile} />
+              <WavePlayer wave={wave} isActive={idx === activeIdx} currentUser={user} isMobile={isMobile} onDelete={handleDeleteWave} />
             </div>
           ))}
         </div>
