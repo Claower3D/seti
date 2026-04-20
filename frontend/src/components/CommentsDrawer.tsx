@@ -27,8 +27,15 @@ const CommentsDrawer: React.FC<Props> = ({ itemId, type, isOpen, onClose, onComm
   const [loading, setLoading] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const fetchComments = async () => {
     setLoading(true);
@@ -273,7 +280,9 @@ const CommentsDrawer: React.FC<Props> = ({ itemId, type, isOpen, onClose, onComm
 
             {/* Input Footer */}
             <div style={{
-              padding: '16px 20px calc(16px + env(safe-area-inset-bottom, 24px))',
+              padding: isMobile 
+                ? '16px 20px calc(80px + env(safe-area-inset-bottom, 24px))' 
+                : '16px 20px calc(16px + env(safe-area-inset-bottom, 24px))',
               borderTop: '1px solid rgba(255, 255, 255, 0.05)',
               background: 'rgba(10, 12, 18, 0.95)',
               display: 'flex',
