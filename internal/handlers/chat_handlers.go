@@ -205,6 +205,30 @@ func GetMessages(c *gin.Context) {
 	c.JSON(http.StatusOK, messages)
 }
 
+func GetChatMedia(c *gin.Context) {
+	userID, _ := c.Get("userId")
+	receiverID := c.Query("receiverId")
+	groupID := c.Query("groupId")
+
+	var messages []models.Message
+	query := db.DB.Where("file_url IS NOT NULL AND file_url != ''")
+
+	if groupID != "" {
+		query = query.Where("group_id = ?", groupID)
+	} else if receiverID != "" {
+		query = query.Where("(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)", userID, receiverID, receiverID, userID)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "receiverId or groupId is required"})
+		return
+	}
+
+	query.Order("created_at desc").Find(&messages)
+	if messages == nil {
+		messages = []models.Message{}
+	}
+	c.JSON(http.StatusOK, messages)
+}
+
 func CreateMessage(c *gin.Context) {
 	var input struct {
 		ReceiverID    uint   `json:"receiverId" binding:"required"`

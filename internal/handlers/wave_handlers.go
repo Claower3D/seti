@@ -143,3 +143,26 @@ func CreateWaveComment(c *gin.Context) {
 	db.DB.Preload("User").First(&comment, comment.ID)
 	c.JSON(http.StatusCreated, comment)
 }
+
+func DeleteWave(c *gin.Context) {
+	waveID := c.Param("id")
+	userID, _ := c.Get("userId")
+
+	var wave models.Wave
+	if err := db.DB.Where("id = ? AND user_id = ?", waveID, userID).First(&wave).Error; err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have permission to delete this wave"})
+		return
+	}
+
+	// Clean up associations
+	db.DB.Where("wave_id = ?", waveID).Delete(&models.WaveLike{})
+	db.DB.Where("wave_id = ?", waveID).Delete(&models.WaveComment{})
+	db.DB.Where("wave_id = ?", waveID).Delete(&models.Notification{})
+	
+	if err := db.DB.Delete(&wave).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete wave"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}

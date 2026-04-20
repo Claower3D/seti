@@ -71,6 +71,9 @@ protected.GET("/groups/:id", handlers.GetGroup)
 protected.POST("/groups/:id/join", handlers.JoinGroup)
 protected.POST("/groups/:id/leave", handlers.LeaveGroup)
 protected.GET("/groups/:id/messages", handlers.GetGroupMessages)
+			protected.POST("/groups/:id/members", handlers.AddGroupMembers)
+			protected.PUT("/groups/:id", handlers.UpdateGroup)
+			protected.GET("/messages/media", handlers.GetChatMedia)
 			protected.GET("/messages/:otherId", handlers.GetMessages)
 			protected.GET("/messages/unread-count", handlers.GetUnreadMessageCount)
 			protected.POST("/messages", handlers.CreateMessage)
@@ -79,6 +82,7 @@ protected.POST("/waves", handlers.CreateWave)
 protected.POST("/waves/:id/like", handlers.LikeWave)
 protected.GET("/waves/:id/comments", handlers.GetWaveComments)
 protected.POST("/waves/:id/comments", handlers.CreateWaveComment)
+protected.DELETE("/waves/:id", handlers.DeleteWave)
 
 		protected.POST("/fcm-token", handlers.RegisterFCMToken)
                 protected.GET("/notifications", handlers.GetNotifications)
@@ -87,9 +91,15 @@ protected.POST("/waves/:id/comments", handlers.CreateWaveComment)
 }
 
 r.GET("/ws", handlers.WebSocketHandler)
+r.StaticFile("/logo.png", "./frontend/dist/logo.png")
 r.StaticFS("/assets", http.Dir("./frontend/dist/assets"))
 r.NoRoute(func(c *gin.Context) {
-c.File("./frontend/dist/index.html")
+	path := c.Request.URL.Path
+	if _, err := os.Stat("./frontend/dist" + path); err == nil && path != "/" {
+		c.File("./frontend/dist" + path)
+		return
+	}
+	c.File("./frontend/dist/index.html")
 })
 
 port := os.Getenv("PORT")

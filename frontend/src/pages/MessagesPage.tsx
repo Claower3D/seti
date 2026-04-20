@@ -5,7 +5,7 @@ import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useCall } from '../context/CallContext';
-import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, Video, Plus, Users, Shield } from 'lucide-react';
+import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, Video, Plus, Users, Shield, Info, Settings, FileText, LogOut } from 'lucide-react';
 // ... rest of the imports and components ...
 // (Note: I will only replace the specific block but I need to make sure Shield is in imports)
 
@@ -153,15 +153,29 @@ export const MessagesPage = () => {
   const [selectedFriendsForCluster, setSelectedFriendsForCluster] = useState<number[]>([]);
   
   // Media Gallery & Admin
-  const [showGallery, setShowGallery] = useState(false);
   const [galleryMedia, setGalleryMedia] = useState<any[]>([]);
   const [galleryFilter, setGalleryFilter] = useState<'photo'|'video'|'file'>('photo');
   const [showAddMember, setShowAddMember] = useState(false);
   const [friendsToAdd, setFriendsToAdd] = useState<number[]>([]);
   
   const location = useLocation();
-
   const { startCall } = useCall();
+
+  // Info Drawer & Settings
+  const [showInfoDrawer, setShowInfoDrawer] = useState(false);
+  const [infoTab, setInfoTab] = useState<'info'|'gallery'|'members'|'settings'>('info');
+  const [editGroupName, setEditGroupName] = useState('');
+  const [editGroupDesc, setEditGroupDesc] = useState('');
+  const [editGroupAvatar, setEditGroupAvatar] = useState('');
+  const [isUpdatingGroup, setIsUpdatingGroup] = useState(false);
+
+  useEffect(() => {
+    if (selectedGroup) {
+      setEditGroupName(selectedGroup.name);
+      setEditGroupDesc(selectedGroup.description || '');
+      setEditGroupAvatar(selectedGroup.avatar || '');
+    }
+  }, [selectedGroup]);
 
 
   useEffect(() => {
@@ -299,9 +313,23 @@ export const MessagesPage = () => {
     e.target.value = '';
   };
 
-  const isImage = (type?: string) => type?.startsWith('image/');
-  const isVideo = (type?: string) => type?.startsWith('video/');
-  const isDoc = (type?: string) => !isImage(type) && !isVideo(type);
+  const guessTypeFromUrl = (url?: string): string => {
+    if (!url) return '';
+    const ext = url.split('.').pop()?.toLowerCase() || '';
+    if (['jpg','jpeg','png','gif','webp','svg','bmp','heic'].includes(ext)) return 'image/' + ext;
+    if (['mp4','mov','avi','webm','mkv','m4v','3gp'].includes(ext)) return 'video/' + ext;
+    return 'application/octet-stream';
+  };
+
+  const isImage = (type?: string, url?: string) => {
+    const t = type || guessTypeFromUrl(url);
+    return t.startsWith('image/');
+  };
+  const isVideo = (type?: string, url?: string) => {
+    const t = type || guessTypeFromUrl(url);
+    return t.startsWith('video/');
+  };
+  const isDoc = (type?: string, url?: string) => !isImage(type, url) && !isVideo(type, url);
 
   const showList = !isMobile || (!selectedFriend && !selectedGroup);
   const showChat = !isMobile || selectedFriend || selectedGroup;
@@ -312,10 +340,34 @@ export const MessagesPage = () => {
       const params = selectedGroup ? { groupId: selectedGroup.id } : { receiverId: selectedFriend.id };
       const res = await api.get('/messages/media', { params });
       setGalleryMedia(res.data || []);
-      setShowGallery(true);
     } catch {
       alert('Ошибка доступа к архиву');
     }
+  };
+
+  useEffect(() => {
+    if (showInfoDrawer && infoTab === 'gallery') {
+      fetchGallery();
+    }
+  }, [showInfoDrawer, infoTab, selectedFriend, selectedGroup]);
+
+  const handleUpdateGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedGroup) return;
+    setIsUpdatingGroup(true);
+    try {
+      const res = await api.put(`/groups/${selectedGroup.id}`, {
+        name: editGroupName,
+        description: editGroupDesc,
+        avatar: editGroupAvatar
+      });
+      setSelectedGroup(res.data);
+      setGroups(groups.map(g => g.id === res.data.id ? res.data : g));
+      setInfoTab('info');
+    } catch {
+      alert('Ошибка обновления');
+    }
+    setIsUpdatingGroup(false);
   };
 
   const addMembersToCluster = async () => {
@@ -457,19 +509,11 @@ export const MessagesPage = () => {
 
                 {/* UTILITY BUTTONS */}
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={fetchGallery}
-                    title="Медиа-архив"
+                  <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowInfoDrawer(true)}
+                    title="Информация"
                     style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                    <Paperclip size={18} />
+                    <Info size={18} />
                   </motion.button>
-
-                  {selectedGroup && (
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowAddMember(true)}
-                      title="Добавить участников"
-                      style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                      <Plus size={18} />
-                    </motion.button>
-                  )}
 
                   {selectedFriend && (
                     <>
@@ -516,9 +560,9 @@ export const MessagesPage = () => {
                               border: isMe ? '1px solid var(--border-bright)' : '1px solid rgba(255,255,255,0.12)' }}>
                               {msg.fileUrl ? (
                                 msg.fileType?.includes('audio') ? <VoicePlayer src={msg.fileUrl} />
-                                  : msg.fileType?.includes('video') ? <video src={msg.fileUrl} controls style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '10px', outline: 'none' }} />
-                                  : isImage(msg.fileType) ? <img src={msg.fileUrl} alt={msg.fileName} onClick={() => setFullscreenMedia({url: msg.fileUrl, type: msg.fileType})} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '10px', display: 'block', cursor: 'zoom-in' }} />
-                                  : <a href={msg.fileUrl} target="_blank" rel="noreferrer" style={{ color: isMe ? 'black' : 'var(--primary)', textDecoration: 'underline' }}>📎 {msg.fileName}</a>
+                                  : isVideo(msg.fileType, msg.fileUrl) ? <video src={msg.fileUrl} controls style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '10px', outline: 'none' }} />
+                                  : isImage(msg.fileType, msg.fileUrl) ? <img src={msg.fileUrl} alt={msg.fileName} onClick={() => setFullscreenMedia({url: msg.fileUrl, type: msg.fileType || guessTypeFromUrl(msg.fileUrl)})} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '10px', display: 'block', cursor: 'zoom-in' }} />
+                                  : <a href={msg.fileUrl} target="_blank" rel="noreferrer" style={{ color: isMe ? 'black' : 'var(--primary)', textDecoration: 'underline' }}>📎 {msg.fileName || msg.fileUrl.split('/').pop()}</a>
                               ) : msg.content}
                               {isMe && !selectedGroup && (
                                 <div style={{ position: 'absolute', bottom: '8px', right: '12px', opacity: 0.8 }}>
@@ -684,87 +728,180 @@ export const MessagesPage = () => {
         )}
       </AnimatePresence>
 
-      {/* MEDIA GALLERY MODAL */}
+      {/* CHAT INFO DRAWER */}
       <AnimatePresence>
-        {showGallery && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 6000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(30px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '0' : '20px' }}>
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }} 
-              className="glass-panel" style={{ width: '100%', maxWidth: '900px', height: isMobile ? '100%' : '80vh', display: 'flex', flexDirection: 'column', border: '1px solid var(--border-bright)', boxShadow: 'var(--glow-strong)', overflow: 'hidden' }}>
+        {showInfoDrawer && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 6000, overflow: 'hidden' }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowInfoDrawer(false)}
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(15px)' }} />
+            
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '100%', maxWidth: '400px', background: 'rgba(5, 7, 12, 0.95)', borderLeft: '1px solid var(--border-bright)', display: 'flex', flexDirection: 'column', boxShadow: '-20px 0 50px rgba(0,0,0,0.5)' }}>
               
-              <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h2 className="neon-text" style={{ fontSize: '1.4rem', fontWeight: '900', marginBottom: '4px' }}>Signal Archive</h2>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Все переданные данные по текущему каналу</p>
-                </div>
-                <button onClick={() => setShowGallery(false)} style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <X size={24} />
+              <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <button onClick={() => setShowInfoDrawer(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                  <ArrowLeft size={24} />
                 </button>
+                <div style={{ fontWeight: '900', fontSize: '1.2rem' }} className="neon-text">Информация</div>
               </div>
 
-              <div style={{ padding: '0 24px', background: 'rgba(0,0,0,0.2)', display: 'flex', gap: '24px' }}>
+              <div style={{ padding: '32px 24px', textAlign: 'center', background: 'linear-gradient(to bottom, rgba(255,255,255,0.03), transparent)' }}>
+                <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
+                  {selectedFriend ? (
+                    <img src={selectedFriend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedFriend.username} style={{ width: '100px', height: '100px', borderRadius: '35px', border: '3px solid var(--primary)', boxShadow: 'var(--glow-strong)' }} />
+                  ) : (
+                    <div style={{ width: '100px', height: '100px', borderRadius: '35px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--glow-strong)' }}>
+                      <Users size={40} color="black" />
+                    </div>
+                  )}
+                </div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '900', marginBottom: '4px' }}>{selectedFriend?.username || selectedGroup?.name}</h2>
+                <div style={{ fontSize: '0.85rem', color: 'var(--primary)', marginBottom: '16px' }}>
+                  {selectedFriend ? 'Узел активен' : 'Кластер вещания'}
+                </div>
+                {(selectedFriend?.bio || selectedGroup?.description) && (
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.6', maxWidth: '300px', margin: '0 auto' }}>
+                    {selectedFriend?.bio || selectedGroup?.description}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', padding: '0 12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 {[
-                  { id: 'photo', label: 'Signals', sub: 'Фото' },
-                  { id: 'video', label: 'Streams', sub: 'Видео' },
-                  { id: 'file', label: 'Data Units', sub: 'Файлы' }
+                  { id: 'info', label: 'Данные', icon: Info },
+                  { id: 'gallery', label: 'Архив', icon: Paperclip },
+                  ...(selectedGroup ? [{ id: 'members', label: 'Узлы', icon: Users }] : []),
+                  ...(selectedGroup && selectedGroup.ownerId === user?.id ? [{ id: 'settings', label: 'Настр.', icon: Settings }] : [])
                 ].map(tab => (
-                  <button key={tab.id} onClick={() => setGalleryFilter(tab.id as any)}
-                    style={{ padding: '16px 4px', background: 'none', border: 'none', borderBottom: galleryFilter === tab.id ? '2px solid var(--primary)' : '2px solid transparent', color: galleryFilter === tab.id ? 'var(--primary)' : 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.3s', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', opacity: galleryFilter === tab.id ? 1 : 0.6 }}>
-                    <span style={{ fontSize: '0.9rem', fontWeight: '900', letterSpacing: '1px' }}>{tab.label}</span>
-                    <span style={{ fontSize: '0.65rem', fontWeight: '700', opacity: 0.7 }}>{tab.sub}</span>
+                  <button key={tab.id} onClick={() => setInfoTab(tab.id as any)}
+                    style={{ flex: 1, padding: '14px 0', background: 'none', border: 'none', borderBottom: infoTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent', color: infoTab === tab.id ? 'var(--primary)' : 'var(--text-secondary)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', opacity: infoTab === tab.id ? 1 : 0.6, transition: 'all 0.2s' }}>
+                    <tab.icon size={18} />
+                    <span style={{ fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase' }}>{tab.label}</span>
                   </button>
                 ))}
               </div>
 
-              <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: galleryFilter === 'file' ? '1fr' : 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
-                  {galleryMedia.filter(m => {
-                    if (galleryFilter === 'photo') return isImage(m.fileType);
-                    if (galleryFilter === 'video') return isVideo(m.fileType);
-                    return isDoc(m.fileType);
-                  }).map((m, idx) => (
-                    <motion.div key={idx} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }}>
-                      {galleryFilter === 'file' ? (
-                        <a href={m.fileUrl} target="_blank" rel="noreferrer" 
-                          style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black' }}>
-                            <Paperclip size={20} />
-                          </div>
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                {infoTab === 'info' && (
+                  <div style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div className="glass-panel" style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: '800', marginBottom: '4px' }}>Протокол</div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: '700' }}>{selectedFriend ? 'SIGNAL_P2P' : 'CLUSTER_BROADCAST'}</div>
+                        </div>
+                        <Shield size={20} color="var(--primary)" />
+                      </div>
+                      <div className="glass-panel" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                         <div style={{ flex: 1 }}>
+                           <div style={{ fontSize: '0.7rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: '800', marginBottom: '4px' }}>Статус</div>
+                           <div style={{ fontSize: '0.9rem', fontWeight: '700' }}>Синхронизирован</div>
+                         </div>
+                         <div className="pulse" style={{ width: '10px', height: '10px', background: 'var(--primary)', boxShadow: 'var(--glow)' }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {infoTab === 'gallery' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                     <div style={{ display: 'flex', gap: '12px', padding: '16px 24px', background: 'rgba(0,0,0,0.2)' }}>
+                        {['photo', 'video', 'file'].map(type => (
+                          <button key={type} onClick={() => setGalleryFilter(type as any)}
+                            style={{ flex: 1, padding: '8px', borderRadius: '10px', background: galleryFilter === type ? 'var(--primary)' : 'rgba(255,255,255,0.03)', border: 'none', color: galleryFilter === type ? 'black' : 'white', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
+                            {type === 'photo' ? 'СИГНАЛЫ' : type === 'video' ? 'ЭФИРЫ' : 'ДАННЫЕ'}
+                          </button>
+                        ))}
+                     </div>
+                     <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: galleryFilter === 'file' ? '1fr' : 'repeat(3, 1fr)', gap: '8px' }}>
+                        {(() => {
+                          const filtered = galleryMedia.filter(m => {
+                            if (galleryFilter === 'photo') return isImage(m.fileType, m.fileUrl);
+                            if (galleryFilter === 'video') return isVideo(m.fileType, m.fileUrl);
+                            return isDoc(m.fileType, m.fileUrl);
+                          });
+                          if (filtered.length === 0) return (
+                            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                              <div style={{ marginBottom: '8px', opacity: 0.4, fontSize: '2rem' }}>{galleryFilter === 'photo' ? '🖼️' : galleryFilter === 'video' ? '🎬' : '📎'}</div>
+                              Архив пуст
+                            </div>
+                          );
+                          return filtered.map((m, idx) =>
+                            galleryFilter === 'file' ? (
+                              <a key={idx} href={m.fileUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <FileText size={18} color="var(--primary)" />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ color: 'white', fontWeight: '700', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.fileName || m.fileUrl?.split('/').pop()}</div>
+                                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.6rem' }}>{new Date(m.createdAt).toLocaleDateString()}</div>
+                                </div>
+                              </a>
+                            ) : (
+                              <div key={idx} onClick={() => setFullscreenMedia({ url: m.fileUrl, type: m.fileType || guessTypeFromUrl(m.fileUrl) })} 
+                                style={{ aspectRatio: '1/1', borderRadius: '8px', overflow: 'hidden', cursor: 'pointer', position: 'relative', background: 'rgba(255,255,255,0.05)' }}>
+                                {isImage(m.fileType, m.fileUrl)
+                                  ? <img src={m.fileUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  : <video src={m.fileUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                              </div>
+                            )
+                          );
+                        })()}
+                     </div>
+                  </div>
+                )}
+
+                {infoTab === 'members' && selectedGroup && (
+                  <div style={{ padding: '16px' }}>
+                    <button onClick={() => setShowAddMember(true)} className="btn-primary" style={{ width: '100%', marginBottom: '20px', borderRadius: '14px', justifyContent: 'center' }}>
+                      <Plus size={18} /> Подключить узел
+                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {selectedGroup.members?.map((m: any) => (
+                        <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px' }}>
+                          <img src={m.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + m.user?.username} style={{ width: '36px', height: '36px', borderRadius: '12px' }} />
                           <div style={{ flex: 1 }}>
-                            <div style={{ color: 'white', fontWeight: '700', fontSize: '0.9rem' }}>{m.fileName}</div>
-                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>{new Date(m.createdAt).toLocaleDateString()}</div>
-                          </div>
-                        </a>
-                      ) : (
-                        <div onClick={() => setFullscreenMedia({ url: m.fileUrl, type: m.fileType })} 
-                          style={{ aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
-                          {galleryFilter === 'photo' ? (
-                            <img src={m.fileUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <video src={m.fileUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          )}
-                          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', fontSize: '0.6rem', color: 'white' }}>
-                            {new Date(m.createdAt).toLocaleDateString()}
+                            <div style={{ fontWeight: '700', fontSize: '0.9rem' }}>{m.user?.username}</div>
+                            <div style={{ fontSize: '0.7rem', color: m.role === 'owner' ? 'var(--primary)' : 'var(--text-secondary)' }}>{m.role === 'owner' ? 'Главный узел' : 'Активный узел'}</div>
                           </div>
                         </div>
-                      )}
-                    </motion.div>
-                  ))}
-                  {galleryMedia.filter(m => {
-                    if (galleryFilter === 'photo') return isImage(m.fileType);
-                    if (galleryFilter === 'video') return isVideo(m.fileType);
-                    return isDoc(m.fileType);
-                  }).length === 0 && (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px 20px', color: 'var(--text-secondary)' }}>
-                      <p>Нет объектов в данной категории архива</p>
+                      ))}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {infoTab === 'settings' && selectedGroup && (
+                  <form onSubmit={handleUpdateGroup} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '8px' }}>Идентификатор</label>
+                      <input className="input-field" value={editGroupName} onChange={e => setEditGroupName(e.target.value)} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '8px' }}>Описание</label>
+                      <textarea className="input-field" rows={3} style={{ resize: 'none' }} value={editGroupDesc} onChange={e => setEditGroupDesc(e.target.value)} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '8px' }}>Аватар URL</label>
+                      <input className="input-field" value={editGroupAvatar} onChange={e => setEditGroupAvatar(e.target.value)} />
+                    </div>
+                    <button type="submit" disabled={isUpdatingGroup} className="btn-primary" style={{ width: '100%', borderRadius: '14px', justifyContent: 'center' }}>
+                      {isUpdatingGroup ? 'Синхронизация...' : 'Применить изменения'}
+                    </button>
+                  </form>
+                )}
+              </div>
+
+              <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <button onClick={() => { 
+                  if (selectedGroup) api.post(`/groups/${selectedGroup.id}/leave`).then(() => { setSelectedGroup(null); fetchInitialData(); setShowInfoDrawer(false); });
+                }} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'rgba(255,70,70,0.1)', border: '1px solid rgba(255,70,70,0.2)', color: '#ff4646', fontWeight: '800', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                  <LogOut size={18} /> {selectedFriend ? 'Прервать связь' : 'Покинуть кластер'}
+                </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
+
 
     </div>
   );

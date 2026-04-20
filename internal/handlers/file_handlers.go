@@ -25,9 +25,23 @@ func UploadFile(c *gin.Context) {
 		return
 	}
 
+	// Smart mimetype detection
+	contentType := file.Header.Get("Content-Type")
+	f, err := file.Open()
+	if err == nil {
+		defer f.Close()
+		buffer := make([]byte, 512)
+		if _, err := f.Read(buffer); err == nil {
+			detected := http.DetectContentType(buffer)
+			if detected != "application/octet-stream" {
+				contentType = detected
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"url":      "/uploads/" + newName,
 		"fileName": file.Filename,
-		"fileType": file.Header.Get("Content-Type"),
+		"fileType": contentType,
 	})
 }

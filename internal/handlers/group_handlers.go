@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"social-network/internal/db"
 	"social-network/internal/models"
 
@@ -102,6 +103,35 @@ func GetGroupMessages(c *gin.Context) {
 	c.JSON(http.StatusOK, messages)
 }
 
+func AddGroupMembers(c *gin.Context) {
+	groupID := c.Param("id")
+	var input struct {
+		MemberIDs []uint `json:"memberIds" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	for _, mid := range input.MemberIDs {
+		// Check if already a member
+		var existing models.GroupMember
+		if err := db.DB.Where("group_id = ? AND user_id = ?", groupID, mid).First(&existing).Error; err != nil {
+			db.DB.Create(&models.GroupMember{
+				GroupID: parseUint(groupID),
+				UserID:  mid,
+				Role:    "member",
+			})
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Members added successfully"})
+}
+
+func parseUint(s string) uint {
+	val, _ := strconv.ParseUint(s, 10, 32)
+	return uint(val)
+}
+
 func SearchGroups(c *gin.Context) {
 	q := c.Query("q")
 	var groups []models.Group
@@ -110,4 +140,44 @@ func SearchGroups(c *gin.Context) {
 		groups = []models.Group{}
 	}
 	c.JSON(http.StatusOK, groups)
+}
+
+func UpdateGroup(c *gin.Context) {
+	groupID := c.Param("id")
+	userID, _ := c.Get("userId")
+
+	var group models.Group
+	if err := db.DB.First(&group, groupID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Group not found"})
+		return
+	}
+
+	if group.OwnerID != userID.(uint) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only the owner can update group details"})
+		return
+	}
+
+	var input struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		Avatar      string `json:"avatar"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if input.Name != "" {
+		group.Name = input.Name
+	}
+	group.Description = input.Description
+	group.Avatar = input.Avatar
+
+	if err := db.DB.Save(&group).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update group"})
+		return
+	}
+
+	c.JSON(http.StatusOK, group)
 }
