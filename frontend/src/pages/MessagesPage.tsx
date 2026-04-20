@@ -261,29 +261,40 @@ export const MessagesPage = () => {
 
   const handleVoiceSend = async (blob: Blob) => {
     setIsRecording(false);
-    if (!selectedFriend || !ws) return;
+    if ((!selectedFriend && !selectedGroup) || !ws) return;
     const fd = new FormData();
     fd.append('file', blob, `voice-${Date.now()}.webm`);
     try {
       const r = await api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      ws.send(JSON.stringify({ action: 'send', receiverId: selectedFriend.id, content: '', fileUrl: r.data.url, fileName: 'Голосовое сообщение.webm', fileType: 'audio/webm' }));
+      const payload: any = { action: 'send', content: '', fileUrl: r.data.url, fileName: 'Голосовое сообщение.webm', fileType: 'audio/webm' };
+      if (selectedFriend) payload.receiverId = selectedFriend.id;
+      if (selectedGroup) payload.groupId = selectedGroup.id;
+      ws.send(JSON.stringify(payload));
     } catch { alert('Ошибка отправки голосового сообщения'); }
   };
 
   const handleDelete = (msgId: number) => {
-    if (!ws || !selectedFriend) return;
-    if (confirm('Удалить сообщение?')) ws.send(JSON.stringify({ action: 'delete', messageId: msgId, receiverId: selectedFriend.id }));
+    if (!ws || (!selectedFriend && !selectedGroup)) return;
+    if (confirm('Удалить сообщение?')) {
+      const payload: any = { action: 'delete', messageId: msgId };
+      if (selectedFriend) payload.receiverId = selectedFriend.id;
+      if (selectedGroup) payload.groupId = selectedGroup.id;
+      ws.send(JSON.stringify(payload));
+    }
   };
 
   const handeEditClick = (msg: any) => { setEditingMsgId(msg.id); setInput(msg.content); inputRef.current?.focus(); };
 
   const sendFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0] || !selectedFriend || !ws) return;
+    if (!e.target.files?.[0] || (!selectedFriend && !selectedGroup) || !ws) return;
     const fd = new FormData();
     fd.append('file', e.target.files[0]);
     try {
       const r = await api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      ws.send(JSON.stringify({ action: 'send', receiverId: selectedFriend.id, content: '', fileUrl: r.data.url, fileName: r.data.fileName, fileType: r.data.fileType }));
+      const payload: any = { action: 'send', content: '', fileUrl: r.data.url, fileName: r.data.fileName, fileType: r.data.fileType };
+      if (selectedFriend) payload.receiverId = selectedFriend.id;
+      if (selectedGroup) payload.groupId = selectedGroup.id;
+      ws.send(JSON.stringify(payload));
     } catch { alert('Ошибка загрузки файла'); }
     e.target.value = '';
   };
