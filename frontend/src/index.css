@@ -439,6 +439,25 @@ body::after {
   animation: glow-pulse 2s ease-in-out infinite;
 }
 
+@keyframes wave-pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 0.4; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
+
+.wave-pulse {
+  animation: wave-pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes calling-glow {
+  0%, 100% { box-shadow: 0 0 40px color-mix(in srgb, var(--primary), transparent 80%); }
+  50% { box-shadow: 0 0 80px color-mix(in srgb, var(--primary), transparent 50%); }
+}
+
+.calling-glow {
+  animation: calling-glow 3s ease-in-out infinite;
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% center;

@@ -3,6 +3,7 @@ import { useNotifications } from './NotificationContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
+import { callAudio } from '../utils/audio_utils';
 
 // ─── Native Audio Plugin Bridge ───────────────────────────────────────────────
 const NativeAudio = {
@@ -58,8 +59,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const pcRef = useRef<RTCPeerConnection | null>(null);
     const pendingOfferRef = useRef<RTCSessionDescriptionInit | null>(null);
-    const ringtoneRef = useRef<HTMLAudioElement | null>(null);
-    const dialtoneRef = useRef<HTMLAudioElement | null>(null);
 
     const iceServers = [
         { urls: 'stun:stun.l.google.com:19302' },
@@ -67,24 +66,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         { urls: 'stun:stun2.l.google.com:19302' },
     ];
 
-    useEffect(() => {
-        const ring = new Audio('https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3');
-        ring.loop = true;
-        ringtoneRef.current = ring;
-        const dial = new Audio('https://assets.mixkit.co/active_storage/sfx/1358/1358-preview.mp3');
-        dial.loop = true;
-        dialtoneRef.current = dial;
-        return () => { ring.pause(); dial.pause(); };
-    }, []);
-
-    const playRingtone = () => ringtoneRef.current?.play().catch(() => {});
-    const stopRingtone = () => {
-        if (ringtoneRef.current) { ringtoneRef.current.pause(); ringtoneRef.current.currentTime = 0; }
-    };
-    const playDialtone = () => dialtoneRef.current?.play().catch(() => {});
-    const stopDialtone = () => {
-        if (dialtoneRef.current) { dialtoneRef.current.pause(); dialtoneRef.current.currentTime = 0; }
-    };
+    const playRingtone = () => callAudio.playRingtone();
+    const stopRingtone = () => callAudio.stopAll();
+    const playDialtone = () => callAudio.playDialtone();
+    const stopDialtone = () => callAudio.stopAll();
 
     const resetCallState = useCallback(() => {
         NativeAudio.setCallMode(false);
@@ -284,6 +269,7 @@ const CallScreen = () => {
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
     const localVideoRef  = useRef<HTMLVideoElement>(null);
     const [duration, setDuration] = useState(0);
+    const isMobile = window.innerWidth < 768;
 
     // Attach remote stream to the correct media element
     useEffect(() => {
@@ -320,13 +306,25 @@ const CallScreen = () => {
             exit={{ opacity: 0, scale: 0.9 }}
             style={{
                 position: 'fixed', inset: 0, zIndex: 999999,
-                background: callIsVideo ? '#000' : 'linear-gradient(135deg, #0a0a20, #1a1a3a)',
+                background: '#050510',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                // Respect device safe areas (notch / gesture bar)
                 paddingTop: 'env(safe-area-inset-top, 0px)',
                 paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+                overflow: 'hidden'
             }}
         >
+            {/* Immersive Background */}
+            <div style={{
+                position: 'absolute', inset: 0,
+                backgroundImage: `url(${callFriend.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${callFriend.username}`})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'blur(60px) brightness(0.3)',
+                transform: 'scale(1.2)',
+                zIndex: -1
+            }} />
+            
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 100%)', zIndex: -1 }} />
             {/* Hidden audio element — always present for audio routing */}
             <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: 'none' }} />
 
@@ -345,29 +343,34 @@ const CallScreen = () => {
             {/* Avatar + status */}
             <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
                 <motion.div
-                    animate={!connected ? { scale: [1, 1.1, 1], rotate: [0, 2, -2, 0] } : {}}
-                    transition={{ repeat: Infinity, duration: 3 }}
-                    style={{ position: 'relative' }}
+                    className={connected ? "calling-glow" : ""}
+                    animate={!connected ? { scale: [1, 1.05, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    style={{ position: 'relative', borderRadius: '45px', overflow: 'hidden' }}
                 >
                     {!connected && (
-                        <div style={{ position: 'absolute', inset: -20, borderRadius: '50%', border: '2px solid var(--primary)', opacity: 0.3, animation: 'ping 2s infinite' }} />
+                        <div className="wave-pulse" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '4px solid var(--primary)', zIndex: -1 }} />
                     )}
                     <img
                         src={callFriend.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${callFriend.username}`}
                         alt=""
-                        style={{ width: '140px', height: '140px', borderRadius: '40px', border: '3px solid var(--primary)', boxShadow: 'var(--glow-strong)' }}
+                        style={{ width: '160px', height: '160px', borderRadius: '45px', border: '3px solid var(--primary)', objectFit: 'cover' }}
                     />
                 </motion.div>
 
                 <div style={{ textAlign: 'center' }}>
-                    <h2 style={{ fontSize: '2rem', fontWeight: '900', color: 'white', marginBottom: '8px', textShadow: '0 0 20px rgba(0,0,0,0.5)' }}>
+                    <h2 style={{ fontSize: '2.4rem', fontWeight: '900', color: 'white', marginBottom: '4px', textShadow: '0 0 30px rgba(0,0,0,0.8)' }}>
                         {callFriend.username}
                     </h2>
-                    <p style={{ color: 'var(--primary)', fontWeight: '700', letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.9rem' }}>
+                    <motion.p 
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                        style={{ color: 'var(--primary)', fontWeight: '800', letterSpacing: '3px', textTransform: 'uppercase', fontSize: '0.85rem' }}
+                    >
                         {callState === 'incoming' ? 'Входящий вызов...' :
-                         callState === 'outgoing' ? 'Набор номера...' :
-                         `Соединение установлено • ${fmt(duration)}`}
-                    </p>
+                         callState === 'outgoing' ? 'Вызов абонента...' :
+                         `В эфире • ${fmt(duration)}`}
+                    </motion.p>
                 </div>
             </div>
 
@@ -396,46 +399,75 @@ const CallScreen = () => {
                 padding: '0 20px',
             }}>
                 {callState === 'incoming' ? (
-                    <>
+                    <div style={{ display: 'flex', gap: '48px', alignItems: 'center' }}>
                         {/* Decline */}
-                        <motion.button whileTap={{ scale: 0.9 }} onClick={endCall} style={btnStyle('#ff3b3b', 72)}>
-                            <PhoneOff size={32} />
-                        </motion.button>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                            <motion.button 
+                                whileHover={{ scale: 1.1, backgroundColor: '#ff4b4b' }}
+                                whileTap={{ scale: 0.9 }} 
+                                onClick={endCall} 
+                                style={{
+                                    ...btnStyle('#ff3b3b', 76),
+                                    boxShadow: '0 0 40px rgba(255, 59, 59, 0.4)'
+                                }}
+                            >
+                                <PhoneOff size={32} />
+                            </motion.button>
+                            <span style={labelStyle}>Отклонить</span>
+                        </div>
                         {/* Accept */}
-                        <motion.button whileTap={{ scale: 0.9 }} onClick={acceptCall} style={btnStyle('#00d26a', 72)}>
-                            <Phone size={32} />
-                        </motion.button>
-                    </>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                            <motion.button 
+                                whileHover={{ scale: 1.1, backgroundColor: '#00e675' }}
+                                whileTap={{ scale: 0.9 }} 
+                                onClick={acceptCall} 
+                                style={{
+                                    ...btnStyle('#00d26a', 76),
+                                    boxShadow: '0 0 40px rgba(0, 210, 106, 0.4)'
+                                }}
+                            >
+                                <Phone size={32} />
+                            </motion.button>
+                            <span style={labelStyle}>Принять</span>
+                        </div>
+                    </div>
                 ) : (
-                    <>
-                        {/* Mute */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ 
+                        display: 'flex', 
+                        gap: isMobile ? '12px' : '24px', 
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        padding: '24px 32px',
+                        borderRadius: '40px',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                        {/* Mute toggle */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                             <motion.button whileTap={{ scale: 0.9 }} onClick={toggleMute}
-                                style={btnStyle(isMuted ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)', 60, true)}>
+                                style={btnStyle(isMuted ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)', 58, true)}>
                                 {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
                             </motion.button>
-                            <span style={labelStyle}>{isMuted ? 'Микр. выкл.' : 'Микрофон'}</span>
+                            <span style={labelStyle}>{isMuted ? 'Звук выкл' : 'Микрофон'}</span>
                         </div>
 
                         {/* Video toggle */}
-                        {callIsVideo && (
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                                <motion.button whileTap={{ scale: 0.9 }} onClick={toggleVideo}
-                                    style={btnStyle(isVideoOff ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)', 60, true)}>
-                                    {isVideoOff ? <VideoOff size={24} /> : <Video size={24} />}
-                                </motion.button>
-                                <span style={labelStyle}>{isVideoOff ? 'Камера выкл.' : 'Камера'}</span>
-                            </div>
-                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                            <motion.button whileTap={{ scale: 0.9 }} onClick={toggleVideo}
+                                style={btnStyle(isVideoOff ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)', 58, true)}>
+                                {isVideoOff ? <VideoOff size={24} /> : <Video size={24} />}
+                            </motion.button>
+                            <span style={labelStyle}>Камера</span>
+                        </div>
 
-                        {/* Speaker toggle — always visible, more prominent on native */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                        {/* Speaker toggle */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                             <motion.button whileTap={{ scale: 0.9 }} onClick={toggleSpeaker}
                                 style={{
-                                    ...btnStyle(isSpeaker ? 'var(--primary)' : 'rgba(255,255,255,0.1)', 60, true),
+                                    ...btnStyle(isSpeaker ? 'var(--primary)' : 'rgba(255,255,255,0.1)', 58, true),
                                     color: isSpeaker ? 'black' : 'white',
-                                    boxShadow: isSpeaker ? 'var(--glow-strong)' : 'none',
-                                    border: isSpeaker ? 'none' : '1px solid rgba(255,255,255,0.2)',
+                                    boxShadow: isSpeaker ? 'var(--glow-strong)' : 'none'
                                 }}>
                                 {isSpeaker ? <Volume2 size={24} /> : <VolumeX size={24} />}
                             </motion.button>
@@ -444,14 +476,23 @@ const CallScreen = () => {
                             </span>
                         </div>
 
+                        <div style={{ width: '1px', height: '40px', background: 'rgba(255, 255, 255, 0.1)', margin: '0 8px' }} />
+
                         {/* End call */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                            <motion.button whileTap={{ scale: 0.9 }} onClick={endCall} style={btnStyle('#ff3b3b', 72)}>
-                                <PhoneOff size={32} />
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                            <motion.button 
+                                whileTap={{ scale: 0.9 }} 
+                                onClick={endCall} 
+                                style={{
+                                    ...btnStyle('#ff3b3b', 72),
+                                    boxShadow: '0 0 40px rgba(255, 59, 59, 0.4)'
+                                }}
+                            >
+                                <PhoneOff size={30} />
                             </motion.button>
-                            <span style={labelStyle}>Сбросить</span>
+                            <span style={{ ...labelStyle, color: '#ff3b3b' }}>Завершить</span>
                         </div>
-                    </>
+                    </div>
                 )}
             </div>
 
