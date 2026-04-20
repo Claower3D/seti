@@ -354,6 +354,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function AppInner() {
   const location = useLocation();
   const isWavesPage = location.pathname === '/waves';
+  const isMessagesPage = location.pathname.startsWith('/messages');
 
   return (
     <div className="main-layout">
@@ -361,12 +362,12 @@ function AppInner() {
       <Sidebar />
       <div 
         style={{ flex: 1, minWidth: 0 }} 
-        className={`main-content ${isWavesPage ? 'waves-layout' : ''}`}
+        className={`main-content ${(isWavesPage || isMessagesPage) ? 'waves-layout' : ''}`}
       >
         <div className="desktop-only">
-          <Header />
+          {!isMessagesPage && <Header />}
         </div>
-        {!isWavesPage && (
+        {!isWavesPage && !isMessagesPage && (
           <div className="mobile-only">
             <Header />
           </div>
