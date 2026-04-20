@@ -165,7 +165,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', background: '#000', overflow: 'hidden' }}>
-      {/* Video */}
+      {/* Video — hidden while loading so black bg shows instead of white browser placeholder */}
       <video
         ref={videoRef}
         src={wave.videoUrl}
@@ -174,19 +174,71 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
         playsInline
         onTimeUpdate={handleTimeUpdate}
         onWaiting={() => setVideoLoading(true)}
+        onCanPlay={() => setVideoLoading(false)}
+        onLoadedData={() => setVideoLoading(false)}
         onPlaying={() => setVideoLoading(false)}
         onClick={togglePlay}
-        style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          cursor: 'pointer',
+          // Fade in once video is ready; hides the white Android WebView placeholder
+          opacity: videoLoading ? 0 : 1,
+          transition: 'opacity 0.4s ease',
+          background: '#000',
+        }}
       />
 
-      {/* Video Loading Spinner */}
+      {/* Neon loading overlay — shown on black background while video buffering */}
       {videoLoading && (
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 10 }}>
-          <motion.div 
-            animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
-            transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-            style={{ width: '50px', height: '50px', border: '3px solid color-mix(in srgb, var(--primary), transparent 90%)', borderTopColor: 'var(--primary)', borderRadius: '50%', boxShadow: 'var(--glow)' }} 
-          />
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 10,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: '16px',
+          background: '#000',
+        }}>
+          {/* Outer glow ring */}
+          <div style={{ position: 'relative', width: '64px', height: '64px' }}>
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+              style={{
+                position: 'absolute', inset: 0,
+                borderRadius: '50%',
+                border: '3px solid transparent',
+                borderTopColor: 'var(--primary)',
+                borderRightColor: 'color-mix(in srgb, var(--primary), transparent 50%)',
+                boxShadow: 'var(--glow-strong)',
+              }}
+            />
+            <motion.div
+              animate={{ rotate: -180 }}
+              transition={{ repeat: Infinity, duration: 2.4, ease: 'linear' }}
+              style={{
+                position: 'absolute', inset: 8,
+                borderRadius: '50%',
+                border: '2px solid transparent',
+                borderTopColor: 'var(--secondary)',
+                opacity: 0.7,
+              }}
+            />
+          </div>
+          <motion.span
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+            style={{
+              color: 'var(--primary)',
+              fontSize: '0.75rem',
+              fontWeight: '800',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              textShadow: 'var(--glow)',
+            }}
+          >
+            Загрузка...
+          </motion.span>
         </div>
       )}
 
