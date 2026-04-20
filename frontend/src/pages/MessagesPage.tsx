@@ -5,7 +5,10 @@ import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useCall } from '../context/CallContext';
-import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, Video } from 'lucide-react';
+import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, Video, Plus, Users, Shield } from 'lucide-react';
+// ... rest of the imports and components ...
+// (Note: I will only replace the specific block but I need to make sure Shield is in imports)
+
 
 // ─── Voice Player ────────────────────────────────────────────────────────────
 const VoicePlayer = ({ src }: { src: string }) => {
@@ -134,6 +137,8 @@ export const MessagesPage = () => {
   const { ws, lastMessage } = useNotifications();
   const [friends, setFriends] = useState<any[]>([]);
   const [selectedFriend, setSelectedFriend] = useState<any>(null);
+  const [selectedGroup, setSelectedGroup] = useState<any>(null);
+  const [groups, setGroups] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -143,6 +148,9 @@ export const MessagesPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [editingMsgId, setEditingMsgId] = useState<number | null>(null);
   const [fullscreenMedia, setFullscreenMedia] = useState<{url: string, type: string} | null>(null);
+  const [showCreateCluster, setShowCreateCluster] = useState(false);
+  const [newClusterName, setNewClusterName] = useState('');
+  const [selectedFriendsForCluster, setSelectedFriendsForCluster] = useState<number[]>([]);
   const location = useLocation();
 
   const { startCall } = useCall();
@@ -160,12 +168,17 @@ export const MessagesPage = () => {
         if (selectedFriend && data.senderId === selectedFriend.id) return prev.map(m => m.receiverId === data.senderId ? { ...m, isRead: true } : m);
         return prev;
       }
-      const inChat = selectedFriend && (msg.senderId === selectedFriend.id || msg.receiverId === selectedFriend.id);
-      if (inChat && msg.senderId === selectedFriend.id) markAsRead(selectedFriend.id);
-      if (inChat && prev.some(m => m.id === msg.id && action === 'send')) return prev;
-      return inChat ? [...prev, msg] : prev;
+      const inDirectChat = selectedFriend && (msg.senderId === selectedFriend.id || msg.receiverId === selectedFriend.id) && !msg.groupId;
+      const inGroupChat = selectedGroup && msg.groupId === selectedGroup.id;
+      
+      if ((inDirectChat || inGroupChat) && msg.senderId !== user?.id) {
+        if (selectedFriend) markAsRead(selectedFriend.id);
+      }
+      
+      if ((inDirectChat || inGroupChat) && prev.some(m => m.id === msg.id && action === 'send')) return prev;
+      return (inDirectChat || inGroupChat) ? [...prev, msg] : prev;
     });
-  }, [lastMessage, selectedFriend, friends]);
+  }, [lastMessage, selectedFriend, selectedGroup, friends, user]);
 
   useEffect(() => {
     (window as any).lastSelectedFriendId = selectedFriend?.id || null;
@@ -185,14 +198,32 @@ export const MessagesPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    api.get('/friends').then(res => setFriends(res.data || [])).catch(() => setFriends([]));
-  }, []);
+  const fetchInitialData = async () => {
+    try {
+      const [fRes, gRes] = await Promise.all([
+        api.get('/friends'),
+        api.get('/groups')
+      ]);
+      setFriends(fRes.data || []);
+      setGroups(gRes.data || []);
+    } catch {}
+  };
+
+  useEffect(() => { fetchInitialData(); }, []);
 
   useEffect(() => {
-    if (!selectedFriend) return;
-    api.get(`/messages/${selectedFriend.id}`).then(res => { setMessages(res.data || []); markAsRead(selectedFriend.id); });
+    if (selectedFriend) {
+      setSelectedGroup(null);
+      api.get(`/messages/${selectedFriend.id}`).then(res => { setMessages(res.data || []); markAsRead(selectedFriend.id); });
+    }
   }, [selectedFriend]);
+
+  useEffect(() => {
+    if (selectedGroup) {
+      setSelectedFriend(null);
+      api.get(`/groups/${selectedGroup.id}/messages`).then(res => { setMessages(res.data || []); });
+    }
+  }, [selectedGroup]);
 
   const markAsRead = (friendId: number) => {
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ action: 'read', receiverId: friendId }));
@@ -202,13 +233,20 @@ export const MessagesPage = () => {
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ws || !input.trim() || !selectedFriend) return;
-    if (editingMsgId) {
-      ws.send(JSON.stringify({ action: 'edit', messageId: editingMsgId, content: input, receiverId: selectedFriend.id }));
-      setEditingMsgId(null);
-    } else {
-      ws.send(JSON.stringify({ action: 'send', receiverId: selectedFriend.id, content: input }));
-    }
+    if (!ws || !input.trim() || (!selectedFriend && !selectedGroup)) return;
+    
+    const payload: any = {
+      action: editingMsgId ? 'edit' : 'send',
+      content: input,
+      messageId: editingMsgId
+    };
+
+    if (selectedFriend) payload.receiverId = selectedFriend.id;
+    if (selectedGroup) payload.groupId = selectedGroup.id;
+
+    ws.send(JSON.stringify(payload));
+    
+    if (editingMsgId) setEditingMsgId(null);
     setInput('');
     inputRef.current?.focus();
   };
@@ -243,8 +281,25 @@ export const MessagesPage = () => {
   };
 
   const isImage = (type?: string) => type?.startsWith('image/');
-  const showList = !isMobile || !selectedFriend;
-  const showChat = !isMobile || selectedFriend;
+  const showList = !isMobile || (!selectedFriend && !selectedGroup);
+  const showChat = !isMobile || selectedFriend || selectedGroup;
+
+  const createCluster = async () => {
+    if (!newClusterName.trim() || selectedFriendsForCluster.length === 0) return;
+    try {
+      const res = await api.post('/groups', {
+        name: newClusterName,
+        memberIds: selectedFriendsForCluster
+      });
+      setGroups([res.data, ...groups]);
+      setShowCreateCluster(false);
+      setNewClusterName('');
+      setSelectedFriendsForCluster([]);
+      setSelectedGroup(res.data);
+    } catch {
+      alert('Ошибка при создании Кластера');
+    }
+  };
 
   return (
     <div style={{ height: 'calc(100vh - 140px)', display: 'flex', gap: '16px' }}>
@@ -261,13 +316,43 @@ export const MessagesPage = () => {
             )}
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
-            {friends.length === 0 ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px 12px', opacity: 0.8 }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--primary)' }}>Кластеры</span>
+              <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowCreateCluster(true)}
+                style={{ background: 'color-mix(in srgb, var(--primary), transparent 90%)', border: '1px solid currentColor', color: 'var(--primary)', width: '24px', height: '24px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <Plus size={14} />
+              </motion.button>
+            </div>
+            
+            {groups.map(group => (
+               <div key={`g-${group.id}`} onClick={() => setSelectedGroup(group)}
+               style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
+                 background: selectedGroup?.id === group.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
+                 border: selectedGroup?.id === group.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
+                 transition: 'all 0.3s', marginBottom: '8px' }}>
+                <div style={{ position: 'relative' }}>
+                  <div style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: selectedGroup?.id === group.id ? 'var(--glow)' : 'none' }}>
+                    <Users size={24} color="black" />
+                  </div>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedGroup?.id === group.id ? 'var(--primary)' : 'white' }}>{group.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Групповой сигнал активен</div>
+                </div>
+              </div>
+            ))}
+
+            <div style={{ height: '2px', background: 'rgba(255,255,255,0.05)', margin: '16px 8px 24px' }} />
+            
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--primary)', padding: '0 8px 12px', display: 'block', opacity: 0.8 }}>Прямые сигналы</span>
+            
+            {friends.length === 0 && groups.length === 0 ? (
               <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                 <MessageSquare size={48} style={{ marginBottom: '16px', opacity: 0.3 }} />
                 <p>Нет активных сессий</p>
               </div>
             ) : friends.map(friend => (
-              <div key={friend.id} onClick={() => setSelectedFriend(friend)}
+              <div key={`f-${friend.id}`} onClick={() => setSelectedFriend(friend)}
                 style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
                   background: selectedFriend?.id === friend.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
                   border: selectedFriend?.id === friend.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
@@ -289,37 +374,56 @@ export const MessagesPage = () => {
 
       {showChat && (
         <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, border: '1px solid var(--border)' }}>
-          {selectedFriend ? (
+          {(selectedFriend || selectedGroup) ? (
             <>
-              {/* Chat header with call buttons */}
+              {/* Chat header */}
               <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.02)' }}>
                 {isMobile && (
-                  <button onClick={() => setSelectedFriend(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px', display: 'flex', borderRadius: '12px' }}>
+                  <button onClick={() => { setSelectedFriend(null); setSelectedGroup(null); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px', display: 'flex', borderRadius: '12px' }}>
                     <ArrowLeft size={24} />
                   </button>
                 )}
-                <img src={selectedFriend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedFriend.username}
-                  alt="avatar" style={{ width: '44px', height: '44px', borderRadius: '14px', border: '2px solid var(--primary)' }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: '900', fontSize: '1.1rem', color: 'var(--primary)', textShadow: 'var(--glow)' }}>{selectedFriend.username}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div className="pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', boxShadow: 'var(--glow)' }}></div> Online Signal
-                  </div>
-                </div>
+                
+                {selectedFriend ? (
+                  <>
+                    <img src={selectedFriend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedFriend.username}
+                      alt="avatar" style={{ width: '44px', height: '44px', borderRadius: '14px', border: '2px solid var(--primary)' }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '900', fontSize: '1.1rem', color: 'var(--primary)', textShadow: 'var(--glow)' }}>{selectedFriend.username}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <div className="pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', boxShadow: 'var(--glow)' }}></div> Online Signal
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Users size={20} color="black" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '900', fontSize: '1.1rem', color: 'var(--primary)', textShadow: 'var(--glow)' }}>{selectedGroup.name}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Shield size={12} /> Cluster Stream Active
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* CALL BUTTONS */}
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={() => startCall(selectedFriend, false)}
-                    title="Аудиозвонок"
-                    style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'color-mix(in srgb, var(--primary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--primary), transparent 60%)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(0,242,255,0.15)' }}>
-                    <Phone size={18} />
-                  </motion.button>
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={() => startCall(selectedFriend, true)}
-                    title="Видеозвонок"
-                    style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'color-mix(in srgb, var(--secondary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--secondary), transparent 60%)', color: 'var(--secondary, #7b2ff7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(123,47,247,0.15)' }}>
-                    <Video size={18} />
-                  </motion.button>
-                </div>
+                {selectedFriend && (
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => startCall(selectedFriend, false)}
+                      title="Аудиозвонок"
+                      style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'color-mix(in srgb, var(--primary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--primary), transparent 60%)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(0,242,255,0.15)' }}>
+                      <Phone size={18} />
+                    </motion.button>
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => startCall(selectedFriend, true)}
+                      title="Видеозвонок"
+                      style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'color-mix(in srgb, var(--secondary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--secondary), transparent 60%)', color: 'var(--secondary, #7b2ff7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(123,47,247,0.15)' }}>
+                      <Video size={18} />
+                    </motion.button>
+                  </div>
+                )}
               </div>
 
               <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -328,42 +432,51 @@ export const MessagesPage = () => {
                     <p style={{ letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.8rem' }}>инициализация сеанса связи 👋</p>
                   </div>
                 )}
-                {messages.map((msg, i) => {
-                  const isMe = msg.senderId === user?.id;
-                  return (
-                    <motion.div initial={{ opacity: 0, x: isMe ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} key={i}
-                      style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                      <div className="msg-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px', flexDirection: isMe ? 'row-reverse' : 'row', maxWidth: isMobile ? '88%' : '70%', minWidth: 0 }}>
-                        <div style={{ width: '100%', padding: '12px 18px', borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
-                          background: isMe ? 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 70%), color-mix(in srgb, var(--secondary), transparent 70%))' : 'rgba(255,255,255,0.08)',
-                          color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
-                          overflowWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'normal', fontWeight: isMe ? '700' : '500',
-                          boxShadow: isMe ? 'var(--glow)' : '0 4px 20px rgba(0,0,0,0.3)',
-                          border: isMe ? '1px solid var(--border-bright)' : '1px solid rgba(255,255,255,0.12)' }}>
-                          {msg.fileUrl ? (
-                            msg.fileType?.includes('audio') ? <VoicePlayer src={msg.fileUrl} />
-                              : msg.fileType?.includes('video') ? <video src={msg.fileUrl} controls style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '10px', outline: 'none' }} />
-                              : isImage(msg.fileType) ? <img src={msg.fileUrl} alt={msg.fileName} onClick={() => setFullscreenMedia({url: msg.fileUrl, type: msg.fileType})} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '10px', display: 'block', cursor: 'zoom-in' }} />
-                              : <a href={msg.fileUrl} target="_blank" rel="noreferrer" style={{ color: isMe ? 'black' : 'var(--primary)', textDecoration: 'underline' }}>📎 {msg.fileName}</a>
-                          ) : msg.content}
-                          {isMe && (
-                            <div style={{ position: 'absolute', bottom: '8px', right: '12px', opacity: 0.8 }}>
-                              <CheckCheck size={14} color={msg.isRead ? '#39ff14' : 'rgba(255,255,255,0.4)'} style={{ filter: msg.isRead ? 'drop-shadow(0 0 5px #39ff14)' : 'none' }} />
+                  {messages.map((msg, i) => {
+                    const isMe = msg.senderId === user?.id;
+                    const showSender = !isMe && selectedGroup && (i === 0 || messages[i-1].senderId !== msg.senderId);
+                    
+                    return (
+                      <motion.div initial={{ opacity: 0, x: isMe ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} key={i}
+                        style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start', marginBottom: showSender ? '8px' : '0' }}>
+                        <div className="msg-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', gap: '8px', flexDirection: isMe ? 'row-reverse' : 'row', maxWidth: isMobile ? '88%' : '70%', minWidth: 0 }}>
+                          {!isMe && selectedGroup && (
+                            <img src={msg.sender?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + msg.sender?.username} 
+                              alt="" style={{ width: '28px', height: '28px', borderRadius: '8px', opacity: showSender ? 1 : 0 }} />
+                          )}
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            {showSender && <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '800', marginLeft: '4px', marginBottom: '4px' }}>{msg.sender?.username}</span>}
+                            <div style={{ width: '100%', padding: '12px 18px', borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
+                              background: isMe ? 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 70%), color-mix(in srgb, var(--secondary), transparent 70%))' : 'rgba(255,255,255,0.08)',
+                              color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
+                              overflowWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'normal', fontWeight: isMe ? '700' : '500',
+                              boxShadow: isMe ? 'var(--glow)' : '0 4px 20px rgba(0,0,0,0.3)',
+                              border: isMe ? '1px solid var(--border-bright)' : '1px solid rgba(255,255,255,0.12)' }}>
+                              {msg.fileUrl ? (
+                                msg.fileType?.includes('audio') ? <VoicePlayer src={msg.fileUrl} />
+                                  : msg.fileType?.includes('video') ? <video src={msg.fileUrl} controls style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '10px', outline: 'none' }} />
+                                  : isImage(msg.fileType) ? <img src={msg.fileUrl} alt={msg.fileName} onClick={() => setFullscreenMedia({url: msg.fileUrl, type: msg.fileType})} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '10px', display: 'block', cursor: 'zoom-in' }} />
+                                  : <a href={msg.fileUrl} target="_blank" rel="noreferrer" style={{ color: isMe ? 'black' : 'var(--primary)', textDecoration: 'underline' }}>📎 {msg.fileName}</a>
+                              ) : msg.content}
+                              {isMe && !selectedGroup && (
+                                <div style={{ position: 'absolute', bottom: '8px', right: '12px', opacity: 0.8 }}>
+                                  <CheckCheck size={14} color={msg.isRead ? '#39ff14' : 'rgba(255,255,255,0.4)'} style={{ filter: msg.isRead ? 'drop-shadow(0 0 5px #39ff14)' : 'none' }} />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {isMe && !selectedGroup && (
+                            <div className="msg-actions" style={{ display: 'flex', gap: '4px', opacity: 0.6, flexShrink: 0 }}>
+                              {!msg.fileUrl && (
+                                <button onClick={() => handeEditClick(msg)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}><Edit2 size={14} /></button>
+                              )}
+                              <button onClick={() => handleDelete(msg.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', padding: '4px' }}><Trash2 size={14} /></button>
                             </div>
                           )}
                         </div>
-                        {isMe && (
-                          <div className="msg-actions" style={{ display: 'flex', gap: '4px', opacity: 0.6, flexShrink: 0 }}>
-                            {!msg.fileUrl && (
-                              <button onClick={() => handeEditClick(msg)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}><Edit2 size={14} /></button>
-                            )}
-                            <button onClick={() => handleDelete(msg.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', padding: '4px' }}><Trash2 size={14} /></button>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                      </motion.div>
+                    );
+                  })}
                 <div ref={scrollRef} />
               </div>
 
@@ -414,7 +527,6 @@ export const MessagesPage = () => {
         </div>
       )}
 
-      {/* Fullscreen media */}
       <AnimatePresence>
         {fullscreenMedia && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -427,6 +539,48 @@ export const MessagesPage = () => {
               ? <video src={fullscreenMedia.url} controls autoPlay onClick={e => e.stopPropagation()} style={{ maxWidth: '90%', maxHeight: '90%', outline: 'none', borderRadius: '12px' }} />
               : <img src={fullscreenMedia.url} alt="Fullscreen" onClick={e => e.stopPropagation()} style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain', borderRadius: '12px' }} />
             }
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* NEW CLUSTER MODAL */}
+      <AnimatePresence>
+        {showCreateCluster && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 5000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} 
+              className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '32px', border: '1px solid var(--border-bright)', boxShadow: 'var(--glow-strong)' }}>
+              <h2 style={{ marginBottom: '24px', fontSize: '1.5rem', fontWeight: '900' }} className="neon-text">Новый Кластер</h2>
+              
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--primary)' }}>Имя Кластера</label>
+                <input type="text" className="input-field" placeholder="Введите название..." value={newClusterName} onChange={e => setNewClusterName(e.target.value)} />
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--primary)' }}>Выбор узлов (участников)</label>
+                <div style={{ maxHeight: '200px', overflowY: 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  {friends.map(f => (
+                    <label key={f.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', cursor: 'pointer', transition: 'background 0.2s' }} 
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <input type="checkbox" checked={selectedFriendsForCluster.includes(f.id)} 
+                        onChange={e => {
+                          if (e.target.checked) setSelectedFriendsForCluster([...selectedFriendsForCluster, f.id]);
+                          else setSelectedFriendsForCluster(selectedFriendsForCluster.filter(id => id !== f.id));
+                        }}
+                        style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
+                      <img src={f.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + f.username} style={{ width: '32px', height: '32px', borderRadius: '10px' }} />
+                      <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{f.username}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button onClick={() => setShowCreateCluster(false)} style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontWeight: '700', cursor: 'pointer' }}>Отмена</button>
+                <button onClick={createCluster} className="btn-primary" style={{ flex: 1, padding: '12px', borderRadius: '12px', justifyContent: 'center' }}>Создать</button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -73,6 +73,7 @@ func WebSocketHandler(c *gin.Context) {
 			FileName   string `json:"fileName"`
 			FileType   string `json:"fileType"`
 			ReplyStoryURL string `json:"replyStoryUrl"`
+			GroupID    uint   `json:"groupId"`
 		}
 
 		if err := json.Unmarshal(message, &msgData); err != nil {
@@ -134,11 +135,17 @@ func WebSocketHandler(c *gin.Context) {
 			chatMsg = models.Message{
 				SenderID:   userID,
 				ReceiverID: msgData.ReceiverID,
+				GroupID:    nil,
 				Content:    msgData.Content,
 				FileURL:    msgData.FileURL,
 				FileName:   msgData.FileName,
 				FileType:   msgData.FileType,
 				ReplyStoryURL: msgData.ReplyStoryURL,
+			}
+			if msgData.GroupID != 0 {
+				gid := msgData.GroupID
+				chatMsg.GroupID = &gid
+				chatMsg.ReceiverID = 0 // In group chats, we use GroupID
 			}
 			db.DB.Create(&chatMsg)
                         // Send push notification
@@ -159,11 +166,22 @@ func WebSocketHandler(c *gin.Context) {
 		}
 
 		mu.Lock()
-		if receiver, ok := clients[chatMsg.ReceiverID]; ok {
-			receiver.Conn.WriteJSON(outData)
-		}
-		if sender, ok := clients[chatMsg.SenderID]; ok {
-			sender.Conn.WriteJSON(outData)
+		if chatMsg.GroupID != nil {
+			// Find all members of the group
+			var members []models.GroupMember
+			db.DB.Where("group_id = ?", *chatMsg.GroupID).Find(&members)
+			for _, m := range members {
+				if receiver, ok := clients[m.UserID]; ok {
+					receiver.Conn.WriteJSON(outData)
+				}
+			}
+		} else {
+			if receiver, ok := clients[chatMsg.ReceiverID]; ok {
+				receiver.Conn.WriteJSON(outData)
+			}
+			if sender, ok := clients[chatMsg.SenderID]; ok {
+				sender.Conn.WriteJSON(outData)
+			}
 		}
 		mu.Unlock()
 	}

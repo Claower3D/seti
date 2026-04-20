@@ -14,6 +14,7 @@ func CreateGroup(c *gin.Context) {
 		Name        string `json:"name" binding:"required"`
 		Description string `json:"description"`
 		Avatar      string `json:"avatar"`
+		MemberIDs   []uint `json:"memberIds"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -30,6 +31,11 @@ func CreateGroup(c *gin.Context) {
 		return
 	}
 	db.DB.Create(&models.GroupMember{GroupID: group.ID, UserID: userID.(uint), Role: "owner"})
+	for _, mid := range input.MemberIDs {
+		if mid != userID.(uint) {
+			db.DB.Create(&models.GroupMember{GroupID: group.ID, UserID: mid, Role: "member"})
+		}
+	}
 	db.DB.Preload("Owner").Preload("Members.User").First(&group, group.ID)
 	c.JSON(http.StatusCreated, group)
 }
@@ -89,7 +95,7 @@ func LeaveGroup(c *gin.Context) {
 func GetGroupMessages(c *gin.Context) {
 	groupID := c.Param("id")
 	var messages []models.Message
-	db.DB.Where("group_id = ?", groupID).Order("created_at asc").Find(&messages)
+	db.DB.Preload("Sender").Where("group_id = ?", groupID).Order("created_at asc").Find(&messages)
 	if messages == nil {
 		messages = []models.Message{}
 	}
