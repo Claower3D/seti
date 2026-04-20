@@ -14,6 +14,7 @@ import { WavesPage } from './pages/WavesPage';
 import { AppDownloadPage } from './pages/AppDownloadPage';
 import { UpdateModal } from './components/UpdateModal';
 import LoadingScreen from './components/LoadingScreen';
+import ErrorPlaceholder from './components/ErrorPlaceholder';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, ArrowDownCircle, Plus } from 'lucide-react';
@@ -346,8 +347,26 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 function AppInner() {
   const location = useLocation();
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const isWavesPage = location.pathname === '/waves';
   const isMessagesPage = location.pathname.startsWith('/messages');
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  if (isOffline) {
+    return <div style={{ height: '100vh', background: '#050510', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ErrorPlaceholder type="offline" /></div>;
+  }
 
   return (
     <div className="main-layout">
@@ -380,6 +399,7 @@ function AppInner() {
             <Route path="/waves" element={<ProtectedRoute><WavesPage /></ProtectedRoute>} />
             <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/app" element={<ProtectedRoute><AppDownloadPage /></ProtectedRoute>} />
+            <Route path="*" element={<ErrorPlaceholder type="404" />} />
           </Routes>
         </AnimatePresence>
       </div>
