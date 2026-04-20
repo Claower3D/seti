@@ -122,6 +122,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile }: { wave: Wave; isA
         loop
         muted={muted}
         playsInline
+        preload={isActive ? "auto" : "metadata"}
         onTimeUpdate={handleTimeUpdate}
         onWaiting={() => setVideoLoading(true)}
         onCanPlay={() => setVideoLoading(false)}

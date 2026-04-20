@@ -144,7 +144,8 @@ export const StoryCameraModal: React.FC<StoryCameraModalProps> = ({ isOpen, onCl
 
     const mr = new MediaRecorder(streamRef.current, { 
       mimeType,
-      videoBitsPerSecond: 2500000 // 2.5 Mbps for smooth recording
+      videoBitsPerSecond: 6000000, // High quality 6 Mbps
+      audioBitsPerSecond: 128000  // High quality audio
     });
     mediaRecorderRef.current = mr;
     mr.ondataavailable = (e) => { if (e.data.size > 0) videoChunksRef.current.push(e.data); };
