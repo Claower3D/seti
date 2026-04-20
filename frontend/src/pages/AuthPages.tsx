@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, User, LogIn, Smartphone, Globe, Download } from 'lucide-react';
+import { Mail, Lock, User, LogIn, Smartphone, Globe, Download, Fingerprint } from 'lucide-react';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -144,6 +144,7 @@ export const LoginPage = () => {
 export const RegisterPage = () => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
+    const [iin, setIin] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -155,7 +156,7 @@ export const RegisterPage = () => {
       setIsSubmitting(true);
       setError('');
       try {
-        const res = await api.post('/register', { username, email, password });
+        const res = await api.post('/register', { username, email, iin, password });
         login(res.data.token, res.data.user);
         navigate('/');
       } catch (err: any) {
@@ -212,6 +213,23 @@ export const RegisterPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+              />
+            </div>
+            <div style={{ position: 'relative' }}>
+              <Fingerprint size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder="ИИН РК (12 цифр)" 
+                style={{ paddingLeft: '48px', height: '52px' }}
+                value={iin}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 12);
+                  setIin(val);
+                }}
+                required
+                pattern="[0-9]{12}"
+                title="ИИН должен состоять из 12 цифр"
               />
             </div>
             <div style={{ position: 'relative' }}>

@@ -10,6 +10,7 @@ type User struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
 	Username  string         `gorm:"uniqueIndex;not null" json:"username"`
 	Email     string         `gorm:"uniqueIndex;not null" json:"email"`
+	IIN       string         `gorm:"uniqueIndex;size:12;not null" json:"iin"`
 	Password  string         `json:"-"`
 	Bio       string         `json:"bio"`
 	Avatar    string         `json:"avatar"`
@@ -153,4 +154,3 @@ type Notification struct {
 	Read       bool      `gorm:"default:false" json:"read"`
 	CreatedAt  time.Time `json:"createdAt"`
 }
-
