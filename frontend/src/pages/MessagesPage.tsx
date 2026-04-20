@@ -151,6 +151,14 @@ export const MessagesPage = () => {
   const [showCreateCluster, setShowCreateCluster] = useState(false);
   const [newClusterName, setNewClusterName] = useState('');
   const [selectedFriendsForCluster, setSelectedFriendsForCluster] = useState<number[]>([]);
+  
+  // Media Gallery & Admin
+  const [showGallery, setShowGallery] = useState(false);
+  const [galleryMedia, setGalleryMedia] = useState<any[]>([]);
+  const [galleryFilter, setGalleryFilter] = useState<'photo'|'video'|'file'>('photo');
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [friendsToAdd, setFriendsToAdd] = useState<number[]>([]);
+  
   const location = useLocation();
 
   const { startCall } = useCall();
@@ -281,11 +289,38 @@ export const MessagesPage = () => {
   };
 
   const isImage = (type?: string) => type?.startsWith('image/');
+  const isVideo = (type?: string) => type?.startsWith('video/');
+  const isDoc = (type?: string) => !isImage(type) && !isVideo(type);
+
   const showList = !isMobile || (!selectedFriend && !selectedGroup);
   const showChat = !isMobile || selectedFriend || selectedGroup;
 
+  const fetchGallery = async () => {
+    if (!selectedFriend && !selectedGroup) return;
+    try {
+      const params = selectedGroup ? { groupId: selectedGroup.id } : { receiverId: selectedFriend.id };
+      const res = await api.get('/messages/media', { params });
+      setGalleryMedia(res.data || []);
+      setShowGallery(true);
+    } catch {
+      alert('Ошибка доступа к архиву');
+    }
+  };
+
+  const addMembersToCluster = async () => {
+    if (!selectedGroup || friendsToAdd.length === 0) return;
+    try {
+      await api.post(`/groups/${selectedGroup.id}/members`, { memberIds: friendsToAdd });
+      setShowAddMember(false);
+      setFriendsToAdd([]);
+      // Maybe refresh group list or show success
+    } catch {
+      alert('Ошибка при расширении Кластера');
+    }
+  };
+
   const createCluster = async () => {
-    if (!newClusterName.trim() || selectedFriendsForCluster.length === 0) return;
+    if (!newClusterName.trim()) return;
     try {
       const res = await api.post('/groups', {
         name: newClusterName,
@@ -409,21 +444,37 @@ export const MessagesPage = () => {
                   </>
                 )}
 
-                {/* CALL BUTTONS */}
-                {selectedFriend && (
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => startCall(selectedFriend, false)}
-                      title="Аудиозвонок"
-                      style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'color-mix(in srgb, var(--primary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--primary), transparent 60%)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(0,242,255,0.15)' }}>
-                      <Phone size={18} />
+                {/* UTILITY BUTTONS */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <motion.button whileTap={{ scale: 0.9 }} onClick={fetchGallery}
+                    title="Медиа-архив"
+                    style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <Paperclip size={18} />
+                  </motion.button>
+
+                  {selectedGroup && (
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowAddMember(true)}
+                      title="Добавить участников"
+                      style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <Plus size={18} />
                     </motion.button>
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => startCall(selectedFriend, true)}
-                      title="Видеозвонок"
-                      style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'color-mix(in srgb, var(--secondary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--secondary), transparent 60%)', color: 'var(--secondary, #7b2ff7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(123,47,247,0.15)' }}>
-                      <Video size={18} />
-                    </motion.button>
-                  </div>
-                )}
+                  )}
+
+                  {selectedFriend && (
+                    <>
+                      <motion.button whileTap={{ scale: 0.9 }} onClick={() => startCall(selectedFriend, false)}
+                        title="Аудиозвонок"
+                        style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'color-mix(in srgb, var(--primary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--primary), transparent 60%)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(0,242,255,0.15)' }}>
+                        <Phone size={18} />
+                      </motion.button>
+                      <motion.button whileTap={{ scale: 0.9 }} onClick={() => startCall(selectedFriend, true)}
+                        title="Видеозвонок"
+                        style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'color-mix(in srgb, var(--secondary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--secondary), transparent 60%)', color: 'var(--secondary, #7b2ff7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(123,47,247,0.15)' }}>
+                        <Video size={18} />
+                      </motion.button>
+                    </>
+                  )}
+                </div>
               </div>
 
               <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -558,7 +609,7 @@ export const MessagesPage = () => {
               </div>
 
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--primary)' }}>Выбор узлов (участников)</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--primary)' }}>Пригласить (необязательно)</label>
                 <div style={{ maxHeight: '200px', overflowY: 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)' }}>
                   {friends.map(f => (
                     <label key={f.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', cursor: 'pointer', transition: 'background 0.2s' }} 
@@ -579,6 +630,125 @@ export const MessagesPage = () => {
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button onClick={() => setShowCreateCluster(false)} style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontWeight: '700', cursor: 'pointer' }}>Отмена</button>
                 <button onClick={createCluster} className="btn-primary" style={{ flex: 1, padding: '12px', borderRadius: '12px', justifyContent: 'center' }}>Создать</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ADD MEMBER MODAL */}
+      <AnimatePresence>
+        {showAddMember && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 5000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} 
+              className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '32px', border: '1px solid var(--border-bright)', boxShadow: 'var(--glow-strong)' }}>
+              <h2 style={{ marginBottom: '24px', fontSize: '1.5rem', fontWeight: '900' }} className="neon-text">Расширить Кластер</h2>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--primary)' }}>Выберите новые узлы</label>
+                <div style={{ maxHeight: '250px', overflowY: 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  {friends.filter(f => !selectedGroup?.members?.some((m: any) => m.userId === f.id)).map(f => (
+                    <label key={f.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={friendsToAdd.includes(f.id)} 
+                        onChange={e => {
+                          if (e.target.checked) setFriendsToAdd([...friendsToAdd, f.id]);
+                          else setFriendsToAdd(friendsToAdd.filter(id => id !== f.id));
+                        }}
+                        style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
+                      <img src={f.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + f.username} style={{ width: '32px', height: '32px', borderRadius: '10px' }} />
+                      <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{f.username}</span>
+                    </label>
+                  ))}
+                  {friends.filter(f => !selectedGroup?.members?.some((m: any) => m.userId === f.id)).length === 0 && (
+                    <p style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Нет доступных узлов для подключения</p>
+                  )}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button onClick={() => setShowAddMember(false)} style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontWeight: '700', cursor: 'pointer' }}>Отмена</button>
+                <button onClick={addMembersToCluster} className="btn-primary" style={{ flex: 1, padding: '12px', borderRadius: '12px', justifyContent: 'center' }}>Подключить</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MEDIA GALLERY MODAL */}
+      <AnimatePresence>
+        {showGallery && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 6000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(30px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '0' : '20px' }}>
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }} 
+              className="glass-panel" style={{ width: '100%', maxWidth: '900px', height: isMobile ? '100%' : '80vh', display: 'flex', flexDirection: 'column', border: '1px solid var(--border-bright)', boxShadow: 'var(--glow-strong)', overflow: 'hidden' }}>
+              
+              <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h2 className="neon-text" style={{ fontSize: '1.4rem', fontWeight: '900', marginBottom: '4px' }}>Signal Archive</h2>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Все переданные данные по текущему каналу</p>
+                </div>
+                <button onClick={() => setShowGallery(false)} style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div style={{ padding: '0 24px', background: 'rgba(0,0,0,0.2)', display: 'flex', gap: '24px' }}>
+                {[
+                  { id: 'photo', label: 'Signals', sub: 'Фото' },
+                  { id: 'video', label: 'Streams', sub: 'Видео' },
+                  { id: 'file', label: 'Data Units', sub: 'Файлы' }
+                ].map(tab => (
+                  <button key={tab.id} onClick={() => setGalleryFilter(tab.id as any)}
+                    style={{ padding: '16px 4px', background: 'none', border: 'none', borderBottom: galleryFilter === tab.id ? '2px solid var(--primary)' : '2px solid transparent', color: galleryFilter === tab.id ? 'var(--primary)' : 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.3s', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', opacity: galleryFilter === tab.id ? 1 : 0.6 }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: '900', letterSpacing: '1px' }}>{tab.label}</span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: '700', opacity: 0.7 }}>{tab.sub}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: galleryFilter === 'file' ? '1fr' : 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
+                  {galleryMedia.filter(m => {
+                    if (galleryFilter === 'photo') return isImage(m.fileType);
+                    if (galleryFilter === 'video') return isVideo(m.fileType);
+                    return isDoc(m.fileType);
+                  }).map((m, idx) => (
+                    <motion.div key={idx} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }}>
+                      {galleryFilter === 'file' ? (
+                        <a href={m.fileUrl} target="_blank" rel="noreferrer" 
+                          style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black' }}>
+                            <Paperclip size={20} />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ color: 'white', fontWeight: '700', fontSize: '0.9rem' }}>{m.fileName}</div>
+                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>{new Date(m.createdAt).toLocaleDateString()}</div>
+                          </div>
+                        </a>
+                      ) : (
+                        <div onClick={() => setFullscreenMedia({ url: m.fileUrl, type: m.fileType })} 
+                          style={{ aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+                          {galleryFilter === 'photo' ? (
+                            <img src={m.fileUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <video src={m.fileUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          )}
+                          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', fontSize: '0.6rem', color: 'white' }}>
+                            {new Date(m.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                  {galleryMedia.filter(m => {
+                    if (galleryFilter === 'photo') return isImage(m.fileType);
+                    if (galleryFilter === 'video') return isVideo(m.fileType);
+                    return isDoc(m.fileType);
+                  }).length === 0 && (
+                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px 20px', color: 'var(--text-secondary)' }}>
+                      <p>Нет объектов в данной категории архива</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           </motion.div>

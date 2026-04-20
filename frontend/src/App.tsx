@@ -4,17 +4,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider, useNotifications } from './context/NotificationContext';
 import { CallProvider } from './context/CallContext';
-import { LoginPage, RegisterPage } from './pages/AuthPages';
-import { FeedPage } from './pages/FeedPage';
-import { MessagesPage } from './pages/MessagesPage';
-import { FriendsPage } from './pages/FriendsPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { GroupsPage } from './pages/GroupsPage';
-import { WavesPage } from './pages/WavesPage';
-import { AppDownloadPage } from './pages/AppDownloadPage';
 import { UpdateModal } from './components/UpdateModal';
 import LoadingScreen from './components/LoadingScreen';
 import ErrorPlaceholder from './components/ErrorPlaceholder';
+
+// Lazy load pages for performance (SETI Optimization)
+const FeedPage = React.lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
+const MessagesPage = React.lazy(() => import('./pages/MessagesPage').then(m => ({ default: m.MessagesPage })));
+const FriendsPage = React.lazy(() => import('./pages/FriendsPage').then(m => ({ default: m.FriendsPage })));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const GroupsPage = React.lazy(() => import('./pages/GroupsPage').then(m => ({ default: m.GroupsPage })));
+const WavesPage = React.lazy(() => import('./pages/WavesPage').then(m => ({ default: m.WavesPage })));
+const AppDownloadPage = React.lazy(() => import('./pages/AppDownloadPage').then(m => ({ default: m.AppDownloadPage })));
+const { LoginPage, RegisterPage } = { 
+  LoginPage: React.lazy(() => import('./pages/AuthPages').then(m => ({ default: m.LoginPage }))),
+  RegisterPage: React.lazy(() => import('./pages/AuthPages').then(m => ({ default: m.RegisterPage })))
+};
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, ArrowDownCircle, Plus } from 'lucide-react';
@@ -387,18 +392,20 @@ function AppInner() {
           </div>
         )}
         <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
-            <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-            <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
-            <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
-            <Route path="/waves" element={<ProtectedRoute><WavesPage /></ProtectedRoute>} />
-            <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/app" element={<ProtectedRoute><AppDownloadPage /></ProtectedRoute>} />
-            <Route path="*" element={<ErrorPlaceholder type="404" />} />
-          </Routes>
+          <React.Suspense fallback={<LoadingScreen />}>
+            <Routes location={location} key={location.pathname}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+              <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+              <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
+              <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
+              <Route path="/waves" element={<ProtectedRoute><WavesPage /></ProtectedRoute>} />
+              <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/app" element={<ProtectedRoute><AppDownloadPage /></ProtectedRoute>} />
+              <Route path="*" element={<ErrorPlaceholder type="404" />} />
+            </Routes>
+          </React.Suspense>
         </AnimatePresence>
       </div>
       <MobileNav />
