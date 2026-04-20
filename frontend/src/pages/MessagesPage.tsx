@@ -252,11 +252,13 @@ export const MessagesPage = () => {
       {showList && (
         <div className="glass-panel" style={{ width: isMobile ? '100%' : '320px', flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)' }}>
-            <h2 style={{ marginBottom: '18px', fontSize: '1.4rem', fontWeight: '900' }} className="neon-text">Каналы связи</h2>
-            <div style={{ position: 'relative' }}>
-              <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-              <input type="text" className="input-field" placeholder="Поиск сигналов..." style={{ paddingLeft: '44px', height: '44px', fontSize: '0.9rem' }} />
-            </div>
+            <h2 style={{ marginBottom: isMobile ? '0' : '18px', fontSize: '1.4rem', fontWeight: '900' }} className="neon-text">Каналы связи</h2>
+            {!isMobile && (
+              <div style={{ position: 'relative' }}>
+                <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                <input type="text" className="input-field" placeholder="Поиск сигналов..." style={{ paddingLeft: '44px', height: '44px', fontSize: '0.9rem' }} />
+              </div>
+            )}
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
             {friends.length === 0 ? (
