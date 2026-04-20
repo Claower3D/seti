@@ -276,22 +276,25 @@ export const ProfilePage = () => {
               <button onClick={() => setIsEditModalOpen(true)}
                 className="btn-primary"
                 style={{ 
-                  width: '38px',
-                  height: '38px',
+                  padding: '8px 18px',
                   borderRadius: '12px', 
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  gap: '8px',
                   transition: 'transform 0.2s',
                   background: 'var(--primary)',
                   color: 'black',
+                  fontWeight: '800',
+                  fontSize: '0.9rem',
                   boxShadow: 'var(--glow-strong)'
                 }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'rotate(30deg)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'rotate(0deg)'}
               >
-                <Settings size={20} />
+                <Settings size={18} style={{ transition: 'transform 0.4s' }}
+                  onMouseEnter={(e: any) => e.currentTarget.style.transform = 'rotate(90deg)'}
+                  onMouseLeave={(e: any) => e.currentTarget.style.transform = 'rotate(0deg)'}
+                />
+                Настройки
               </button>
             )}
             {!isOwnProfile && (
