@@ -36,8 +36,8 @@ const Sidebar = () => {
   return (
     <div className="sidebar glass-panel">
       <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '12px', padding: '0 4px' }}>
-        <div className="pulse" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 80%), color-mix(in srgb, var(--secondary), transparent 80%))', border: '1px solid var(--border-bright)', padding: '10px', borderRadius: '12px', boxShadow: 'var(--glow)' }}>
-          <Zap color="var(--primary)" size={22} style={{ filter: 'var(--glow)' }} />
+        <div className="pulse" style={{ width: '42px', height: '42px', padding: 0 }}>
+          <img src="/logo.png" alt="SETI LOGO" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 8px var(--primary))' }} />
         </div>
         <span style={{ fontSize: '1.6rem', fontWeight: '900', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>SETI</span>
       </div>
