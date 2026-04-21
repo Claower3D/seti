@@ -22,7 +22,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
   useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   const [liked, setLiked] = useState(wave.liked);
   const [likesCount, setLikesCount] = useState(wave.likesCount || 0);
   const [showHeart, setShowHeart] = useState(false);
@@ -40,7 +40,14 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
     const v = videoRef.current;
     if (!v) return;
     if (isActive) {
-      v.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+      v.play()
+        .then(() => setPlaying(true))
+        .catch(() => {
+          // Fallback for browsers that block autoplay with sound
+          v.muted = true;
+          setMuted(true);
+          v.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+        });
     } else {
       v.pause();
       v.currentTime = 0;
