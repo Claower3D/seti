@@ -28,7 +28,7 @@ const COUNTRY_CODES = [
   { code: '+995', flag: '🇬🇪', name: 'Грузия' },
 ];
 
-const PhoneInput = ({ value, onChange }: { value: string; onChange: (phone: string) => void }) => {
+const PhoneInput = ({ onChange }: { onChange: (phone: string) => void }) => {
   const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[1]); // Kazakhstan default
   const [showDropdown, setShowDropdown] = useState(false);
   const [localNumber, setLocalNumber] = useState('');
