@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, LogOut, X, ChevronRight, Settings, Shield, Bell } from 'lucide-react';
+import { User, LogOut, X, ChevronRight, Settings, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Props {
