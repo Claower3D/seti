@@ -274,7 +274,7 @@ export const RegisterPage = () => {
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--primary)', marginBottom: '8px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               📱 Номер телефона
             </label>
-            <PhoneInput value={phone} onChange={setPhone} />
+            <PhoneInput onChange={setPhone} />
           </div>
 
           {/* Email */}
