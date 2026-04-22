@@ -22,42 +22,83 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper: check if JWT is expired
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (!payload.exp) return false;
+    // exp is in seconds, Date.now() in ms
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true; // invalid token format → treat as expired
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Theme application logic
+  // Theme application
   useEffect(() => {
-    const applyTheme = () => {
-      const root = document.documentElement;
-      const color = user?.neonColor || '#00f5ff';
-      const brightness = user?.neonBrightness !== undefined ? user.neonBrightness : 1.0;
-      
-      root.style.setProperty('--primary', color);
-      root.style.setProperty('--glow-opacity', brightness.toString());
-      
-      // Calculate a complementary secondary color (optional but nice)
-      // For now, we use the primary color with lower opacity for general glows
-      root.style.setProperty('--primary-glow', `${color}${Math.round(brightness * 255).toString(16).padStart(2, '0')}`);
-    };
-
-    applyTheme();
+    const root = document.documentElement;
+    const color = user?.neonColor || '#00f5ff';
+    const brightness = user?.neonBrightness !== undefined ? user.neonBrightness : 1.0;
+    root.style.setProperty('--primary', color);
+    root.style.setProperty('--glow-opacity', brightness.toString());
+    root.style.setProperty('--primary-glow', `${color}${Math.round(brightness * 255).toString(16).padStart(2, '0')}`);
   }, [user]);
 
+  // On mount: validate token from localStorage
   useEffect(() => {
-    const fetchMe = async () => {
-      if (token) {
-        try {
-          const res = await api.get('/me');
-          setUser(res.data);
-        } catch (err) {
-          logout();
-        }
+    const init = async () => {
+      const storedToken = localStorage.getItem('token');
+
+      // No token → not logged in
+      if (!storedToken) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      // Token is expired → clear it
+      if (isTokenExpired(storedToken)) {
+        localStorage.removeItem('token');
+        setLoading(false);
+        return;
+      }
+
+      // Token looks valid → verify with server
+      try {
+        const res = await api.get('/me', {
+          headers: { Authorization: `Bearer ${storedToken}` }
+        });
+        setToken(storedToken);
+        setUser(res.data);
+      } catch {
+        // Server rejected token (deleted user, revoked, etc.)
+        localStorage.removeItem('token');
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchMe();
+
+    init();
+  }, []);
+
+  // Periodically re-validate token every 5 minutes
+  useEffect(() => {
+    if (!token) return;
+
+    const interval = setInterval(() => {
+      if (isTokenExpired(token)) {
+        logout();
+        return;
+      }
+      // Also re-verify with server
+      api.get('/me').catch(() => logout());
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
   }, [token]);
 
   const login = (newToken: string, newUser: User) => {
@@ -68,6 +109,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     localStorage.removeItem('token');
+    // Also clear any session/cache data
+    sessionStorage.clear();
     setToken(null);
     setUser(null);
   };
