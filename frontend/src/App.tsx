@@ -8,6 +8,7 @@ import { UpdateModal } from './components/UpdateModal';
 import LoadingScreen from './components/LoadingScreen';
 import ErrorPlaceholder from './components/ErrorPlaceholder';
 import SetiLogo from './components/SetiLogo';
+import MobileMenuDrawer from './components/MobileMenuDrawer';
 
 // Lazy load pages for performance (SETI Optimization)
 const FeedPage = React.lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
@@ -288,8 +289,9 @@ const Header = () => {
 };
 
 const MobileNav = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isWavesPage = location.pathname === '/waves';
   if (!user) return null;
 
@@ -298,7 +300,7 @@ const MobileNav = () => {
     { to: '/messages', icon: MessageSquare, label: 'Чаты' },
     { to: '/waves', icon: Radio, label: 'Волны', isMiddle: true },
     { to: '/friends', icon: Users, label: 'Друзья' },
-    { to: `/profile/${user.username}`, icon: User, label: 'Профиль' },
+    { to: '#menu', icon: User, label: 'Профиль', isMenuTrigger: true },
   ];
 
   const handlePlusClick = (e: React.MouseEvent) => {
@@ -309,41 +311,62 @@ const MobileNav = () => {
   };
 
   return (
-    <nav className="mobile-nav">
-      {navItems.map(({ to, icon: Icon, label, isMiddle }) => {
-        const isActive = location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
-        
-        if (isMiddle && isWavesPage) {
-          return (
-            <button key="plus" onClick={handlePlusClick} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', outline: 'none', padding: '0 8px', position: 'relative', marginTop: '-12px' }}>
-              <motion.div 
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                style={{ 
-                  background: 'linear-gradient(135deg, var(--primary), var(--secondary))', 
-                  borderRadius: '18px', 
-                  width: '56px', 
-                  height: '42px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  boxShadow: 'var(--glow-strong)', 
-                  border: '1px solid rgba(255,255,255,0.3)' 
-                }}
-              >
-                <Plus size={30} color="black" strokeWidth={3} />
-              </motion.div>
-            </button>
-          );
-        }
+    <>
+      <nav className="mobile-nav">
+        {navItems.map(({ to, icon: Icon, label, isMiddle, isMenuTrigger }) => {
+          const isActive = location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
+          
+          if (isMiddle && isWavesPage) {
+            return (
+              <button key="plus" onClick={handlePlusClick} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', outline: 'none', padding: '0 8px', position: 'relative', marginTop: '-12px' }}>
+                <motion.div 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  style={{ 
+                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))', 
+                    borderRadius: '18px', 
+                    width: '56px', 
+                    height: '42px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    boxShadow: 'var(--glow-strong)', 
+                    border: '1px solid rgba(255,255,255,0.3)' 
+                  }}
+                >
+                  <Plus size={30} color="black" strokeWidth={3} />
+                </motion.div>
+              </button>
+            );
+          }
 
-        return (
-          <Link key={to} to={to} className={isActive ? 'active' : ''}>
-            <Icon size={22} /><span>{label}</span>
-          </Link>
-        );
-      })}
-    </nav>
+          if (isMenuTrigger) {
+            return (
+              <button 
+                key="menu" 
+                onClick={() => setIsMenuOpen(true)}
+                style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', outline: 'none', color: isMenuOpen ? 'var(--primary)' : 'var(--text-secondary)' }}
+              >
+                <Icon size={22} style={{ filter: isMenuOpen ? 'var(--glow)' : 'none' }} />
+                <span style={{ fontSize: '0.65rem', fontWeight: isMenuOpen ? '800' : '500' }}>{label}</span>
+              </button>
+            );
+          }
+
+          return (
+            <Link key={to} to={to} className={isActive ? 'active' : ''}>
+              <Icon size={22} /><span>{label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+      <MobileMenuDrawer 
+        isOpen={isMenuOpen} 
+        onClose={() => setIsMenuOpen(false)} 
+        user={user} 
+        onLogout={logout} 
+      />
+    </>
   );
 };
 

@@ -16,7 +16,7 @@ const isValidKZNumber = (digits: string): boolean => {
   const prefix = digits.slice(1, 3); // e.g. "70", "71", "76", "77"
   // KZ mobile prefixes: 700-709, 710-719, 720-729, 747, 750-758, 760-769, 770-779, 780-789
   const validPrefixes = [
-    '70','71','72','73','74','75','76','77','78'
+    '70', '71', '72', '73', '74', '75', '76', '77', '78'
   ];
   return validPrefixes.some(p => prefix.startsWith(p[0]) && (p.length === 1 || prefix[1] === p[1] || true));
 };
@@ -24,9 +24,9 @@ const isValidKZNumber = (digits: string): boolean => {
 const formatKZPhone = (raw: string): string => {
   // raw = digits only after country code, max 10 digits
   if (raw.length <= 3) return raw;
-  if (raw.length <= 6) return `${raw.slice(0,3)} ${raw.slice(3)}`;
-  if (raw.length <= 8) return `${raw.slice(0,3)} ${raw.slice(3,6)} ${raw.slice(6)}`;
-  return `${raw.slice(0,3)} ${raw.slice(3,6)} ${raw.slice(6,8)} ${raw.slice(8,10)}`;
+  if (raw.length <= 6) return `${raw.slice(0, 3)} ${raw.slice(3)}`;
+  if (raw.length <= 8) return `${raw.slice(0, 3)} ${raw.slice(3, 6)} ${raw.slice(6)}`;
+  return `${raw.slice(0, 3)} ${raw.slice(3, 6)} ${raw.slice(6, 8)} ${raw.slice(8, 10)}`;
 };
 
 const KZPhoneInput = ({ onChange }: { onChange: (phone: string, valid: boolean) => void; error?: string }) => {
