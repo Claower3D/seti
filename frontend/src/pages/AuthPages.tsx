@@ -127,7 +127,7 @@ const KZPhoneInput = ({ onChange }: { onChange: (phone: string, valid: boolean) 
 
 // ─── Login Page ───────────────────────────────────────────────────────────────
 export const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -146,11 +146,11 @@ export const LoginPage = () => {
     setIsSubmitting(true);
     setError('');
     try {
-      const res = await api.post('/login', { email, password });
+      const res = await api.post('/login', { identifier, password });
       login(res.data.token, res.data.user);
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Неверный email или пароль');
+      setError(err.response?.data?.error || 'Неверный логин (телефон/ник) или пароль');
     } finally {
       setIsSubmitting(false);
     }
@@ -206,10 +206,10 @@ export const LoginPage = () => {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div style={{ position: 'relative' }}>
-            <Mail size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-            <input type="email" className="input-field" placeholder="Системный Email"
+            <User size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+            <input type="text" className="input-field" placeholder="Логин (Телефон или Username)"
               style={{ paddingLeft: '48px', height: '52px' }}
-              value={email} onChange={(e) => setEmail(e.target.value)} required />
+              value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
           </div>
           <div style={{ position: 'relative' }}>
             <Lock size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
@@ -233,7 +233,6 @@ export const LoginPage = () => {
 // ─── Register Page ────────────────────────────────────────────────────────────
 export const RegisterPage = () => {
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneValid, setPhoneValid] = useState(false);
   const [iin, setIin] = useState('');
@@ -259,7 +258,7 @@ export const RegisterPage = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await api.post('/register', { username, email, phone, iin, password });
+      const res = await api.post('/register', { username, phone, iin, password });
       login(res.data.token, res.data.user);
       navigate('/');
     } catch (err: any) {
@@ -301,13 +300,7 @@ export const RegisterPage = () => {
           {/* KZ Phone */}
           <KZPhoneInput onChange={handlePhoneChange} />
 
-          {/* Email */}
-          <div style={{ position: 'relative' }}>
-            <Mail size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-            <input type="email" className="input-field" placeholder="Email для синхронизации"
-              style={{ paddingLeft: '48px', height: '52px' }}
-              value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
+
 
           {/* IIN */}
           <div style={{ position: 'relative' }}>

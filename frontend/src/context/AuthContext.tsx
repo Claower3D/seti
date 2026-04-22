@@ -4,7 +4,8 @@ import api from '../api/client';
 interface User {
   id: number;
   username: string;
-  email: string;
+  email?: string;
+  phone: string;
   avatar: string;
   bio: string;
   neonColor?: string;

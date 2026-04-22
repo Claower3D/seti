@@ -10,15 +10,15 @@ import (
 
 type RegisterInput struct {
 	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
+	Email    string `json:"email"`
 	Phone    string `json:"phone" binding:"required"`
 	IIN      string `json:"iin" binding:"required,len=12,numeric"`
 	Password string `json:"password" binding:"required,min=6"`
 }
 
 type LoginInput struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
+	Identifier string `json:"identifier" binding:"required"`
+	Password   string `json:"password" binding:"required"`
 }
 
 func Register(c *gin.Context) {
@@ -65,7 +65,7 @@ func Login(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := db.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+	if err := db.DB.Where("username = ? OR phone = ?", input.Identifier, input.Identifier).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверные данные"})
 		return
 	}
