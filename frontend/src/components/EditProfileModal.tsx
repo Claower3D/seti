@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import api from '../api/client';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +22,7 @@ const NEON_PRESETS = [
 ];
 
 export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: EditProfileModalProps) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'general' | 'design' | 'security'>('general');
   
   // General State
@@ -88,6 +90,12 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
       onUpdate(res.data);
       updateUser(res.data);
       setSuccess('Профиль обновлен');
+      
+      // If username changed, redirect to the new profile page
+      if (res.data.username !== currentUser.username) {
+        navigate(`/profile/${res.data.username}`);
+      }
+      
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Ошибка при обновлении профиля');
