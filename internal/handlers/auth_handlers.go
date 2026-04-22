@@ -5,13 +5,13 @@ import (
 	"social-network/internal/db"
 	"social-network/internal/middleware"
 	"social-network/internal/models"
-
 	"github.com/gin-gonic/gin"
 )
 
 type RegisterInput struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
+	Phone    string `json:"phone" binding:"required"`
 	IIN      string `json:"iin" binding:"required,len=12,numeric"`
 	Password string `json:"password" binding:"required,min=6"`
 }
@@ -37,13 +37,14 @@ func Register(c *gin.Context) {
 	user := models.User{
 		Username: input.Username,
 		Email:    input.Email,
+		Phone:    input.Phone,
 		IIN:      input.IIN,
 		Password: hashedPassword,
 		Avatar:   "https://api.dicebear.com/7.x/avataaars/svg?seed=" + input.Username,
 	}
 
 	if err := db.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User already exists or database error"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Пользователь уже существует или ошибка базы данных"})
 		return
 	}
 
@@ -65,12 +66,12 @@ func Login(c *gin.Context) {
 
 	var user models.User
 	if err := db.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверные данные"})
 		return
 	}
 
 	if !middleware.CheckPasswordHash(input.Password, user.Password) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверные данные"})
 		return
 	}
 
