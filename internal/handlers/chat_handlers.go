@@ -296,18 +296,18 @@ func ArchiveConversation(c *gin.Context) {
 	}
 
 	if input.Type == "friend" {
-		// Update friendship based on who is sender/receiver
+		// We need to know if the current user is the sender or receiver in the friendship table
 		err := db.DB.Model(&models.Friendship{}).
-			Where("(user_id = ? AND friend_id = ?)", userID, input.ID).
+			Where("user_id = ? AND friend_id = ?", userID, input.ID).
 			Update("is_archived_by_sender", input.Archived).Error
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to archive"})
 			return
 		}
+		
 		db.DB.Model(&models.Friendship{}).
-			Where("(user_id = ? AND friend_id = ?)", input.ID, userID).
+			Where("user_id = ? AND friend_id = ?", input.ID, userID).
 			Update("is_archived_by_receiver", input.Archived)
-
 	} else if input.Type == "group" {
 		err := db.DB.Model(&models.GroupMember{}).
 			Where("group_id = ? AND user_id = ?", input.ID, userID).

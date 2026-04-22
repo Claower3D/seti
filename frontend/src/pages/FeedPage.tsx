@@ -49,7 +49,38 @@ export const FeedPage = () => {
   };
 
   const fetchStories = async () => {
-    try { const res = await api.get('/stories'); setStories(res.data || []); } catch { setStories([]); }
+    try { 
+      const res = await api.get('/stories'); 
+      const rawStories = res.data || [];
+      
+      // 1. Group by userId
+      const groups: { [key: number]: any[] } = {};
+      rawStories.forEach((s: any) => {
+        if (!groups[s.userId]) groups[s.userId] = [];
+        groups[s.userId].push(s);
+      });
+
+      // 2. Sort each group chronologically (Old to New)
+      // 3. Sort groups by latest story (New to Old)
+      const sortedUsers = Object.keys(groups).map(Number).sort((a, b) => {
+        const latestA = Math.max(...groups[a].map(s => new Date(s.createdAt).getTime()));
+        const latestB = Math.max(...groups[b].map(s => new Date(s.createdAt).getTime()));
+        return latestB - latestA;
+      });
+
+      // 4. Flatten for viewer
+      const flattened: any[] = [];
+      sortedUsers.forEach(uid => {
+        const userStories = groups[uid].sort((a, b) => 
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+        flattened.push(...userStories);
+      });
+
+      setStories(flattened); 
+    } catch { 
+      setStories([]); 
+    }
   };
 
   useEffect(() => { fetchPosts(); fetchStories(); }, []);
@@ -232,16 +263,19 @@ export const FeedPage = () => {
             <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Ваша история</span>
           </div>
 
-          {stories.map((story, idx) => (
-            <div key={story.id} onClick={() => { setActiveStoryIdx(idx); setStoryProgress(0); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0, cursor: 'pointer' }}>
-              <div style={{ padding: '3px', borderRadius: '26px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', boxShadow: 'var(--glow)' }}>
-                <div style={{ background: 'var(--bg)', borderRadius: '23px', padding: '2px' }}>
-                  <img src={story.user?.avatar} alt="" style={{ width: '64px', height: '64px', borderRadius: '20px', objectFit: 'cover' }} />
+          {Array.from(new Map(stories.map(s => [s.userId, s])).values()).map((story) => {
+            const firstStoryIdx = stories.findIndex(s => s.userId === story.userId);
+            return (
+              <div key={story.userId} onClick={() => { setActiveStoryIdx(firstStoryIdx); setStoryProgress(0); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0, cursor: 'pointer' }}>
+                <div style={{ padding: '3px', borderRadius: '26px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', boxShadow: 'var(--glow)' }}>
+                  <div style={{ background: 'var(--bg)', borderRadius: '23px', padding: '2px' }}>
+                    <img src={story.user?.avatar} alt="" style={{ width: '64px', height: '64px', borderRadius: '20px', objectFit: 'cover' }} />
+                  </div>
                 </div>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'white' }}>{story.user?.username}</span>
               </div>
-              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'white' }}>{story.user?.username}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

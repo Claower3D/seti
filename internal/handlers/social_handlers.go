@@ -5,6 +5,7 @@ import (
 	"social-network/internal/db"
 	"social-network/internal/middleware"
 	"social-network/internal/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -176,7 +177,7 @@ func SearchUsers(c *gin.Context) {
 		return
 	}
 	var users []models.User
-	if err := db.DB.Where("username LIKE ?", "%"+query+"%").Limit(20).Find(&users).Error; err != nil {
+	if err := db.DB.Where("LOWER(username) LIKE LOWER(?)", "%"+query+"%").Limit(20).Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search users"})
 		return
 	}
@@ -324,7 +325,13 @@ func GetStories(c *gin.Context) {
 	// Include current user
 	allowedIDs := append(friendIDs, userID.(uint))
 
-	if err := db.DB.Preload("User").Where("user_id IN (?)", allowedIDs).Order("created_at desc").Find(&stories).Error; err != nil {
+	// Only stories from last 24 hours
+	cutoff := time.Now().Add(-24 * time.Hour)
+
+	if err := db.DB.Preload("User").
+		Where("user_id IN (?) AND created_at > ?", allowedIDs, cutoff).
+		Order("created_at desc").
+		Find(&stories).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch stories"})
 		return
 	}
