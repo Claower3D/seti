@@ -29,7 +29,7 @@ const formatKZPhone = (raw: string): string => {
   return `${raw.slice(0,3)} ${raw.slice(3,6)} ${raw.slice(6,8)} ${raw.slice(8,10)}`;
 };
 
-const KZPhoneInput = ({ onChange, error }: { onChange: (phone: string, valid: boolean) => void; error?: string }) => {
+const KZPhoneInput = ({ onChange }: { onChange: (phone: string, valid: boolean) => void; error?: string }) => {
   const [localNumber, setLocalNumber] = useState('');
   const [touched, setTouched] = useState(false);
 
