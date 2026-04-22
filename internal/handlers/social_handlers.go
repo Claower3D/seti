@@ -356,3 +356,4 @@ func CreateStory(c *gin.Context) {
 	db.DB.Preload("User").First(&story, story.ID)
 	c.JSON(http.StatusCreated, story)
 }
+
