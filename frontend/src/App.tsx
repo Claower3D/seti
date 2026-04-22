@@ -24,7 +24,7 @@ const { LoginPage, RegisterPage } = {
 };
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, ArrowDownCircle, Plus } from 'lucide-react';
+import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, ArrowDownCircle, Plus, LayoutGrid } from 'lucide-react';
 import api from './api/client';
 
 const Sidebar = () => {
@@ -292,6 +292,12 @@ const MobileNav = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Close menu on navigation
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
   const isWavesPage = location.pathname === '/waves';
   if (!user) return null;
 
@@ -300,7 +306,7 @@ const MobileNav = () => {
     { to: '/messages', icon: MessageSquare, label: 'Чаты' },
     { to: '/waves', icon: Radio, label: 'Волны', isMiddle: true },
     { to: '/friends', icon: Users, label: 'Друзья' },
-    { to: '#menu', icon: User, label: 'Профиль', isMenuTrigger: true },
+    { to: '#menu', icon: LayoutGrid, label: 'Меню', isMenuTrigger: true },
   ];
 
   const handlePlusClick = (e: React.MouseEvent) => {

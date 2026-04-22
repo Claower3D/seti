@@ -1,6 +1,11 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, LogOut, X, ChevronRight, Settings, Shield } from 'lucide-react';
+import { 
+  LogOut, ChevronRight, Settings, Shield, 
+  Home, MessageSquare, Users, Radio, ArrowDownCircle, 
+  LayoutGrid, Bookmark, Image, Music, Gamepad2, GraduationCap, 
+  Phone
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Props {
@@ -13,11 +18,26 @@ interface Props {
 const MobileMenuDrawer: React.FC<Props> = ({ isOpen, onClose, user, onLogout }) => {
   if (!user) return null;
 
+  const menuServices = [
+    { name: 'Новости', icon: Home, path: '/', color: '#00f5ff' },
+    { name: 'Чаты', icon: MessageSquare, path: '/messages', color: '#00ccff', badge: 0 },
+    { name: 'Друзья', icon: Users, path: '/friends', color: '#7b61ff' },
+    { name: 'Волны', icon: Radio, path: '/waves', color: '#ff0090' },
+    { name: 'Группы', icon: LayoutGrid, path: '/groups', color: '#ffcc00' },
+    { name: 'Приложение', icon: ArrowDownCircle, path: '/app', color: '#00ff88' },
+    { name: 'Музыка', icon: Music, path: '#music', color: '#ff4d4d', isPlaceholder: true },
+    { name: 'Фото', icon: Image, path: '#photos', color: '#ff8800', isPlaceholder: true },
+    { name: 'Закладки', icon: Bookmark, path: '#bookmarks', color: '#b400ff', isPlaceholder: true },
+    { name: 'Игры', icon: Gamepad2, path: '#games', color: '#00ffcc', isPlaceholder: true },
+    { name: 'Звонки', icon: Phone, path: '#calls', color: '#00ff7f', isPlaceholder: true },
+    { name: 'Обучение', icon: GraduationCap, path: '#learn', color: '#ff00ff', isPlaceholder: true },
+  ];
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop - Ends above mobile-nav to allow clicking nav items */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -25,14 +45,17 @@ const MobileMenuDrawer: React.FC<Props> = ({ isOpen, onClose, user, onLogout }) 
             onClick={onClose}
             style={{
               position: 'fixed',
-              inset: 0,
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: '64px',
               background: 'rgba(0, 0, 0, 0.6)',
               backdropFilter: 'blur(10px)',
-              zIndex: 3000
+              zIndex: 1900
             }}
           />
 
-          {/* Shutter / Drawer */}
+          {/* Full VK-Style Drawer */}
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -40,114 +63,130 @@ const MobileMenuDrawer: React.FC<Props> = ({ isOpen, onClose, user, onLogout }) 
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             style={{
               position: 'fixed',
-              bottom: 0,
+              bottom: '64px',
               left: 0,
               right: 0,
+              top: '40px', // Allow a bit of space at top for "shutter" feel
               background: 'rgba(10, 12, 18, 0.98)',
               backdropFilter: 'blur(40px)',
               borderTop: '1px solid var(--border-bright)',
               borderRadius: '32px 32px 0 0',
-              zIndex: 3001,
-              padding: '12px 24px calc(24px + env(safe-area-inset-bottom, 12px))',
+              zIndex: 1901,
               display: 'flex',
               flexDirection: 'column',
-              boxShadow: '0 -20px 60px rgba(0, 0, 0, 0.8), var(--glow-strong)'
+              boxShadow: '0 -20px 60px rgba(0, 0, 0, 0.8), var(--glow-strong)',
+              overflow: 'hidden'
             }}
           >
-            {/* Handle */}
+            {/* Handle / Drag Indicator */}
             <div 
               onClick={onClose}
               style={{
                 width: '40px',
                 height: '5px',
-                background: 'rgba(255, 255, 255, 0.2)',
+                background: 'rgba(255, 255, 255, 0.15)',
                 borderRadius: '2.5px',
-                margin: '0 auto 24px',
-                cursor: 'pointer'
+                margin: '12px auto',
+                cursor: 'pointer',
+                flexShrink: 0
               }} 
             />
 
-            {/* Header / User Info */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
-              <div style={{ position: 'relative' }}>
+            {/* Scrollable Container */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px 40px' }} className="hide-scrollbar">
+              
+              {/* Profile Bar */}
+              <div style={{ 
+                background: 'rgba(255,255,255,0.03)', 
+                border: '1px solid rgba(255,255,255,0.05)', 
+                borderRadius: '24px', 
+                padding: '16px', 
+                marginBottom: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px'
+              }}>
                 <img 
                   src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} 
                   alt="" 
-                  style={{ 
-                    width: '64px', 
-                    height: '64px', 
-                    borderRadius: '20px', 
-                    border: '2px solid var(--primary)',
-                    boxShadow: 'var(--glow)'
-                  }} 
+                  style={{ width: '56px', height: '56px', borderRadius: '18px', border: '1px solid var(--primary)' }} 
                 />
-                <div style={{ 
-                  position: 'absolute', 
-                  bottom: '-2px', 
-                  right: '-2px', 
-                  width: '16px', 
-                  height: '16px', 
-                  background: '#00ff7f', 
-                  borderRadius: '50%', 
-                  border: '3px solid #0a0c12',
-                  boxShadow: '0 0 10px #00ff7f'
-                }} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '900', color: 'white', letterSpacing: '-0.5px' }}>{user.username}</h3>
-                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>System Active</p>
-              </div>
-              <button 
-                onClick={onClose}
-                style={{ marginLeft: 'auto', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Menu Items */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <Link 
-                to={`/profile/${user.username}`} 
-                onClick={onClose}
-                style={{ textDecoration: 'none' }}
-              >
-                <div className="nav-item" style={{ width: 'auto', background: 'rgba(0, 245, 255, 0.05)', border: '1px solid rgba(0, 245, 255, 0.2)', padding: '16px 20px', borderRadius: '18px', display: 'flex', alignItems: 'center', gap: '14px', transition: 'all 0.2s' }}>
-                  <div style={{ background: 'var(--primary)', color: 'black', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--glow)' }}>
-                    <User size={22} strokeWidth={2.5} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: 'white', fontWeight: '800', fontSize: '1.05rem' }}>Мой профиль</div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Управление цифровым следом</div>
-                  </div>
-                  <ChevronRight size={18} style={{ color: 'var(--text-secondary)' }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '900', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</h3>
+                  <Link to={`/profile/${user.username}`} onClick={onClose} style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: '700', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                    Перейти в профиль <ChevronRight size={14} />
+                  </Link>
                 </div>
-              </Link>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)', padding: '16px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <Settings size={20} style={{ color: 'white' }} />
-                  <span style={{ color: 'white', fontWeight: '700', fontSize: '0.9rem' }}>Настройки</span>
-                </div>
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)', padding: '16px', borderRadius: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <Shield size={20} style={{ color: 'white' }} />
-                  <span style={{ color: 'white', fontWeight: '700', fontSize: '0.9rem' }}>Защита</span>
+                <div style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                  <Settings size={20} color="white" />
                 </div>
               </div>
 
-              <div 
-                onClick={() => { onLogout(); onClose(); }}
-                className="nav-item" 
-                style={{ width: 'auto', marginTop: '20px', background: 'rgba(255, 60, 60, 0.05)', border: '1px solid rgba(255, 60, 60, 0.2)', padding: '16px 20px', borderRadius: '18px', display: 'flex', alignItems: 'center', gap: '14px', color: '#ff4d4d' }}
-              >
-                <LogOut size={20} />
-                <span style={{ fontWeight: '800', fontSize: '1rem' }}>Выйти из системы</span>
+              {/* Service Grid Section */}
+              <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '16px', paddingLeft: '8px' }}>
+                Сервисы SETI
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}>
+                {menuServices.map((service, idx) => (
+                  <Link 
+                    key={idx} 
+                    to={service.isPlaceholder ? '#' : service.path} 
+                    onClick={service.isPlaceholder ? (e) => e.preventDefault() : onClose}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <motion.div 
+                      whileTap={{ scale: 0.95 }}
+                      style={{ 
+                        background: 'rgba(255,255,255,0.02)', 
+                        border: '1px solid rgba(255,255,255,0.04)', 
+                        borderRadius: '20px', 
+                        padding: '16px 8px', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        gap: '10px',
+                        opacity: service.isPlaceholder ? 0.4 : 1,
+                        filter: service.isPlaceholder ? 'grayscale(0.5)' : 'none'
+                      }}>
+                      <div style={{ 
+                        width: '44px', 
+                        height: '44px', 
+                        borderRadius: '14px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: `color-mix(in srgb, ${service.color}, transparent 88%)`,
+                        color: service.color,
+                        boxShadow: `0 0 15px ${service.color}22`
+                      }}>
+                        <service.icon size={24} />
+                      </div>
+                      <span style={{ color: 'white', fontSize: '0.75rem', fontWeight: '700', textAlign: 'center' }}>{service.name}</span>
+                    </motion.div>
+                  </Link>
+                ))}
               </div>
-            </div>
 
-            {/* Version Info */}
-            <div style={{ marginTop: '32px', textAlign: 'center', opacity: 0.3, fontSize: '0.7rem', letterSpacing: '2px', fontWeight: '700', color: 'white' }}>
-              SETI PROTOCOL V2.4.0
+              {/* Footer Actions */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ padding: '16px 20px', borderRadius: '18px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: '14px', color: 'rgba(255,255,255,0.7)' }}>
+                  <Shield size={20} />
+                  <span style={{ fontWeight: '600', fontSize: '0.95rem', flex: 1 }}>Безопасность</span>
+                  <ChevronRight size={16} opacity={0.3} />
+                </div>
+                <div 
+                  onClick={() => { onLogout(); onClose(); }}
+                  style={{ padding: '16px 20px', borderRadius: '18px', background: 'rgba(255, 60, 60, 0.05)', border: '1px solid rgba(255, 60, 60, 0.1)', display: 'flex', alignItems: 'center', gap: '14px', color: '#ff4d4d', marginTop: '12px' }}
+                >
+                  <LogOut size={20} />
+                  <span style={{ fontWeight: '800', fontSize: '0.95rem' }}>Выйти из аккаунта</span>
+                </div>
+              </div>
+
+              {/* Version */}
+              <div style={{ textAlign: 'center', marginTop: '40px', opacity: 0.2, fontSize: '0.65rem', fontWeight: '800', letterSpacing: '3px' }}>
+                SETI PROTOCOL V2.5.0
+              </div>
             </div>
           </motion.div>
         </>
