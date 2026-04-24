@@ -9,6 +9,8 @@ export const MusicPlayer = () => {
 
   if (!currentSong) return null;
 
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
   return (
     <AnimatePresence>
       <motion.div 
@@ -16,8 +18,8 @@ export const MusicPlayer = () => {
         animate={{ 
           y: 0, 
           opacity: 1,
-          height: isExpanded ? '100dvh' : '90px',
-          bottom: isExpanded ? 0 : '20px',
+          height: isExpanded ? '100%' : '90px',
+          bottom: isExpanded ? '0px' : '20px',
           width: isExpanded ? '100%' : 'calc(100% - 32px)',
           borderRadius: isExpanded ? '0px' : '24px',
         }}
@@ -26,11 +28,11 @@ export const MusicPlayer = () => {
           position: 'fixed', 
           left: '50%', 
           transform: 'translateX(-50%)',
-          background: 'rgba(15, 18, 30, 0.85)',
+          background: 'rgba(15, 18, 30, 0.95)',
           backdropFilter: 'blur(30px) saturate(150%)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           zIndex: 2000,
-          boxShadow: '0 25px 50px rgba(0,0,0,0.8), var(--glow)',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.8), 0 0 20px rgba(0,245,255,0.2)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'
@@ -38,7 +40,7 @@ export const MusicPlayer = () => {
       >
         {/* Background Blur for Expanded Mode */}
         {isExpanded && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: -1, overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', inset: '0px', zIndex: -1, overflow: 'hidden' }}>
             <img src={currentSong.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(100px) brightness(0.4)', transform: 'scale(1.5)' }} />
           </div>
         )}
@@ -56,52 +58,51 @@ export const MusicPlayer = () => {
                   <motion.div 
                     animate={{ scale: [1, 1.1, 1] }} 
                     transition={{ repeat: Infinity, duration: 2 }}
-                    style={{ position: 'absolute', inset: -2, border: '2px solid var(--primary)', borderRadius: '16px', opacity: 0.5 }}
+                    style={{ position: 'absolute', inset: '-2px', border: '2px solid #00f5ff', borderRadius: '16px', opacity: 0.5 }}
                   />
                 )}
               </div>
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: '0px' }}>
                 <div style={{ fontSize: '1rem', fontWeight: '900', color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentSong.title}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '700', letterSpacing: '0.5px' }}>{currentSong.artist}</div>
+                <div style={{ fontSize: '0.8rem', color: '#00f5ff', fontWeight: '700', letterSpacing: '0.5px' }}>{currentSong.artist}</div>
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <SkipBack size={22} color="white" style={{ opacity: 0.4, cursor: 'default' }} />
-                <button onClick={togglePlay} style={{ background: 'var(--primary)', border: 'none', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--glow-strong)' }}>
+                <SkipBack size={22} color="white" style={{ opacity: 0.4 }} />
+                <button onClick={(e) => { e.stopPropagation(); togglePlay(); }} style={{ background: '#00f5ff', border: 'none', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 15px rgba(0,245,255,0.4)' }}>
                   {isPlaying ? <Pause size={26} color="black" fill="black" /> : <Play size={26} color="black" fill="black" style={{ marginLeft: '4px' }} />}
                 </button>
-                <SkipForward size={22} color="white" style={{ opacity: 0.4, cursor: 'default' }} />
+                <SkipForward size={22} color="white" style={{ opacity: 0.4 }} />
               </div>
-              <Maximize2 size={20} color="white" style={{ opacity: 0.5, cursor: 'pointer' }} onClick={() => setIsExpanded(true)} />
+              <Maximize2 size={20} color="white" style={{ opacity: 0.5, cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }} />
             </div>
           </div>
         )}
 
         {/* Expanded View Content */}
         {isExpanded && (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '40px 30px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '40px 30px', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
               <Minimize2 size={28} color="white" style={{ cursor: 'pointer', opacity: 0.7 }} onClick={() => setIsExpanded(false)} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '0.7rem', fontWeight: '900', color: 'var(--primary)', letterSpacing: '3px', textTransform: 'uppercase' }}>Now Playing</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: '900', color: '#00f5ff', letterSpacing: '3px', textTransform: 'uppercase' }}>Now Playing</div>
               </div>
               <div style={{ width: '28px' }} />
             </div>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '40px' }}>
               <motion.div 
-                animate={{ scale: isPlaying ? 1 : 0.9, rotate: isPlaying ? [0, 1, -1, 0] : 0 }}
-                transition={{ duration: 4, repeat: Infinity }}
-                style={{ width: '100%', maxWidth: '340px', aspectRatio: '1/1', borderRadius: '32px', overflow: 'hidden', boxShadow: '0 30px 60px rgba(0,0,0,0.6), var(--glow-strong)' }}
+                animate={{ scale: isPlaying ? 1 : 0.9 }}
+                style={{ width: '100%', maxWidth: '340px', aspectRatio: '1/1', borderRadius: '32px', overflow: 'hidden', boxShadow: '0 30px 60px rgba(0,0,0,0.6)' }}
               >
                 <img src={currentSong.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </motion.div>
 
               <div style={{ textAlign: 'center', width: '100%' }}>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'white', marginBottom: '8px' }}>{currentSong.title}</h2>
-                <p style={{ fontSize: '1.1rem', color: 'var(--primary)', fontWeight: '700' }}>{currentSong.artist}</p>
+                <p style={{ fontSize: '1.1rem', color: '#00f5ff', fontWeight: '700' }}>{currentSong.artist}</p>
               </div>
 
               <div style={{ width: '100%', maxWidth: '500px' }}>
@@ -114,9 +115,9 @@ export const MusicPlayer = () => {
                   style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', cursor: 'pointer', position: 'relative', marginBottom: '12px' }}
                 >
                   <motion.div 
-                    style={{ height: '100%', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', borderRadius: '4px', boxShadow: 'var(--glow)', width: `${(currentTime / duration) * 100}%` }}
+                    style={{ height: '100%', background: 'linear-gradient(90deg, #00f5ff, #7b61ff)', borderRadius: '4px', width: `${progress}%` }}
                   />
-                  <div style={{ position: 'absolute', top: '50%', left: `${(currentTime / duration) * 100}%`, width: '16px', height: '16px', background: 'white', borderRadius: '50%', transform: 'translate(-50%, -50%)', border: '3px solid var(--primary)', boxShadow: '0 0 10px var(--primary)' }} />
+                  <div style={{ position: 'absolute', top: '50%', left: `${progress}%`, width: '16px', height: '16px', background: 'white', borderRadius: '50%', transform: 'translate(-50%, -50%)', border: '3px solid #00f5ff' }} />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', fontWeight: '800' }}>
                   <span>{Math.floor(currentTime / 60)}:{(Math.floor(currentTime % 60)).toString().padStart(2, '0')}</span>
@@ -133,22 +134,15 @@ export const MusicPlayer = () => {
                 <SkipForward size={36} color="white" fill="white" style={{ opacity: 0.8 }} />
                 <Repeat size={24} color="white" style={{ opacity: 0.3 }} />
               </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', maxWidth: '300px', marginTop: '20px' }}>
-                <Volume2 size={20} color="white" style={{ opacity: 0.5 }} />
-                <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px' }}>
-                   <div style={{ width: '70%', height: '100%', background: 'rgba(255,255,255,0.6)', borderRadius: '2px' }} />
-                </div>
-              </div>
             </div>
           </div>
         )}
 
         {/* Progress bar in compact mode */}
         {!isExpanded && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', background: 'rgba(255,255,255,0.05)' }}>
+          <div style={{ position: 'absolute', bottom: '0px', left: '0px', right: '0px', height: '3px', background: 'rgba(255,255,255,0.05)' }}>
             <motion.div 
-              style={{ height: '100%', background: 'var(--primary)', width: `${(currentTime / duration) * 100}%`, boxShadow: '0 0 10px var(--primary)' }}
+              style={{ height: '100%', background: '#00f5ff', width: `${progress}%` }}
             />
           </div>
         )}
