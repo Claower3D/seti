@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
 import { useMusic } from '../context/MusicContext';

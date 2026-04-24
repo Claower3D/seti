@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, X, Grid, Film, Zap, UserPlus, UserMinus, UserCheck, Search, Users } from 'lucide-react';
+import { Heart, MessageCircle, X, Grid, Film, Zap, Settings, UserPlus, UserMinus, UserCheck, Search, Users, UserRoundPlus, UserRoundMinus } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
 const SakuraHologram = () => {
