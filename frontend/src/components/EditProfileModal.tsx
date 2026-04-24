@@ -23,17 +23,9 @@ const NEON_PRESETS = [
 
 const HOLOGRAMS = [
   { id: 'none',   name: 'Без эффекта', icon: X },
-  { id: 'sakura', name: 'Сакура',      icon: FlowerIcon },
   { id: 'matrix', name: 'Матрица',    icon: Zap },
 ];
 
-function FlowerIcon({ size, color }: { size?: number, color?: string }) {
-  return (
-    <svg width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 7.5V2" /><path d="m4.93 4.93 3.89 3.89" /><path d="M2 12h5.5" /><path d="m4.93 19.07 3.89-3.89" /><path d="M12 16.5V22" /><path d="m19.07 19.07-3.89-3.89" /><path d="M22 12h-5.5" /><path d="m19.07 4.93-3.89 3.89" />
-    </svg>
-  );
-}
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
   <label style={{ display: 'block', marginBottom: '8px', color: 'rgba(255,255,255,0.4)', fontWeight: '700', fontSize: '0.7rem', letterSpacing: '1.5px', textTransform: 'uppercase' }}>

@@ -6,46 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, X, Grid, Film, Zap, Settings, UserPlus, UserMinus, UserCheck, Search, Users, UserRoundPlus, UserRoundMinus } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
-const SakuraHologram = () => {
-  const petals = useMemo(() => Array.from({ length: 15 }), []);
-  return (
-    <div style={{ position: 'absolute', inset: -20, pointerEvents: 'none', zIndex: 5, overflow: 'hidden', borderRadius: '50%' }}>
-      {petals.map((_, i) => (
-        <motion.div
-          key={i}
-          initial={{ 
-            opacity: 0, 
-            y: -20, 
-            x: Math.random() * 100 - 50, 
-            rotate: 0,
-            scale: Math.random() * 0.5 + 0.5 
-          }}
-          animate={{ 
-            opacity: [0, 0.8, 0], 
-            y: 120, 
-            x: (Math.random() * 100 - 50) + (Math.sin(i) * 20),
-            rotate: 360 
-          }}
-          transition={{ 
-            duration: Math.random() * 3 + 2, 
-            repeat: Infinity, 
-            delay: Math.random() * 5,
-            ease: "linear"
-          }}
-          style={{
-            position: 'absolute',
-            left: `${Math.random() * 100}%`,
-            width: '10px',
-            height: '10px',
-            background: '#ffb7c5',
-            borderRadius: '50% 0 50% 50%',
-            boxShadow: '0 0 10px #ff69b4',
-          }}
-        />
-      ))}
-    </div>
-  );
-};
 
 const MatrixHologram = ({ color }: { color: string }) => {
   const columns = useMemo(() => Array.from({ length: 10 }), []);
@@ -384,58 +344,6 @@ const SocialListModal = ({ isOpen, onClose, username, type: initialType, profile
   );
 };
 
-const SakuraTreeHologram = () => {
-  return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
-      {/* The Tree Structure */}
-      <svg viewBox="0 0 800 400" style={{ position: 'absolute', bottom: -50, right: '10%', width: '100%', height: 'auto', opacity: 0.25, filter: 'drop-shadow(0 0 20px #ff69b4)' }}>
-         <motion.path
-           initial={{ pathLength: 0 }}
-           animate={{ pathLength: 1 }}
-           transition={{ duration: 3 }}
-           d="M400,400 Q400,200 450,100 M400,350 Q300,250 250,200 M400,300 Q500,220 580,180 M250,200 Q200,150 180,80 M250,200 Q300,150 350,100 M580,180 Q650,150 700,100 M580,180 Q550,130 500,80"
-           stroke="#ffb7c5"
-           strokeWidth="4"
-           fill="none"
-         />
-         {/* Flower Clusters */}
-         {[
-           {x: 450, y: 100}, {x: 180, y: 80}, {x: 350, y: 100}, 
-           {x: 700, y: 100}, {x: 500, y: 80}, {x: 420, y: 150},
-           {x: 280, y: 170}, {x: 600, y: 160}, {x: 380, y: 80}
-         ].map((p, i) => (
-           <motion.circle
-             key={i}
-             initial={{ r: 0 }}
-             animate={{ r: [5, 12, 5], opacity: [0.3, 0.6, 0.3] }}
-             transition={{ duration: 3 + i%2, repeat: Infinity }}
-             cx={p.x} cy={p.y}
-             fill="#ff69b4"
-             style={{ filter: 'blur(5px)' }}
-           />
-         ))}
-      </svg>
-      {/* Falling Petals for the whole background */}
-      {Array.from({ length: 30 }).map((_, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, y: -20, x: Math.random() * 100 + "%" }}
-          animate={{ opacity: [0, 1, 0], y: 500, x: (Math.random() * 10 + Math.random() * 10 - 10) + "%", rotate: 360 }}
-          transition={{ duration: Math.random() * 5 + 5, repeat: Infinity, delay: Math.random() * 10 }}
-          style={{
-            position: 'absolute',
-            width: '12px',
-            height: '12px',
-            background: '#ffb7c5',
-            borderRadius: '100% 0 100% 100%',
-            boxShadow: '0 0 10px #ffb7c5',
-          }}
-        />
-      ))}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(5,6,8,0) 60%, rgba(5,6,8,1) 100%)' }} />
-    </div>
-  );
-};
 
 const MatrixBackgroundHologram = ({ color }: { color: string }) => {
   return (
@@ -572,7 +480,6 @@ export const ProfilePage = () => {
         maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
         WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)'
       }}>
-        {profileUser.hologram === 'sakura' && <SakuraTreeHologram />}
         {profileUser.hologram === 'matrix' && <MatrixBackgroundHologram color={profileUser.neonColor} />}
       </div>
 
@@ -588,7 +495,6 @@ export const ProfilePage = () => {
           <img src={profileUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profileUser.username}
             alt="avatar" style={{ width: isMobile ? '90px' : '110px', height: isMobile ? '90px' : '110px', borderRadius: '50%', border: `2px solid ${profileUser.neonColor || 'var(--border)'}`, padding: '4px', objectFit: 'cover', boxShadow: `0 0 20px ${profileUser.neonColor}33` }} />
           
-          {profileUser.hologram === 'sakura' && <SakuraHologram />}
           {profileUser.hologram === 'matrix' && <MatrixHologram color={profileUser.neonColor} />}
           
           <motion.div
