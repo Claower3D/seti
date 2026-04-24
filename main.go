@@ -42,6 +42,7 @@ func main() {
 		{
 			protected.GET("/users/search", handlers.SearchUsers)
 			protected.GET("/me", handlers.GetMe)
+			protected.DELETE("/me", handlers.DeleteAccount)
 			protected.GET("/stories", handlers.GetStories)
 			protected.POST("/stories", handlers.CreateStory)
 			protected.DELETE("/stories/:id", handlers.DeleteStory)

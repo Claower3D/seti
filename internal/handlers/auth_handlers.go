@@ -96,3 +96,14 @@ func GetMe(c *gin.Context) {
 
 	c.JSON(http.StatusOK, user)
 }
+
+func DeleteAccount(c *gin.Context) {
+	userID, _ := c.Get("userId")
+	
+	if err := db.DB.Delete(&models.User{}, userID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
