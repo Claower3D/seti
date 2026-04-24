@@ -100,7 +100,7 @@ func GetMe(c *gin.Context) {
 func DeleteAccount(c *gin.Context) {
 	userID, _ := c.Get("userId")
 	
-	if err := db.DB.Delete(&models.User{}, userID).Error; err != nil {
+	if err := db.DB.Unscoped().Delete(&models.User{}, userID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
 		return
 	}
