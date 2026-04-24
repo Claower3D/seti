@@ -101,6 +101,7 @@ const Header = () => {
   const [requests, setRequests] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   const prevReqsRef = useRef<number[]>([]);
   const prevNotifsRef = useRef<number[]>([]);
@@ -174,6 +175,20 @@ const Header = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifs(false);
+      }
+    };
+    if (showNotifs) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifs]);
+
   if (!user) return null;
 
   const unreadCount = requests.length + notifications.filter(n => !n.read).length;
@@ -188,7 +203,7 @@ const Header = () => {
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginLeft: '16px' }}>
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }} ref={notifRef}>
           <button onClick={() => setShowNotifs(!showNotifs)}
             className={unreadCount > 0 ? 'pulse' : ''}
             style={{ 
@@ -212,7 +227,7 @@ const Header = () => {
           <AnimatePresence>
           {showNotifs && (
             <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.96 }}
-              className="glass-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '320px', zIndex: 1000, padding: '18px', background: 'rgba(10, 12, 20, 0.95)', border: '1px solid var(--border-bright)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 60px rgba(0,0,0,0.9), var(--glow)', maxHeight: '450px', overflowY: 'auto' }}>
+              className="glass-panel" style={{ position: 'absolute', right: 0, top: '48px', width: 'calc(100vw - 40px)', maxWidth: '320px', zIndex: 1000, padding: '18px', background: 'rgba(10, 12, 20, 0.95)', border: '1px solid var(--border-bright)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 60px rgba(0,0,0,0.9), var(--glow)', maxHeight: '450px', overflowY: 'auto' }}>
               
               {/* Friend Requests Section */}
               <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -226,8 +241,8 @@ const Header = () => {
                     style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--border)' }} />
                   <span style={{ flex: 1, fontWeight: '600', fontSize: '0.8rem', color: 'white' }}>{r.username}</span>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <button onClick={() => acceptRequest(r.id)} style={{ background: 'color-mix(in srgb, var(--primary), transparent 90%)', border: '1px solid var(--border-bright)', borderRadius: '6px', padding: '4px', cursor: 'pointer', color: 'var(--primary)' }}><Check size={14} /></button>
-                    <button onClick={() => declineRequest(r.id)} style={{ background: 'rgba(255,0,144,0.1)', border: '1px solid rgba(255,0,144,0.3)', borderRadius: '6px', padding: '4px', cursor: 'pointer', color: '#ff0090' }}><X size={14} /></button>
+                    <button onClick={() => { acceptRequest(r.id); setShowNotifs(false); }} style={{ background: 'color-mix(in srgb, var(--primary), transparent 90%)', border: '1px solid var(--border-bright)', borderRadius: '6px', padding: '4px', cursor: 'pointer', color: 'var(--primary)' }}><Check size={14} /></button>
+                    <button onClick={() => { declineRequest(r.id); setShowNotifs(false); }} style={{ background: 'rgba(255,0,144,0.1)', border: '1px solid rgba(255,0,144,0.3)', borderRadius: '6px', padding: '4px', cursor: 'pointer', color: '#ff0090' }}><X size={14} /></button>
                   </div>
                 </div>
               ))}
@@ -243,7 +258,10 @@ const Header = () => {
               ) : notifications.map((n) => (
                 <div 
                   key={n.id} 
-                  onClick={() => !n.read && markRead(n.id)}
+                  onClick={() => {
+                    if (!n.read) markRead(n.id);
+                    setShowNotifs(false);
+                  }}
                   style={{ 
                     display: 'flex', 
                     alignItems: 'flex-start', 
