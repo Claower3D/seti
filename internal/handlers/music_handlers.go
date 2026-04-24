@@ -10,32 +10,19 @@ import (
 	"social-network/internal/models"
 	"sync"
 	"time"
-	"regexp"
 
 	"github.com/gin-gonic/gin"
 )
 
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-type SaavnSong struct {
-	Name           string `json:"name"`
-	PrimaryArtists string `json:"primaryArtists"`
-	Image          []struct { Link string `json:"link"` } `json:"image"`
-	DownloadUrl    []struct { Link string `json:"link"` } `json:"downloadUrl"`
-}
-
-type SaavnResult struct {
-	Data []SaavnSong `json:"data"`
-}
-
-func fetchWithUA(targetUrl string) ([]byte, error) {
-	client := &http.Client{Timeout: 12 * time.Second}
-	req, _ := http.NewRequest("GET", targetUrl, nil)
-	req.Header.Set("User-Agent", userAgent)
-	resp, err := client.Do(req)
-	if err != nil { return nil, err }
-	defer resp.Body.Close()
-	return io.ReadAll(resp.Body)
+type ITunesResult struct {
+	Results []struct {
+		TrackName    string `json:"trackName"`
+		ArtistName   string `json:"artistName"`
+		PreviewUrl   string `json:"previewUrl"`
+		ArtworkUrl100 string `json:"artworkUrl100"`
+	} `json:"results"`
 }
 
 func SearchMusic(c *gin.Context) {
@@ -45,70 +32,72 @@ func SearchMusic(c *gin.Context) {
 		return
 	}
 
-	encodedQuery := url.QueryEscape(query)
 	var allSongs []models.Song
-	var mu sync.Mutex
 	var wg sync.WaitGroup
+	var mu sync.Mutex
 
-	// ENGINE 1: JioSaavn
+	// ENGINE 1: iTunes Store API (Flawless Metadata & Previews)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		mirrors := []string{
-			"https://saavn.me/search/songs?query=%s",
-			"https://jiosaavn-api-beta.vercel.app/search/songs?query=%s",
-		}
-		for _, m := range mirrors {
-			data, err := fetchWithUA(fmt.Sprintf(m, encodedQuery))
-			if err != nil { continue }
-			var res SaavnResult
-			if err := json.Unmarshal(data, &res); err == nil && len(res.Data) > 0 {
-				mu.Lock()
-				for _, item := range res.Data {
-					stream := ""
-					if len(item.DownloadUrl) > 0 { stream = item.DownloadUrl[len(item.DownloadUrl)-1].Link }
-					if stream == "" { continue }
-					thumb := ""
-					if len(item.Image) > 0 { thumb = item.Image[len(item.Image)-1].Link }
-					
-					allSongs = append(allSongs, models.Song{
-						Title: item.Name, Artist: item.PrimaryArtists, URL: "/api/music/proxy/raw?url=" + url.QueryEscape(stream), ImageURL: thumb, Source: "hifi",
-					})
-				}
-				mu.Unlock()
-				return 
+		searchURL := fmt.Sprintf("https://itunes.apple.com/search?term=%s&entity=song&limit=20", url.QueryEscape(query))
+		resp, err := http.Get(searchURL)
+		if err != nil { return }
+		defer resp.Body.Close()
+
+		var res ITunesResult
+		if err := json.NewDecoder(resp.Body).Decode(&res); err == nil {
+			mu.Lock()
+			for _, t := range res.Results {
+				allSongs = append(allSongs, models.Song{
+					Title:    t.TrackName,
+					Artist:   t.ArtistName,
+					URL:      "/api/music/proxy/raw?url=" + url.QueryEscape(t.PreviewUrl),
+					ImageURL: t.ArtworkUrl100,
+					Source:   "itunes",
+				})
 			}
+			mu.Unlock()
 		}
 	}()
 
-	// ENGINE 2: YouTube Scraper
+	// ENGINE 2: YouTube Music API (via Cobalt/Piped stable bridges)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		searchURL := fmt.Sprintf("https://www.youtube.com/results?search_query=%s&sp=EgIQAQ%%253D%%253D", encodedQuery)
-		data, err := fetchWithUA(searchURL)
+		// Search for the track on YouTube
+		searchURL := fmt.Sprintf("https://pipedapi.kavin.rocks/search?q=%s&filter=music_songs", url.QueryEscape(query))
+		resp, err := http.Get(searchURL)
 		if err != nil { return }
-		
-		html := string(data)
-		vIDRegex := regexp.MustCompile(`"videoId":"([^"]+)"`)
-		titleRegex := regexp.MustCompile(`"title":\{"runs":\[\{"text":"([^"]+)"\}\]`)
-		
-		vIDs := vIDRegex.FindAllStringSubmatch(html, 15)
-		titles := titleRegex.FindAllStringSubmatch(html, 15)
+		defer resp.Body.Close()
 
-		mu.Lock()
-		for i := 0; i < len(vIDs) && i < len(titles); i++ {
-			vID := vIDs[i][1]
-			title := titles[i][1]
-			allSongs = append(allSongs, models.Song{
-				Title: title,
-				Artist: "YouTube Music",
-				URL: fmt.Sprintf("/api/music/proxy/yt/%s", vID),
-				ImageURL: fmt.Sprintf("https://i.ytimg.com/vi/%s/mqdefault.jpg", vID),
-				Source: "youtube",
-			})
+		var res struct {
+			Items []struct {
+				Title string `json:"title"`
+				UploaderName string `json:"uploaderName"`
+				Url string `json:"url"` // Contains /watch?v=...
+				Thumbnail string `json:"thumbnail"`
+			} `json:"items"`
 		}
-		mu.Unlock()
+		if err := json.NewDecoder(resp.Body).Decode(&res); err == nil {
+			mu.Lock()
+			for _, item := range res.Items {
+				// Extract video ID from /watch?v=ID
+				id := ""
+				u, _ := url.Parse(item.Url)
+				id = u.Query().Get("v")
+				if id == "" { continue }
+
+				allSongs = append(allSongs, models.Song{
+					Title:    item.Title,
+					Artist:   item.UploaderName,
+					URL:      fmt.Sprintf("/api/music/proxy/yt/%s", id),
+					ImageURL: item.Thumbnail,
+					Source:   "youtube",
+				})
+			}
+			mu.Unlock()
+		}
 	}()
 
 	wg.Wait()
@@ -117,7 +106,6 @@ func SearchMusic(c *gin.Context) {
 
 func ProxyStream(c *gin.Context) {
 	typeStr := c.Param("type")
-	
 	var finalStreamURL string
 
 	if typeStr == "raw" {
@@ -125,13 +113,13 @@ func ProxyStream(c *gin.Context) {
 	} else if typeStr == "yt" {
 		id := c.Param("id")
 		instances := []string{
-			"https://pipedapi.kavin.rocks",
 			"https://api.piped.victr.me",
 			"https://pipedapi.tokhmi.pw",
-			"https://piped-api.lunar.icu",
+			"https://pipedapi.kavin.rocks",
+			"https://pipedapi.nexus-it.pt",
 		}
 		for _, inst := range instances {
-			client := &http.Client{Timeout: 5 * time.Second}
+			client := &http.Client{Timeout: 6 * time.Second}
 			resp, err := client.Get(fmt.Sprintf("%s/streams/%s", inst, id))
 			if err != nil || resp.StatusCode != 200 { continue }
 			var res struct { AudioStreams []struct { URL string `json:"url"` } `json:"audioStreams"` }
@@ -149,29 +137,24 @@ func ProxyStream(c *gin.Context) {
 		return
 	}
 
-	// ULTIMATE MODE: PIPE THE STREAM THROUGH SERVER
-	client := &http.Client{Timeout: 30 * time.Minute} // Long timeout for streaming
+	// Stream proxying with Range Support
+	client := &http.Client{Timeout: 60 * time.Minute}
 	req, _ := http.NewRequest("GET", finalStreamURL, nil)
 	req.Header.Set("User-Agent", userAgent)
-	req.Header.Set("Range", c.GetHeader("Range")) // Support seeking!
+	if r := c.GetHeader("Range"); r != "" { req.Header.Set("Range", r) }
 
 	resp, err := client.Do(req)
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Streaming failed"})
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Stream connection failed"})
 		return
 	}
 	defer resp.Body.Close()
 
-	// Copy headers from source
 	for k, v := range resp.Header {
-		for _, val := range v {
-			c.Writer.Header().Add(k, val)
-		}
+		for _, val := range v { c.Writer.Header().Add(k, val) }
 	}
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Writer.WriteHeader(resp.StatusCode)
-	
-	// Stream the data
 	_, _ = io.Copy(c.Writer, resp.Body)
 }
 
