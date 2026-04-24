@@ -137,6 +137,7 @@ type Wave struct {
 	LikesCount    int       `json:"likesCount"`
 	CommentsCount int       `json:"commentsCount"`
 	Liked         bool      `gorm:"-" json:"liked"`
+	FriendStatus  string    `gorm:"-" json:"friendStatus"` // 'friends', 'following', 'none'
 	CreatedAt     time.Time `json:"createdAt"`
 }
 

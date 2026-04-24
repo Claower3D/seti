@@ -16,6 +16,7 @@ interface Wave {
   likesCount: number;
   commentsCount: number;
   liked: boolean;
+  friendStatus: 'friends' | 'following' | 'follower' | 'none';
   createdAt: string;
 }
 
@@ -30,12 +31,16 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
   const [progress, setProgress] = useState(0);
   const [showComment, setShowComment] = useState(false);
   const [commentsCount, setCommentsCount] = useState(wave.commentsCount || 0);
-  const [following, setFollowing] = useState(false); // Check if they are friends/following
+  const [friendshipStatus, setFriendshipStatus] = useState(wave.friendStatus);
   const [followLoading, setFollowLoading] = useState(false);
   const [videoLoading, setVideoLoading] = useState(true);
   const dbTapRef = useRef<number>(0);
 
-  const isOwnWave = currentUser?.id === wave.user?.id;
+  const isOwnWave = currentUser?.id === wave.userId;
+
+  useEffect(() => {
+    setFriendshipStatus(wave.friendStatus);
+  }, [wave.friendStatus]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -44,7 +49,6 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
       v.play()
         .then(() => setPlaying(true))
         .catch(() => {
-          // Fallback for browsers that block autoplay with sound
           v.muted = true;
           setMuted(true);
           v.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
@@ -94,7 +98,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
         setShowHeart(true);
         setTimeout(() => setShowHeart(false), 900);
       }
-    } catch {}
+    } catch { }
   };
 
   const handleCommentAdded = (newCount: number) => {
@@ -105,20 +109,20 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
     if (isOwnWave || followLoading) return;
     setFollowLoading(true);
     try {
-      if (following) {
-        await api.delete(`/friends/request/${wave.user.id}`);
-        setFollowing(false);
+      if (friendshipStatus === 'friends' || friendshipStatus === 'following') {
+        await api.delete(`/friends/${wave.user.id}`);
+        setFriendshipStatus('none');
       } else {
-        await api.post(`/friends/request/${wave.user.id}`);
-        setFollowing(true);
+        const res = await api.post(`/friends/request/${wave.user.id}`);
+        setFriendshipStatus(res.data.status === 'accepted' ? 'friends' : 'following');
       }
-    } catch {}
+    } catch { }
     setFollowLoading(false);
   };
 
   const handleShare = () => {
     const url = `${window.location.origin}/waves/${wave.id}`;
-    navigator.clipboard.writeText(url).then(() => alert('Ссылка скопирована!')).catch(() => {});
+    navigator.clipboard.writeText(url).then(() => alert('Ссылка скопирована!')).catch(() => { });
   };
 
   const handleDelete = async () => {
@@ -129,7 +133,6 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', background: '#000', overflow: 'hidden' }}>
-      {/* Video — hidden while loading so black bg shows instead of white browser placeholder */}
       <video
         ref={videoRef}
         src={wave.videoUrl}
@@ -148,14 +151,12 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
           height: '100%',
           objectFit: 'cover',
           cursor: 'pointer',
-          // Fade in once video is ready; hides the white Android WebView placeholder
           opacity: videoLoading ? 0 : 1,
           transition: 'opacity 0.4s ease',
           background: '#000',
         }}
       />
 
-      {/* Neon loading overlay — shown on black background while video buffering */}
       {videoLoading && (
         <div style={{
           position: 'absolute', inset: 0, zIndex: 10,
@@ -164,7 +165,6 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
           gap: '16px',
           background: '#000',
         }}>
-          {/* Outer glow ring */}
           <div style={{ position: 'relative', width: '64px', height: '64px' }}>
             <motion.div
               animate={{ rotate: 360 }}
@@ -207,7 +207,6 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
         </div>
       )}
 
-      {/* Double-tap heart */}
       <AnimatePresence>
         {showHeart && (
           <motion.div
@@ -222,35 +221,34 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
         )}
       </AnimatePresence>
 
-      {/* Play/pause overlay */}
       <AnimatePresence>
         {!playing && isActive && !videoLoading && (
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.5 }}
-            style={{ 
-              position: 'absolute', 
-              top: '50%', 
-              left: '50%', 
-              x: '-50%', 
-              y: '-50%', 
-              pointerEvents: 'none', 
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              x: '-50%',
+              y: '-50%',
+              pointerEvents: 'none',
               zIndex: 30,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}
           >
-            <div style={{ 
-              background: 'rgba(0,0,0,0.3)', 
-              borderRadius: '50%', 
+            <div style={{
+              background: 'rgba(0,0,0,0.3)',
+              borderRadius: '50%',
               width: isMobile ? '80px' : '70px',
               height: isMobile ? '80px' : '70px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backdropFilter: 'blur(10px)', 
+              backdropFilter: 'blur(10px)',
               border: '1px solid rgba(255,255,255,0.15)',
               boxShadow: '0 0 40px rgba(0,0,0,0.4)'
             }}>
@@ -260,25 +258,24 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
         )}
       </AnimatePresence>
 
-      {/* Gradients */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '20%', background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)', pointerEvents: 'none' }} />
 
-      <div style={{ 
-        position: 'absolute', 
-        bottom: '0', 
-        left: '0', 
-        right: '0', 
-        height: '4px', 
-        background: 'rgba(255,255,255,0.08)', 
+      <div style={{
+        position: 'absolute',
+        bottom: '0',
+        left: '0',
+        right: '0',
+        height: '4px',
+        background: 'rgba(255,255,255,0.08)',
         zIndex: 100,
         overflow: 'hidden',
         backdropFilter: 'blur(4px)'
       }}>
-        <motion.div 
-          style={{ 
-            height: '100%', 
-            width: `${progress}%`, 
+        <motion.div
+          style={{
+            height: '100%',
+            width: `${progress}%`,
             background: 'linear-gradient(90deg, var(--primary), var(--secondary), var(--primary))',
             backgroundSize: '200% 100%',
             boxShadow: 'var(--glow-strong)',
@@ -288,26 +285,36 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
         />
       </div>
 
-      {/* User info */}
       <div style={{ position: 'absolute', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 90px)' : '80px', left: '16px', right: isMobile ? '80px' : '80px', zIndex: 15 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-          <Link to={`/profile/${wave.user?.username}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+          <Link to={`/profile/${wave.user?.username}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flex: 1, overflow: 'hidden' }}>
             <img src={wave.user?.avatar} alt="" style={{ width: isMobile ? '48px' : '42px', height: isMobile ? '48px' : '42px', borderRadius: '50%', border: '2px solid var(--border-bright)', boxShadow: 'var(--glow)' }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                <div style={{ fontWeight: '900', color: 'var(--primary)', fontSize: isMobile ? '1.1rem' : '1.05rem', textShadow: 'var(--glow-strong)' }}>@{wave.user?.username}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                <div style={{ fontWeight: '900', color: 'var(--primary)', fontSize: isMobile ? '1.1rem' : '1.05rem', textShadow: 'var(--glow-strong)', whiteSpace: 'nowrap' }}>@{wave.user?.username}</div>
+                
+                {friendshipStatus === 'friends' && (
+                  <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)', fontWeight: '800', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>В друзьях</span>
+                )}
+                {friendshipStatus === 'following' && (
+                  <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '800', opacity: 0.8 }}>Вы подписаны</span>
+                )}
+                {friendshipStatus === 'follower' && (
+                  <span style={{ fontSize: '0.65rem', color: 'var(--secondary)', fontWeight: '800', opacity: 0.8 }}>Подписан на вас</span>
+                )}
+
                 {!isOwnWave && (
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={(e) => { e.preventDefault(); toggleFollow(); }}
                     disabled={followLoading}
                     style={{
-                      background: following ? 'rgba(255,255,255,0.1)' : 'color-mix(in srgb, var(--primary), transparent 85%)',
-                      border: following ? '1px solid rgba(255,255,255,0.2)' : '1px solid color-mix(in srgb, var(--primary), transparent 60%)',
+                      background: friendshipStatus === 'friends' || friendshipStatus === 'following' ? 'rgba(255,255,255,0.1)' : 'color-mix(in srgb, var(--primary), transparent 85%)',
+                      border: friendshipStatus === 'friends' || friendshipStatus === 'following' ? '1px solid rgba(255,255,255,0.2)' : '1px solid color-mix(in srgb, var(--primary), transparent 60%)',
                       borderRadius: '8px',
                       padding: isMobile ? '2px 10px' : '2px 8px',
                       cursor: 'pointer',
-                      color: following ? 'rgba(255,255,255,0.6)' : 'var(--primary)',
+                      color: friendshipStatus === 'friends' || friendshipStatus === 'following' ? 'rgba(255,255,255,0.6)' : 'var(--primary)',
                       fontWeight: '800',
                       fontSize: '0.65rem',
                       backdropFilter: 'blur(10px)',
@@ -315,7 +322,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {followLoading ? '...' : (following ? '✓ Читаю' : 'Подписаться')}
+                    {followLoading ? '...' : (friendshipStatus === 'friends' || friendshipStatus === 'following' ? '✓' : (friendshipStatus === 'follower' ? 'В ответ' : 'Подписаться'))}
                   </motion.button>
                 )}
               </div>

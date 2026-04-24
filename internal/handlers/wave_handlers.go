@@ -17,12 +17,26 @@ func GetWaves(c *gin.Context) {
 		return
 	}
 
-	// Mark liked waves
 	uid := userID.(uint)
 	for i := range waves {
+		// Mark liked
 		var like models.WaveLike
 		if db.DB.Where("user_id = ? AND wave_id = ?", uid, waves[i].ID).First(&like).Error == nil {
 			waves[i].Liked = true
+		}
+
+		// Mark friendship status
+		var fs models.Friendship
+		if db.DB.Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)", uid, waves[i].UserID, waves[i].UserID, uid).First(&fs).Error == nil {
+			if fs.Status == "accepted" {
+				waves[i].FriendStatus = "friends"
+			} else if fs.UserID == uid {
+				waves[i].FriendStatus = "following"
+			} else {
+				waves[i].FriendStatus = "follower"
+			}
+		} else {
+			waves[i].FriendStatus = "none"
 		}
 	}
 
