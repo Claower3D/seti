@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -56,7 +55,6 @@ func CheckPasswordHash(password, encodedHash string) bool {
 		return false
 	}
 
-	var version int
 	var memory uint32
 	var iterations uint32
 	var parallelism uint8
