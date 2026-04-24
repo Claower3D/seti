@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Lock, User, LogIn, Smartphone, Globe, Download, Fingerprint, Phone, CheckCircle, AlertCircle } from 'lucide-react';
+import { Lock, User, LogIn, Smartphone, Globe, Download, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import SetiLogo from '../components/SetiLogo';
 
