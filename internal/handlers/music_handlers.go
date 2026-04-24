@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 	"regexp"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +38,7 @@ func SearchMusic(c *gin.Context) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	// ENGINE 1: iTunes (Metadata)
+	// ENGINE 1: iTunes
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -57,7 +58,7 @@ func SearchMusic(c *gin.Context) {
 		}
 	}()
 
-	// ENGINE 2: VK-style / CIS (Hitmo.me Scraper)
+	// ENGINE 2: VK-style (Hitmo.me)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -68,13 +69,9 @@ func SearchMusic(c *gin.Context) {
 		resp, err := client.Do(req)
 		if err != nil { return }
 		defer resp.Body.Close()
-		
 		body, _ := io.ReadAll(resp.Body)
 		html := string(body)
 
-		// Regex to find music data in Hitmo
-		// <a class="track__title" ...>Title</a>
-		// <a class="track__info-l" ...>URL</a>
 		titleRegex := regexp.MustCompile(`class="track__title"[^>]*>([^<]+)`)
 		artistRegex := regexp.MustCompile(`class="track__artist"[^>]*>([^<]+)`)
 		linkRegex := regexp.MustCompile(`track__info-l"[^>]*href="([^"]+)"`)
@@ -85,13 +82,10 @@ func SearchMusic(c *gin.Context) {
 
 		mu.Lock()
 		for i := 0; i < len(links) && i < len(titles); i++ {
-			artist := "Unknown"
+			artist := "Unknown Artist"
 			if i < len(artists) { artist = artists[i][1] }
-			
-			// Hitmo URLs are often relative
 			streamURL := links[i][1]
 			if streamURL[0] == '/' { streamURL = "https://hitmo.me" + streamURL }
-
 			allSongs = append(allSongs, models.Song{
 				Title: titles[i][1], Artist: artist, URL: "/api/music/proxy/raw?url=" + url.QueryEscape(streamURL), ImageURL: "https://hitmo.me/static/img/no-cover.png", Source: "vk-style",
 			})
@@ -136,7 +130,7 @@ func ProxyStream(c *gin.Context) {
 		id := c.Param("id")
 		instances := []string{"https://api.piped.victr.me", "https://pipedapi.tokhmi.pw", "https://pipedapi.kavin.rocks"}
 		for _, inst := range instances {
-			client := &http.Client{Timeout: 5 * time.Second}
+			client := &http.Client{Timeout: 6 * time.Second}
 			resp, err := client.Get(fmt.Sprintf("%s/streams/%s", inst, id))
 			if err != nil || resp.StatusCode != 200 { continue }
 			var res struct { AudioStreams []struct { URL string `json:"url"` } `json:"audioStreams"` }
@@ -157,6 +151,12 @@ func ProxyStream(c *gin.Context) {
 	client := &http.Client{Timeout: 60 * time.Minute}
 	req, _ := http.NewRequest("GET", finalStreamURL, nil)
 	req.Header.Set("User-Agent", userAgent)
+	
+	// Crucial for bypass: Set referer to the source domain
+	if strings.Contains(finalStreamURL, "hitmo.me") {
+		req.Header.Set("Referer", "https://hitmo.me/")
+	}
+
 	if r := c.GetHeader("Range"); r != "" { req.Header.Set("Range", r) }
 
 	resp, err := client.Do(req)
@@ -166,10 +166,14 @@ func ProxyStream(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	for k, v := range resp.Header {
-		for _, val := range v { c.Writer.Header().Add(k, val) }
-	}
+	// FORCED CLEAN HEADERS: Only send what's needed for playback
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Content-Type", "audio/mpeg") // Force audio type
+	
+	if h := resp.Header.Get("Content-Length"); h != "" { c.Writer.Header().Set("Content-Length", h) }
+	if h := resp.Header.Get("Content-Range"); h != "" { c.Writer.Header().Set("Content-Range", h) }
+	if h := resp.Header.Get("Accept-Ranges"); h != "" { c.Writer.Header().Set("Accept-Ranges", h) }
+
 	c.Writer.WriteHeader(resp.StatusCode)
 	_, _ = io.Copy(c.Writer, resp.Body)
 }
