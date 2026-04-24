@@ -25,7 +25,7 @@ const MobileMenuDrawer: React.FC<Props> = ({ isOpen, onClose, user, onLogout }) 
     { name: 'Волны', icon: Radio, path: '/waves', color: '#ff0090' },
     { name: 'Группы', icon: LayoutGrid, path: '/groups', color: '#ffcc00' },
     { name: 'Приложение', icon: ArrowDownCircle, path: '/app', color: '#00ff88' },
-    { name: 'Музыка', icon: Music, path: '#music', color: '#ff4d4d', isPlaceholder: true },
+    { name: 'Музыка', icon: Music, path: '/music', color: '#ff4d4d' },
     { name: 'Фото', icon: Image, path: '#photos', color: '#ff8800', isPlaceholder: true },
     { name: 'Закладки', icon: Bookmark, path: '#bookmarks', color: '#b400ff', isPlaceholder: true },
     { name: 'Игры', icon: Gamepad2, path: '#games', color: '#00ffcc', isPlaceholder: true },

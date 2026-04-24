@@ -327,7 +327,6 @@ const MobileNav = () => {
     { to: '/', icon: Home, label: 'Лента' },
     { to: '/messages', icon: MessageSquare, label: 'Чаты' },
     { to: '/waves', icon: Radio, label: 'Волны', isMiddle: true },
-    { to: '/music', icon: Music, label: 'Музыка' },
     { to: '/friends', icon: Users, label: 'Друзья' },
     { to: '#menu', icon: LayoutGrid, label: 'Меню', isMenuTrigger: true },
   ];
