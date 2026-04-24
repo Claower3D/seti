@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Plus, Search, Send, ArrowLeft, LogIn, X, Image as ImageIcon, Heart, MessageCircle, Settings, Upload } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
@@ -287,13 +288,13 @@ export const GroupsPage = () => {
             </div>
           ) : groupPosts.map((post) => (
              <div key={post.id} className="glass-panel" style={{ padding: '24px', border: '1px solid var(--border)' }}>
-               <div style={{ display: 'flex', gap: '14px', marginBottom: '16px', alignItems: 'center' }}>
+               <Link to={`/profile/${post.user?.username}`} style={{ textDecoration: 'none', display: 'flex', gap: '14px', marginBottom: '16px', alignItems: 'center' }}>
                  <img src={post.user?.avatar} style={{ width:'46px',height:'46px', borderRadius:'14px', border: '1px solid rgba(255,255,255,0.1)' }} />
                  <div>
                    <div style={{ fontWeight: '900', color: 'var(--primary)', fontSize: '1.1rem' }}>{post.user?.username}</div>
                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{new Date(post.createdAt).toLocaleString()}</div>
                  </div>
-               </div>
+               </Link>
                
                <div style={{ marginBottom: '20px', lineHeight: '1.6', color: '#e2e8f0', fontSize: '1.05rem', wordBreak: 'break-word' }}>{post.content}</div>
                
@@ -314,9 +315,9 @@ export const GroupsPage = () => {
                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
                      {(post.comments || []).map((c: any) => (
                        <div key={c.id} style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-                         <img src={c.user?.avatar} alt="avatar" style={{ width: '32px', height: '32px', borderRadius: '10px' }} />
+                         <Link to={`/profile/${c.user?.username}`}><img src={c.user?.avatar} alt="avatar" style={{ width: '32px', height: '32px', borderRadius: '10px' }} /></Link>
                          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 14px', borderRadius: '12px', flex: 1 }}>
-                           <div style={{ fontWeight: '800', fontSize: '0.85rem', color: 'var(--primary)', marginBottom: '4px' }}>{c.user?.username}</div>
+                           <Link to={`/profile/${c.user?.username}`} style={{ textDecoration: 'none' }}><div style={{ fontWeight: '800', fontSize: '0.85rem', color: 'var(--primary)', marginBottom: '4px' }}>{c.user?.username}</div></Link>
                            <div style={{ fontSize: '0.95rem', color: '#cbd5e1' }}>{c.content}</div>
                          </div>
                        </div>

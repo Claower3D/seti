@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, Share2, Volume2, VolumeX, Plus, Play, Zap, Upload, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import CommentsDrawer from '../components/CommentsDrawer';
@@ -290,35 +291,37 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
       {/* User info */}
       <div style={{ position: 'absolute', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 90px)' : '80px', left: '16px', right: isMobile ? '80px' : '80px', zIndex: 15 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-          <img src={wave.user?.avatar} alt="" style={{ width: isMobile ? '48px' : '42px', height: isMobile ? '48px' : '42px', borderRadius: '50%', border: '2px solid var(--border-bright)', boxShadow: 'var(--glow)' }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-              <div style={{ fontWeight: '900', color: 'var(--primary)', fontSize: isMobile ? '1.1rem' : '1.05rem', textShadow: 'var(--glow-strong)' }}>@{wave.user?.username}</div>
-              {!isOwnWave && (
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={toggleFollow}
-                  disabled={followLoading}
-                  style={{
-                    background: following ? 'rgba(255,255,255,0.1)' : 'color-mix(in srgb, var(--primary), transparent 85%)',
-                    border: following ? '1px solid rgba(255,255,255,0.2)' : '1px solid color-mix(in srgb, var(--primary), transparent 60%)',
-                    borderRadius: '8px',
-                    padding: isMobile ? '2px 10px' : '2px 8px',
-                    cursor: 'pointer',
-                    color: following ? 'rgba(255,255,255,0.6)' : 'var(--primary)',
-                    fontWeight: '800',
-                    fontSize: '0.65rem',
-                    backdropFilter: 'blur(10px)',
-                    transition: 'all 0.3s',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {followLoading ? '...' : (following ? '✓ Читаю' : 'Подписаться')}
-                </motion.button>
-              )}
+          <Link to={`/profile/${wave.user?.username}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+            <img src={wave.user?.avatar} alt="" style={{ width: isMobile ? '48px' : '42px', height: isMobile ? '48px' : '42px', borderRadius: '50%', border: '2px solid var(--border-bright)', boxShadow: 'var(--glow)' }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                <div style={{ fontWeight: '900', color: 'var(--primary)', fontSize: isMobile ? '1.1rem' : '1.05rem', textShadow: 'var(--glow-strong)' }}>@{wave.user?.username}</div>
+                {!isOwnWave && (
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => { e.preventDefault(); toggleFollow(); }}
+                    disabled={followLoading}
+                    style={{
+                      background: following ? 'rgba(255,255,255,0.1)' : 'color-mix(in srgb, var(--primary), transparent 85%)',
+                      border: following ? '1px solid rgba(255,255,255,0.2)' : '1px solid color-mix(in srgb, var(--primary), transparent 60%)',
+                      borderRadius: '8px',
+                      padding: isMobile ? '2px 10px' : '2px 8px',
+                      cursor: 'pointer',
+                      color: following ? 'rgba(255,255,255,0.6)' : 'var(--primary)',
+                      fontWeight: '800',
+                      fontSize: '0.65rem',
+                      backdropFilter: 'blur(10px)',
+                      transition: 'all 0.3s',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {followLoading ? '...' : (following ? '✓ Читаю' : 'Подписаться')}
+                  </motion.button>
+                )}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '3px' }}><Zap size={10} color="var(--primary)" />Signal Wave</div>
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '3px' }}><Zap size={10} color="var(--primary)" />Signal Wave</div>
-          </div>
+          </Link>
         </div>
         {wave.description && (
           <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: isMobile ? '0.95rem' : '0.9rem', lineHeight: '1.5', margin: 0, fontWeight: '500', textShadow: '0 1px 4px rgba(0,0,0,0.8)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
