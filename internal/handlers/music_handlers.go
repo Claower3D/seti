@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"social-network/internal/db"
 	"social-network/internal/models"
-	"strings"
 	"sync"
 	"time"
 
