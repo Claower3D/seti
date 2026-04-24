@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"social-network/internal/db"
 	"social-network/internal/models"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,15 +18,10 @@ type MusicAPIResult struct {
 	Data   []struct {
 		ID           string `json:"id"`
 		Name         string `json:"name"`
-		Album        struct { 
-			Name string `json:"name"` 
-		} `json:"album"`
-		Year         string `json:"year"`
+		Album        struct { Name string `json:"name"` } `json:"album"`
 		Duration     string `json:"duration"`
 		Artist       string `json:"primaryArtists"`
-		Image        []struct { 
-			Link string `json:"link"` 
-		} `json:"image"`
+		Image        []struct { Link string `json:"link"` } `json:"image"`
 		DownloadURL  []struct { 
 			Link    string `json:"link"` 
 			Quality string `json:"quality"` 
@@ -33,7 +29,7 @@ type MusicAPIResult struct {
 	} `json:"data"`
 }
 
-// SearchMusic now uses High-Quality World Music Databases (JioSaavn / SoundCloud Logic)
+// SearchMusic now uses a multi-engine aggregator for absolute coverage
 func SearchMusic(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -42,39 +38,47 @@ func SearchMusic(c *gin.Context) {
 	}
 
 	encodedQuery := url.QueryEscape(query)
-	songs := []models.Song{}
+	var allSongs []models.Song
+	var mu sync.Mutex
+	var wg sync.WaitGroup
 
-	// SOURCE 1: Global Hi-Fi Music API (JioSaavn base)
-	musicURL := fmt.Sprintf("https://saavn.me/search/songs?query=%s", encodedQuery)
-	resp, err := http.Get(musicURL)
-	if err == nil {
-		defer resp.Body.Close()
-		var res MusicAPIResult
-		if err := json.NewDecoder(resp.Body).Decode(&res); err == nil && len(res.Data) > 0 {
-			for _, item := range res.Data {
-				streamURL := ""
-				if len(item.DownloadURL) > 0 {
-					streamURL = item.DownloadURL[len(item.DownloadURL)-1].Link
+	// ENGINE 1: Global Hi-Fi (Saavn)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		musicURL := fmt.Sprintf("https://saavn.me/search/songs?query=%s&limit=20", encodedQuery)
+		resp, err := http.Get(musicURL)
+		if err == nil {
+			defer resp.Body.Close()
+			var res MusicAPIResult
+			if err := json.NewDecoder(resp.Body).Decode(&res); err == nil {
+				mu.Lock()
+				for _, item := range res.Data {
+					streamURL := ""
+					if len(item.DownloadURL) > 0 {
+						streamURL = item.DownloadURL[len(item.DownloadURL)-1].Link
+					}
+					thumb := ""
+					if len(item.Image) > 0 {
+						thumb = item.Image[len(item.Image)-1].Link
+					}
+					allSongs = append(allSongs, models.Song{
+						Title:    item.Name,
+						Artist:   item.Artist,
+						URL:      streamURL,
+						ImageURL: thumb,
+						Source:   "hifi",
+					})
 				}
-
-				thumb := ""
-				if len(item.Image) > 0 {
-					thumb = item.Image[len(item.Image)-1].Link
-				}
-
-				songs = append(songs, models.Song{
-					Title:    item.Name,
-					Artist:   item.Artist,
-					URL:      streamURL,
-					ImageURL: thumb,
-					Source:   "hifi",
-				})
+				mu.Unlock()
 			}
 		}
-	}
+	}()
 
-	// SOURCE 2: Fallback to YouTube Music via Piped
-	if len(songs) == 0 {
+	// ENGINE 2: YouTube Music (Piped Aggregator)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 		pipedURL := fmt.Sprintf("https://pipedapi.kavin.rocks/search?q=%s&filter=music_songs", encodedQuery)
 		resp, err := http.Get(pipedURL)
 		if err == nil {
@@ -88,10 +92,12 @@ func SearchMusic(c *gin.Context) {
 				} `json:"items"`
 			}
 			if err := json.NewDecoder(resp.Body).Decode(&pRes); err == nil {
+				mu.Lock()
 				for _, item := range pRes.Items {
 					u, _ := url.Parse(item.URL)
 					vID := u.Query().Get("v")
-					songs = append(songs, models.Song{
+					if vID == "" { continue }
+					allSongs = append(allSongs, models.Song{
 						Title:    item.Title,
 						Artist:   item.Uploader,
 						URL:      fmt.Sprintf("/api/music/proxy/%s", vID),
@@ -99,16 +105,27 @@ func SearchMusic(c *gin.Context) {
 						Source:   "piped",
 					})
 				}
+				mu.Unlock()
 			}
 		}
+	}()
+
+	wg.Wait()
+
+	if len(allSongs) == 0 {
+		c.JSON(http.StatusOK, []models.Song{})
+		return
 	}
 
-	c.JSON(http.StatusOK, songs)
+	c.JSON(http.StatusOK, allSongs)
 }
 
 func ProxyStream(c *gin.Context) {
 	videoID := c.Param("id")
-	instances := []string{"https://pipedapi.kavin.rocks", "https://piped-api.lunar.icu"}
+	instances := []string{
+		"https://pipedapi.kavin.rocks",
+		"https://piped-api.lunar.icu",
+	}
 	
 	for _, inst := range instances {
 		resp, err := http.Get(fmt.Sprintf("%s/streams/%s", inst, videoID))
