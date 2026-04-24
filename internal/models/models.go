@@ -7,49 +7,48 @@ import (
 )
 
 type User struct {
-	ID        uint           `gorm:"primaryKey" json:"id"`
-	Username  string         `gorm:"uniqueIndex;not null" json:"username"`
-	Email     string         `json:"email"`
-	IIN       string         `gorm:"uniqueIndex;size:12;not null" json:"iin"`
-        Phone     string         `gorm:"uniqueIndex;size:20;not null" json:"phone"`
-	Password  string         `json:"-"`
-	Bio       string         `json:"bio"`
-	Avatar    string         `json:"avatar"`
-	NeonColor string         `gorm:"default:'#00f5ff'" json:"neonColor"`
-	NeonBrightness float64    `gorm:"default:1.0" json:"neonBrightness"`
-        FCMToken string `json:"fcmToken"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
-	Posts     []Post         `json:"posts,omitempty"`
-	Waves     []Wave         `json:"waves,omitempty"`
-	Friends   []User         `gorm:"many2many:friendships;" json:"friends,omitempty"`
-	IsArchived bool          `gorm:"-" json:"isArchived"`
+	ID             uint           `gorm:"primaryKey" json:"id"`
+	Username       string         `gorm:"uniqueIndex;not null" json:"username"`
+	Email          string         `json:"email"`
+	Phone          string         `gorm:"uniqueIndex;size:20;not null" json:"phone"`
+	Password       string         `json:"-"`
+	Bio            string         `json:"bio"`
+	Avatar         string         `json:"avatar"`
+	NeonColor      string         `gorm:"default:'#00f5ff'" json:"neonColor"`
+	NeonBrightness float64        `gorm:"default:1.0" json:"neonBrightness"`
+	FCMToken       string         `json:"fcmToken"`
+	CreatedAt      time.Time      `json:"createdAt"`
+	UpdatedAt      time.Time      `json:"updatedAt"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
+	Posts          []Post         `json:"posts,omitempty"`
+	Waves          []Wave         `json:"waves,omitempty"`
+	Friends        []User         `gorm:"many2many:friendships;" json:"friends,omitempty"`
+	IsArchived     bool           `gorm:"-" json:"isArchived"`
 }
 
 type Friendship struct {
-	ID        uint   `gorm:"primaryKey"`
-	UserID    uint   `gorm:"not null"`
-	FriendID  uint   `gorm:"not null"`
-	Status    string `gorm:"default:'pending'"`
-	IsArchivedBySender   bool `gorm:"default:false" json:"isArchivedBySender"`
-	IsArchivedByReceiver bool `gorm:"default:false" json:"isArchivedByReceiver"`
-	CreatedAt time.Time
+	ID                   uint   `gorm:"primaryKey"`
+	UserID               uint   `gorm:"not null"`
+	FriendID             uint   `gorm:"not null"`
+	Status               string `gorm:"default:'pending'"`
+	IsArchivedBySender   bool   `gorm:"default:false" json:"isArchivedBySender"`
+	IsArchivedByReceiver bool   `gorm:"default:false" json:"isArchivedByReceiver"`
+	CreatedAt            time.Time
 }
 
 type Message struct {
-	ID         uint      `gorm:"primaryKey" json:"id"`
-	SenderID   uint      `json:"senderId"`
-	Sender     User      `gorm:"foreignKey:SenderID" json:"sender,omitempty"`
-	ReceiverID uint      `json:"receiverId"`
-	GroupID    *uint     `json:"groupId,omitempty"`
-	Content    string    `json:"content"`
-	FileURL    string    `json:"fileUrl,omitempty"`
-	FileType   string    `json:"fileType,omitempty"`
-	FileName   string    `json:"fileName,omitempty"`
-	ReplyStoryURL string `json:"replyStoryUrl,omitempty"`
-	IsRead     bool      `gorm:"default:false" json:"isRead"`
-	CreatedAt  time.Time `json:"createdAt"`
+	ID            uint      `gorm:"primaryKey" json:"id"`
+	SenderID      uint      `json:"senderId"`
+	Sender        User      `gorm:"foreignKey:SenderID" json:"sender,omitempty"`
+	ReceiverID    uint      `json:"receiverId"`
+	GroupID       *uint     `json:"groupId,omitempty"`
+	Content       string    `json:"content"`
+	FileURL       string    `json:"fileUrl,omitempty"`
+	FileType      string    `json:"fileType,omitempty"`
+	FileName      string    `json:"fileName,omitempty"`
+	ReplyStoryURL string    `json:"replyStoryUrl,omitempty"`
+	IsRead        bool      `gorm:"default:false" json:"isRead"`
+	CreatedAt     time.Time `json:"createdAt"`
 }
 
 type Group struct {
@@ -66,13 +65,13 @@ type Group struct {
 }
 
 type GroupMember struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	GroupID   uint      `gorm:"not null" json:"groupId"`
-	UserID    uint      `gorm:"not null" json:"userId"`
-	User      User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Role      string    `gorm:"default:'member'" json:"role"`
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	GroupID    uint      `gorm:"not null" json:"groupId"`
+	UserID     uint      `gorm:"not null" json:"userId"`
+	User       User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	Role       string    `gorm:"default:'member'" json:"role"`
 	IsArchived bool      `gorm:"default:false" json:"isArchived"`
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt  time.Time `json:"createdAt"`
 }
 
 type Post struct {
@@ -93,9 +92,9 @@ type Post struct {
 }
 
 type PostLike struct {
-	ID        uint      `gorm:"primaryKey"`
-	UserID    uint      `gorm:"not null"`
-	PostID    uint      `gorm:"not null"`
+	ID        uint `gorm:"primaryKey"`
+	UserID    uint `gorm:"not null"`
+	PostID    uint `gorm:"not null"`
 	CreatedAt time.Time
 }
 

@@ -235,7 +235,6 @@ export const RegisterPage = () => {
   const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneValid, setPhoneValid] = useState(false);
-  const [iin, setIin] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -258,7 +257,7 @@ export const RegisterPage = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await api.post('/register', { username, phone, iin, password });
+      const res = await api.post('/register', { username, phone, password });
       login(res.data.token, res.data.user);
       navigate('/');
     } catch (err: any) {
@@ -299,18 +298,6 @@ export const RegisterPage = () => {
 
           {/* KZ Phone */}
           <KZPhoneInput onChange={handlePhoneChange} />
-
-
-
-          {/* IIN */}
-          <div style={{ position: 'relative' }}>
-            <Fingerprint size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-            <input type="text" className="input-field" placeholder="ИИН (12 цифр)"
-              style={{ paddingLeft: '48px', height: '52px' }}
-              value={iin}
-              onChange={(e) => { const val = e.target.value.replace(/\D/g, '').slice(0, 12); setIin(val); }}
-              required pattern="[0-9]{12}" title="ИИН должен состоять из 12 цифр" />
-          </div>
 
           {/* Password */}
           <div style={{ position: 'relative' }}>

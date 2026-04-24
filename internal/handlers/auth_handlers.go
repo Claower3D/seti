@@ -12,7 +12,6 @@ type RegisterInput struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email"`
 	Phone    string `json:"phone" binding:"required"`
-	IIN      string `json:"iin" binding:"required,len=12,numeric"`
 	Password string `json:"password" binding:"required,min=6"`
 }
 
@@ -38,7 +37,6 @@ func Register(c *gin.Context) {
 		Username: input.Username,
 		Email:    input.Email,
 		Phone:    input.Phone,
-		IIN:      input.IIN,
 		Password: hashedPassword,
 		Avatar:   "https://api.dicebear.com/7.x/avataaars/svg?seed=" + input.Username,
 	}
