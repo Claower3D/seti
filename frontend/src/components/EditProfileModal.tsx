@@ -21,10 +21,6 @@ const NEON_PRESETS = [
   { name: 'Crimson Glow',    color: '#ff0033' },
 ];
 
-const HOLOGRAMS = [
-  { id: 'none',   name: 'Без эффекта', icon: X },
-  { id: 'matrix', name: 'Матрица',    icon: Zap },
-];
 
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
@@ -314,30 +310,6 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                     </div>
                   </div>
 
-                  <div>
-                    <FieldLabel>HOLOGRAM EFFECTS (ГАЛЛОГРАММА)</FieldLabel>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-                      {HOLOGRAMS.map(h => (
-                        <button key={h.id} onClick={() => { setHologram(h.id); updateUser({ ...currentUser, neonColor, neonBrightness, hologram: h.id }); }}
-                          style={{ 
-                            padding: '16px 8px', 
-                            borderRadius: '14px', 
-                            background: hologram === h.id ? `${neonColor}15` : 'rgba(255,255,255,0.03)', 
-                            border: `1px solid ${hologram === h.id ? neonColor : 'rgba(255,255,255,0.08)'}`, 
-                            cursor: 'pointer', 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            alignItems: 'center', 
-                            gap: '8px',
-                            transition: 'all 0.2s',
-                            boxShadow: hologram === h.id ? `0 0 15px ${neonColor}22` : 'none'
-                          }}>
-                          <h.icon size={20} color={hologram === h.id ? neonColor : 'rgba(255,255,255,0.4)'} />
-                          <span style={{ fontSize: '0.65rem', color: hologram === h.id ? 'white' : 'rgba(255,255,255,0.4)', fontWeight: '700' }}>{h.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
 
                   <div>
                     <FieldLabel>ЯРКОСТЬ НЕОНА</FieldLabel>
