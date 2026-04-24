@@ -89,5 +89,10 @@ func GetMe(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
+	
+	db.DB.Model(&models.Friendship{}).Where("status = 'accepted' AND (user_id = ? OR friend_id = ?)", user.ID, user.ID).Count(&user.FriendsCount)
+	db.DB.Model(&models.Friendship{}).Where("status = 'pending' AND friend_id = ?", user.ID).Count(&user.FollowersCount)
+	db.DB.Model(&models.Friendship{}).Where("status = 'pending' AND user_id = ?", user.ID).Count(&user.FollowingCount)
+
 	c.JSON(http.StatusOK, user)
 }

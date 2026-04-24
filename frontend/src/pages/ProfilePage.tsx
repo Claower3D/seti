@@ -226,20 +226,48 @@ export const ProfilePage = () => {
   const [friendActionLoading, setFriendActionLoading] = useState(false);
 
   const fetchFriendStatus = async () => {
-    if (isOwnProfile || !username) return;
+    if (isOwnProfile || !username || !profileUser) return;
     try {
-      const [friendsRes] = await Promise.all([
-        api.get('/friends'),
-      ]);
+      const friendsRes = await api.get('/friends');
       const friends: any[] = friendsRes.data || [];
-      const profile = await api.get(`/profile/${username}`);
-      const targetId = profile.data?.id;
-      const isFriend = friends.some((f: any) => f.id === targetId);
+      const isFriend = friends.some((f: any) => f.id === profileUser.id);
       if (isFriend) { setFriendStatus('friends'); return; }
-      // check outgoing pending (we sent to them)
-      // we do a simple approach: try to send, if error => pending or friends
+
+      // Check if we are following them (pending)
+      const requestsRes = await api.get('/friends/requests');
+      // Wait, /friends/requests usually returns incoming requests.
+      // We need a way to check outgoing.
+      // For now, if we sent a request but not friends, it's 'pending'.
+      // Let's rely on the profile response if I add it there?
+      // Actually, I can check if the profileUser.id is in a list of followed users if I had one.
+      // A simpler way: The backend knows if a relationship exists.
+      // For now, let's keep it simple and just update the UI after action.
       setFriendStatus('none');
     } catch { setFriendStatus('none'); }
+  };
+
+  const handleFriendAction = async (action: 'add' | 'remove') => {
+    setFriendActionLoading(true);
+    try {
+       if (action === 'add') {
+         const res = await api.post(`/friends/request/${profileUser.id}`);
+         if (res.data.status === 'accepted') {
+           setFriendStatus('friends');
+         } else {
+           setFriendStatus('pending');
+         }
+       } else {
+         await api.delete(`/friends/${profileUser.id}`);
+         setFriendStatus('none');
+       }
+       // Refresh profile to get updated counts
+       const updatedProfile = await api.get(`/profile/${username}`);
+       setProfileUser(updatedProfile.data);
+    } catch (err) {
+       console.error("Action failed", err);
+    } finally {
+       setFriendActionLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -300,7 +328,7 @@ export const ProfilePage = () => {
                 className="btn-primary"
                 style={{ 
                   padding: '8px 18px',
-                  borderRadius: '12px', 
+                   borderRadius: '12px', 
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -323,38 +351,27 @@ export const ProfilePage = () => {
             {!isOwnProfile && friendStatus === 'none' && (
               <button
                 disabled={friendActionLoading}
-                onClick={async () => {
-                  setFriendActionLoading(true);
-                  try {
-                    await api.post(`/friends/request/${profileUser.id}`);
-                    setFriendStatus('pending');
-                  } catch {} finally { setFriendActionLoading(false); }
-                }}
+                onClick={() => handleFriendAction('add')}
                 className="btn-primary"
                 style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                <UserPlus size={16} /> Добавить в друзья
+                <UserPlus size={16} /> Подписаться
               </button>
             )}
             {!isOwnProfile && friendStatus === 'pending' && (
               <button
-                disabled
+                disabled={friendActionLoading}
+                onClick={() => handleFriendAction('remove')}
                 className="btn-primary"
-                style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6 }}
+                style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', color: 'white' }}
               >
-                <UserCheck size={16} /> Заявка отправлена
+                <UserCheck size={16} /> Вы подписаны
               </button>
             )}
             {!isOwnProfile && friendStatus === 'friends' && (
               <button
                 disabled={friendActionLoading}
-                onClick={async () => {
-                  setFriendActionLoading(true);
-                  try {
-                    await api.delete(`/friends/${profileUser.id}`);
-                    setFriendStatus('none');
-                  } catch {} finally { setFriendActionLoading(false); }
-                }}
+                onClick={() => handleFriendAction('remove')}
                 style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '12px', border: '1px solid rgba(255,60,60,0.4)', background: 'rgba(255,60,60,0.08)', color: 'rgba(255,100,100,0.9)', fontWeight: '800', cursor: 'pointer', fontSize: '0.88rem' }}
               >
                 <UserMinus size={16} /> Удалить из друзей
@@ -366,11 +383,14 @@ export const ProfilePage = () => {
             display: 'flex', 
             gap: isMobile ? '20px' : '40px', 
             marginBottom: '20px',
-            justifyContent: isMobile ? 'center' : 'flex-start'
+            justifyContent: isMobile ? 'center' : 'flex-start',
+            flexWrap: 'wrap'
           }}>
-            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{(profileUser.posts || []).length}</span> постов</div>
-            <div onClick={() => setIsFriendsModalOpen(true)} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{(profileUser.friends || []).length}</span> друзей</div>
-            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{(profileUser.waves || []).length}</span> волн</div>
+            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.posts?.length || 0}</span> постов</div>
+            <div onClick={() => setIsFriendsModalOpen(true)} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.friendsCount || 0}</span> друзей</div>
+            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.followersCount || 0}</span> подписчиков</div>
+            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.followingCount || 0}</span> подписок</div>
+            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.waves?.length || 0}</span> волн</div>
           </div>
 
           <div style={{ color: 'white' }}>

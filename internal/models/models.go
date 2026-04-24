@@ -28,6 +28,9 @@ type User struct {
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 	Posts          []Post         `json:"posts,omitempty"`
 	Waves          []Wave         `json:"waves,omitempty"`
+	FriendsCount   int64          `gorm:"-" json:"friendsCount"`
+	FollowersCount int64          `gorm:"-" json:"followersCount"`
+	FollowingCount int64          `gorm:"-" json:"followingCount"`
 	Friends        []User         `gorm:"many2many:friendships;" json:"friends,omitempty"`
 	IsArchived     bool           `gorm:"-" json:"isArchived"`
 }

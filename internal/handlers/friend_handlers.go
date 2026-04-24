@@ -10,30 +10,49 @@ import (
 )
 
 func SendFriendRequest(c *gin.Context) {
-senderID, _ := c.Get("userId")
-receiverID := c.Param("id")
+	senderID, _ := c.Get("userId")
+	receiverIDStr := c.Param("id")
 
-var friendship models.Friendship
-if err := db.DB.Where("user_id = ? AND friend_id = ?", senderID, receiverID).First(&friendship).Error; err == nil {
-c.JSON(http.StatusBadRequest, gin.H{"error": "Request already exists"})
-return
-}
+	var rid uint
+	fmt.Sscanf(receiverIDStr, "%d", &rid)
 
-var friendID uint
-fmt.Sscanf(receiverID, "%d", &friendID)
+	if senderID.(uint) == rid {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "You cannot follow yourself"})
+		return
+	}
 
-friendship = models.Friendship{
-UserID:   senderID.(uint),
-FriendID: friendID,
-Status:   "pending",
-}
+	// Check if already friends or already following
+	var friendship models.Friendship
+	if err := db.DB.Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)", senderID, rid, rid, senderID).First(&friendship).Error; err == nil {
+		if friendship.Status == "accepted" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "You are already friends"})
+			return
+		}
+		if friendship.UserID == senderID.(uint) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "You are already following this user"})
+			return
+		}
+		
+		// If WE are the receiver of an existing request, and we just sent one -> AUTOMATIC ACCEPT
+		friendship.Status = "accepted"
+		db.DB.Save(&friendship)
+		c.JSON(http.StatusOK, gin.H{"message": "Mutual follow! You are now friends", "status": "accepted"})
+		return
+	}
 
-if err := db.DB.Create(&friendship).Error; err != nil {
-c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send request"})
-return
-}
+	// Normal case: Start following
+	friendship = models.Friendship{
+		UserID:   senderID.(uint),
+		FriendID: rid,
+		Status:   "pending",
+	}
 
-c.JSON(http.StatusOK, gin.H{"message": "Friend request sent"})
+	if err := db.DB.Create(&friendship).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to follow user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "You are now following this user", "status": "pending"})
 }
 
 func AcceptFriendRequest(c *gin.Context) {
