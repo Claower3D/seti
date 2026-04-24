@@ -172,7 +172,25 @@ export const MusicPage = () => {
         <motion.button 
           whileTap={{ scale: 0.95 }}
           type="submit"
-          style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: '#00f5ff', color: 'black', border: 'none', padding: '10px 22px', borderRadius: '16px', fontWeight: '900', fontSize: '0.85rem', cursor: 'pointer', boxShadow: '0 0 20px rgba(0,245,255,0.3)' }}
+          style={{ 
+            position: 'absolute', 
+            right: '10px', 
+            top: '50%', 
+            translateY: '-50%',
+            background: '#00f5ff', 
+            color: 'black', 
+            border: 'none', 
+            minWidth: '100px',
+            height: '42px',
+            borderRadius: '16px', 
+            fontWeight: '900', 
+            fontSize: '0.85rem', 
+            cursor: 'pointer', 
+            boxShadow: '0 0 20px rgba(0,245,255,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         >
           {loading ? 'Ищем...' : 'Поиск'}
         </motion.button>
