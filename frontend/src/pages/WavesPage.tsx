@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Share2, Volume2, VolumeX, Plus, Play, Zap, Upload, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Volume2, VolumeX, Plus, Play, Zap, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
