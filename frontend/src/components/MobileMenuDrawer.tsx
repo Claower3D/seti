@@ -64,7 +64,7 @@ const MobileMenuDrawer: React.FC<Props> = ({ isOpen, onClose, user, onLogout }) 
             drag="y"
             dragConstraints={{ top: 0 }}
             dragElastic={{ top: 0, bottom: 0.5 }}
-            onDragEnd={(e, info) => {
+            onDragEnd={(_, info) => {
               if (info.offset.y > 100 || info.velocity.y > 500) {
                 onClose();
               }
