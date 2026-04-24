@@ -407,6 +407,11 @@ function AppInner() {
 
   return (
     <div className="main-layout">
+      <div className="hologram-container">
+        <div className="hologram-ring" />
+        <div className="hologram-ring" />
+        <div className="hologram-ring" />
+      </div>
       <UpdateModal />
       <Sidebar />
       <div 

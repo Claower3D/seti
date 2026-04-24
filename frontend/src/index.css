@@ -744,3 +744,70 @@ body::after {
 .swipe-action-bg.unarchive {
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--secondary), transparent 70%));
 }
+
+/* HOLOGRAM EFFECT */
+.hologram-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 0.15;
+  perspective: 1000px;
+}
+
+.hologram-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid var(--primary);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--primary), transparent 50%), inset 0 0 20px color-mix(in srgb, var(--primary), transparent 50%);
+  animation: hologram-spin linear infinite;
+  transform-style: preserve-3d;
+}
+
+.hologram-ring:nth-child(1) {
+  width: 70vw;
+  height: 70vw;
+  max-width: 900px;
+  max-height: 900px;
+  border-style: dashed;
+  animation-duration: 60s;
+}
+
+.hologram-ring:nth-child(2) {
+  width: 50vw;
+  height: 50vw;
+  max-width: 650px;
+  max-height: 650px;
+  border: 2px dotted color-mix(in srgb, var(--primary), transparent 50%);
+  animation-duration: 40s;
+  animation-direction: reverse;
+}
+
+.hologram-ring:nth-child(3) {
+  width: 30vw;
+  height: 30vw;
+  max-width: 400px;
+  max-height: 400px;
+  border: 2px solid var(--secondary);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--secondary), transparent 50%), inset 0 0 20px color-mix(in srgb, var(--secondary), transparent 50%);
+  animation-duration: 20s;
+}
+
+@keyframes hologram-spin {
+  0% { transform: rotateX(65deg) rotateY(15deg) rotateZ(0deg); }
+  100% { transform: rotateX(65deg) rotateY(15deg) rotateZ(360deg); }
+}
+
+@media (max-width: 768px) {
+  .hologram-ring:nth-child(1) { width: 140vw; height: 140vw; }
+  .hologram-ring:nth-child(2) { width: 100vw; height: 100vw; }
+  .hologram-ring:nth-child(3) { width: 60vw; height: 60vw; }
+}
