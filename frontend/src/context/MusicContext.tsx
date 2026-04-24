@@ -51,10 +51,17 @@ export const MusicProvider = ({ children }: { children: React.ReactNode }) => {
 
   const playSong = (song: Song) => {
     if (!audioRef.current) return;
+
+    let targetUrl = song.url;
+    if (targetUrl.startsWith('/api')) {
+      const baseUrl = import.meta.env.VITE_API_URL || '';
+      targetUrl = baseUrl.replace(/\/api$/, '') + targetUrl;
+    }
+
     if (currentSong?.url === song.url) {
       audioRef.current.play();
     } else {
-      audioRef.current.src = song.url;
+      audioRef.current.src = targetUrl;
       audioRef.current.play();
       setCurrentSong(song);
     }

@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SearchMusic searches for music via Jamendo API
+// SearchMusic searches for music via Piped API (YouTube Music proxy)
 func SearchMusic(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -18,26 +18,24 @@ func SearchMusic(c *gin.Context) {
 		return
 	}
 
-	// Jamendo API (using a public client_id from their examples)
-	clientID := "56d30c55"
-	url := fmt.Sprintf("https://api.jamendo.com/v3.0/tracks/?client_id=%s&format=json&limit=30&search=%s&include=musicinfo&audioformat=mp32", clientID, query)
+	// Piped API (YouTube proxy) - Search for songs
+	url := fmt.Sprintf("https://pipedapi.kavin.rocks/search?q=%s&filter=music_songs", query)
 
 	resp, err := http.Get(url)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch music"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Search service temporarily unavailable"})
 		return
 	}
 	defer resp.Body.Close()
 
 	var result struct {
-		Results []struct {
-			ID        string `json:"id"`
-			Name      string `json:"name"`
-			Artist    string `json:"artist_name"`
-			Image     string `json:"image"`
-			Audio     string `json:"audio"`
-			Duration  int    `json:"duration"`
-		} `json:"results"`
+		Items []struct {
+			Title      string `json:"title"`
+			Uploader   string `json:"uploaderName"`
+			Thumbnail  string `json:"thumbnail"`
+			URL        string `json:"url"` // This contains /watch?v=ID
+			Duration   int    `json:"duration"`
+		} `json:"items"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -47,18 +45,61 @@ func SearchMusic(c *gin.Context) {
 
 	// Convert to our internal format
 	songs := []models.Song{}
-	for _, r := range result.Results {
+	for _, r := range result.Items {
+		videoID := ""
+		if len(r.URL) > 9 {
+			videoID = r.URL[9:]
+		}
+
+		if videoID == "" {
+			continue
+		}
+
 		songs = append(songs, models.Song{
-			Title:    r.Name,
-			Artist:   r.Artist,
-			URL:      r.Audio,
-			ImageURL: r.Image,
+			Title:    r.Title,
+			Artist:   r.Uploader,
+			// Using our internal proxy to get the real stream URL
+			URL:      fmt.Sprintf("/api/music/proxy/%s", videoID),
+			ImageURL: r.Thumbnail,
 			Duration: r.Duration,
-			Source:   "jamendo",
+			Source:   "youtube",
 		})
 	}
 
 	c.JSON(http.StatusOK, songs)
+}
+
+func ProxyStream(c *gin.Context) {
+	videoID := c.Param("id")
+	if videoID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Video ID is required"})
+		return
+	}
+
+	// Fetch stream info from Piped
+	url := fmt.Sprintf("https://pipedapi.kavin.rocks/streams/%s", videoID)
+	resp, err := http.Get(url)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resolve stream"})
+		return
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		AudioStreams []struct {
+			URL      string `json:"url"`
+			Format   string `json:"format"`
+			MimeType string `json:"mimeType"`
+		} `json:"audioStreams"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil || len(result.AudioStreams) == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No audio stream found"})
+		return
+	}
+
+	// Redirect to the first audio stream
+	c.Redirect(http.StatusTemporaryRedirect, result.AudioStreams[0].URL)
 }
 
 func AddToMyMusic(c *gin.Context) {
