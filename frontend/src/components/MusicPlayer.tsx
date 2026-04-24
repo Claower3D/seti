@@ -67,7 +67,7 @@ export const MusicPlayer = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', className: 'desktop-only' }}>
+              <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <SkipBack size={22} color="white" style={{ opacity: 0.4, cursor: 'default' }} />
                 <button onClick={togglePlay} style={{ background: 'var(--primary)', border: 'none', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--glow-strong)' }}>
                   {isPlaying ? <Pause size={26} color="black" fill="black" /> : <Play size={26} color="black" fill="black" style={{ marginLeft: '4px' }} />}
