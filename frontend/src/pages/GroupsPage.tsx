@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Plus, Search, Send, ArrowLeft, LogIn, X, Image as ImageIcon, Heart, MessageCircle } from 'lucide-react';
+import { Users, Plus, Search, Send, ArrowLeft, LogIn, X, Image as ImageIcon, Heart, MessageCircle, Settings, Upload } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,6 +27,13 @@ export const GroupsPage = () => {
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const [showSettings, setShowSettings] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editAvatar, setEditAvatar] = useState('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
 
   const fetchGroups = async () => {
     try { const r = await api.get('/groups'); setGroups(r.data || []); } catch { setGroups([]); }
@@ -115,8 +122,37 @@ export const GroupsPage = () => {
     } catch { console.error('Failed to comment'); }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    setIsUploadingAvatar(true);
+    try {
+      const res = await api.post('/upload', fd);
+      setEditAvatar(res.data.url);
+    } catch {
+      console.error('Avatar upload failed');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const saveGroupSettings = async () => {
+    if (!selected) return;
+    try {
+      const res = await api.put(`/groups/${selected.id}`, { name: editName, description: editDesc, avatar: editAvatar });
+      setSelected({ ...selected, name: res.data.name, description: res.data.description, avatar: res.data.avatar });
+      setGroups(prev => prev.map(g => g.id === selected.id ? { ...g, name: res.data.name, description: res.data.description, avatar: res.data.avatar } : g));
+      setShowSettings(false);
+    } catch {
+      console.error('Failed to update group setting');
+    }
+  };
+
   if (selected) {
     const isMember = groups.some(g => g.id === selected.id) || (selected.members || []).some(m => m.userId === user?.id);
+    const isOwner = selected.ownerId === user?.id;
 
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '40px' }}>
@@ -150,6 +186,19 @@ export const GroupsPage = () => {
                 Вы подписаны
               </button>
             )}
+            
+            {isOwner && (
+              <button 
+                onClick={() => {
+                  setEditName(selected.name);
+                  setEditDesc(selected.description);
+                  setEditAvatar(selected.avatar);
+                  setShowSettings(true);
+                }}
+                style={{ padding: '10px 24px', borderRadius: '12px', border: '1px solid var(--primary)', background: 'rgba(0,0,0,0.5)', color: 'var(--primary)', fontWeight: '800', cursor: 'pointer', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Settings size={18} /> Настройки
+              </button>
+            )}
           </div>
         </div>
 
@@ -159,6 +208,43 @@ export const GroupsPage = () => {
             {selected.description}
           </div>
         )}
+
+        {/* Settings Modal */}
+        <AnimatePresence>
+          {showSettings && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+              <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '30px', position: 'relative', background: '#0a0a16' }}>
+                <button onClick={() => setShowSettings(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+                <h2 style={{ color: 'white', marginBottom: '24px', fontSize: '1.4rem' }}>Настройки сообщества</h2>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
+                  <img src={editAvatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${selected.name}`} style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
+                  <div>
+                    <input type="file" ref={avatarFileRef} hidden onChange={handleAvatarUpload} accept="image/*" />
+                    <button onClick={() => avatarFileRef.current?.click()} disabled={isUploadingAvatar} style={{ background: 'color-mix(in srgb, var(--primary), transparent 90%)', border: '1px solid var(--primary)', color: 'var(--primary)', padding: '10px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: '700' }}>
+                      <Upload size={18} /> {isUploadingAvatar ? 'Загрузка...' : 'Изменить обложку'}
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Название</label>
+                  <input className="input-field" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                </div>
+                
+                <div style={{ marginBottom: '30px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Описание</label>
+                  <textarea className="input-field" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ minHeight: '100px', resize: 'none' }} />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
+                  <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '10px 24px', borderRadius: '12px', cursor: 'pointer', fontWeight: '700' }}>Отмена</button>
+                  <button onClick={saveGroupSettings} className="btn-primary" style={{ padding: '10px 24px', borderRadius: '12px' }}>Сохранить</button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Wall Posting Area */}
         {isMember && (
