@@ -95,6 +95,12 @@ func main() {
 			protected.POST("/fcm-token", handlers.RegisterFCMToken)
 			protected.GET("/notifications", handlers.GetNotifications)
 			protected.POST("/notifications/:id/read", handlers.MarkNotificationRead)
+
+			// Music
+			protected.GET("/music/search", handlers.SearchMusic)
+			protected.GET("/music/my", handlers.GetMyMusic)
+			protected.POST("/music/my", handlers.AddToMyMusic)
+			protected.DELETE("/music/my/:id", handlers.RemoveFromMyMusic)
 		}
 	}
 

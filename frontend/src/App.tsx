@@ -9,6 +9,8 @@ import LoadingScreen from './components/LoadingScreen';
 import ErrorPlaceholder from './components/ErrorPlaceholder';
 import SetiLogo from './components/SetiLogo';
 import MobileMenuDrawer from './components/MobileMenuDrawer';
+import { MusicProvider } from './context/MusicContext';
+import { MusicPlayer } from './components/MusicPlayer';
 
 // Lazy load pages for performance (SETI Optimization)
 const FeedPage = React.lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
@@ -17,6 +19,7 @@ const FriendsPage = React.lazy(() => import('./pages/FriendsPage').then(m => ({ 
 const ProfilePage = React.lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const GroupsPage = React.lazy(() => import('./pages/GroupsPage').then(m => ({ default: m.GroupsPage })));
 const WavesPage = React.lazy(() => import('./pages/WavesPage').then(m => ({ default: m.WavesPage })));
+const MusicPage = React.lazy(() => import('./pages/MusicPage').then(m => ({ default: m.MusicPage })));
 const AppDownloadPage = React.lazy(() => import('./pages/AppDownloadPage').then(m => ({ default: m.AppDownloadPage })));
 const { LoginPage, RegisterPage } = { 
   LoginPage: React.lazy(() => import('./pages/AuthPages').then(m => ({ default: m.LoginPage }))),
@@ -24,7 +27,7 @@ const { LoginPage, RegisterPage } = {
 };
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, ArrowDownCircle, Plus, LayoutGrid } from 'lucide-react';
+import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Zap, Check, X, Radio, ArrowDownCircle, Plus, LayoutGrid, Music } from 'lucide-react';
 import api from './api/client';
 
 const Sidebar = () => {
@@ -37,6 +40,7 @@ const Sidebar = () => {
     { name: 'Сообщения', icon: MessageSquare, path: '/messages' },
     { name: 'Друзья', icon: Users, path: '/friends' },
     { name: 'Волны', icon: Radio, path: '/waves' },
+    { name: 'Музыка', icon: Music, path: '/music' },
     { name: 'Мой профиль', icon: User, path: `/profile/${user.username}` },
     { name: 'Приложение', icon: ArrowDownCircle, path: '/app' },
   ];
@@ -323,6 +327,7 @@ const MobileNav = () => {
     { to: '/', icon: Home, label: 'Лента' },
     { to: '/messages', icon: MessageSquare, label: 'Чаты' },
     { to: '/waves', icon: Radio, label: 'Волны', isMiddle: true },
+    { to: '/music', icon: Music, label: 'Музыка' },
     { to: '/friends', icon: Users, label: 'Друзья' },
     { to: '#menu', icon: LayoutGrid, label: 'Меню', isMenuTrigger: true },
   ];
@@ -461,6 +466,7 @@ function AppInner() {
               <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
               <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
               <Route path="/waves" element={<ProtectedRoute><WavesPage /></ProtectedRoute>} />
+              <Route path="/music" element={<ProtectedRoute><MusicPage /></ProtectedRoute>} />
               <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="/app" element={<ProtectedRoute><AppDownloadPage /></ProtectedRoute>} />
               <Route path="*" element={<ErrorPlaceholder type="404" />} />
@@ -468,6 +474,7 @@ function AppInner() {
           </React.Suspense>
         </AnimatePresence>
       </div>
+      <MusicPlayer />
       <MobileNav />
     </div>
   );
@@ -478,7 +485,9 @@ const Root = () => (
     <AuthProvider>
       <NotificationProvider>
         <CallProvider>
-          <AppInner />
+          <MusicProvider>
+            <AppInner />
+          </MusicProvider>
         </CallProvider>
       </NotificationProvider>
     </AuthProvider>

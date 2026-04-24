@@ -172,3 +172,20 @@ type Notification struct {
 	Read       bool      `gorm:"default:false" json:"read"`
 	CreatedAt  time.Time `json:"createdAt"`
 }
+
+type Song struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Title     string    `gorm:"not null" json:"title"`
+	Artist    string    `json:"artist"`
+	URL       string    `gorm:"not null" json:"url"`
+	ImageURL  string    `json:"imageUrl"`
+	Duration  int       `json:"duration"` // in seconds
+	Source    string    `json:"source"`   // "jamendo", "local", etc.
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type UserSong struct {
+	UserID    uint `gorm:"primaryKey"`
+	SongID    uint `gorm:"primaryKey"`
+	CreatedAt time.Time
+}
