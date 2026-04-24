@@ -64,6 +64,7 @@ type UpdateProfileInput struct {
 	City           string  `json:"city"`
 	Website        string  `json:"website"`
 	Hobbies        string  `json:"hobbies"`
+	Phone          string  `json:"phone"`
 }
 
 func UpdateProfile(c *gin.Context) {
@@ -105,6 +106,15 @@ func UpdateProfile(c *gin.Context) {
 	user.City = input.City
 	user.Website = input.Website
 	user.Hobbies = input.Hobbies
+	if input.Phone != "" && input.Phone != user.Phone {
+		var count int64
+		db.DB.Model(&models.User{}).Where("phone = ? AND id != ?", input.Phone, userID).Count(&count)
+		if count > 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Этот номер телефона уже зарегистрирован"})
+			return
+		}
+		user.Phone = input.Phone
+	}
 
 	if err := db.DB.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})

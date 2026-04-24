@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import api from '../api/client';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun, LogOut, MapPin, Globe, Calendar, Heart, AtSign, Info } from 'lucide-react';
+import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun, LogOut, MapPin, Globe, Calendar, Heart, AtSign, Info, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface EditProfileModalProps {
@@ -38,6 +38,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
   const [fullName, setFullName]   = useState(currentUser?.fullName    || '');
   const [bio, setBio]             = useState(currentUser?.bio         || '');
   const [avatar, setAvatar]       = useState(currentUser?.avatar      || '');
+  const [phone, setPhone]         = useState(currentUser?.phone       || '');
 
   // Info
   const [dateOfBirth, setDateOfBirth] = useState(currentUser?.dateOfBirth || '');
@@ -87,7 +88,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
     setSuccess('');
     try {
       const res = await api.put('/profile', {
-        username, fullName, bio, avatar,
+        username, fullName, bio, avatar, phone,
         neonColor, neonBrightness,
         dateOfBirth, city, website, hobbies,
       });
@@ -250,6 +251,10 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                     </div>
                   </div>
                   <div>
+                    <FieldLabel><Phone size={12} style={{ display: 'inline', marginRight: '6px' }} />Номер телефона</FieldLabel>
+                    <input type="text" value={phone} onChange={e => setPhone(e.target.value)} style={inputStyle} placeholder="+7 (XXX) XXX-XX-XX" />
+                  </div>
+                  <div>
                     <FieldLabel><UserIcon size={12} style={{ display: 'inline', marginRight: '6px' }} />Имя и Фамилия</FieldLabel>
                     <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} style={inputStyle} />
                   </div>
@@ -295,12 +300,24 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                       {NEON_PRESETS.map(preset => (
                         <button key={preset.color} onClick={() => { setNeonColor(preset.color); updateUser({ ...currentUser, neonColor: preset.color, neonBrightness }); }}
                           style={{ padding: '12px 8px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: `2px solid ${neonColor === preset.color ? preset.color : 'transparent'}`, cursor: 'pointer' }}>
-                          <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: preset.color, margin: '0 auto 8px' }} />
+                          <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: preset.color, margin: '0 auto 8px', boxShadow: `0 0 10px ${preset.color}` }} />
                           <span style={{ fontSize: '0.65rem', color: 'white' }}>{preset.name}</span>
                         </button>
                       ))}
                     </div>
                   </div>
+
+                  <div>
+                    <FieldLabel>ЯРКОСТЬ НЕОНА</FieldLabel>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.03)', padding: '14px 18px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <Sun size={18} color={neonColor} />
+                      <input type="range" min="0" max="1.5" step="0.05" value={neonBrightness}
+                        onChange={e => { const v = parseFloat(e.target.value); setNeonBrightness(v); updateUser({ ...currentUser, neonColor, neonBrightness: v }); }}
+                        style={{ flex: 1, accentColor: neonColor, cursor: 'pointer' }} />
+                      <span style={{ minWidth: '40px', fontSize: '0.85rem', fontWeight: '800', color: neonColor }}>{Math.round(neonBrightness * 100)}%</span>
+                    </div>
+                  </div>
+
                   <button onClick={() => handleGeneralSubmit()} disabled={isSubmitting} style={saveBtnStyle}>
                     <Save size={18} /> Применить дизайн
                   </button>
