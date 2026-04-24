@@ -71,6 +71,8 @@ func main() {
 			protected.POST("/groups/:id/join", handlers.JoinGroup)
 			protected.POST("/groups/:id/leave", handlers.LeaveGroup)
 			protected.GET("/groups/:id/messages", handlers.GetGroupMessages)
+			protected.GET("/groups/:id/posts", handlers.GetGroupPosts)
+			protected.POST("/groups/:id/posts", handlers.CreateGroupPost)
 			protected.POST("/groups/:id/members", handlers.AddGroupMembers)
 			protected.PUT("/groups/:id", handlers.UpdateGroup)
 			protected.GET("/messages/media", handlers.GetChatMedia)

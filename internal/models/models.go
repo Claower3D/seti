@@ -79,6 +79,8 @@ type Post struct {
 	Content       string         `gorm:"not null" json:"content"`
 	UserID        uint           `json:"userId"`
 	User          User           `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	GroupID       *uint          `json:"groupId,omitempty"`
+	Group         *Group         `gorm:"foreignKey:GroupID" json:"group,omitempty"`
 	ImageURL      string         `json:"imageUrl"`
 	VideoURL      string         `json:"videoUrl"`
 	MediaType     string         `json:"mediaType"` // "image", "video", "text"

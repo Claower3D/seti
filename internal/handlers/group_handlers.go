@@ -190,3 +190,47 @@ func UpdateGroup(c *gin.Context) {
 
 	c.JSON(http.StatusOK, group)
 }
+
+func GetGroupPosts(c *gin.Context) {
+	groupID := c.Param("id")
+	var posts []models.Post
+	if err := db.DB.Preload("User").Preload("Group").Where("group_id = ?", groupID).Order("created_at desc").Find(&posts).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch group posts"})
+		return
+	}
+	c.JSON(http.StatusOK, posts)
+}
+
+func CreateGroupPost(c *gin.Context) {
+	groupID := c.Param("id")
+	userID, _ := c.Get("userId")
+
+	var input struct {
+		Content   string `json:"content" binding:"required"`
+		ImageURL  string `json:"imageUrl"`
+		VideoURL  string `json:"videoUrl"`
+		MediaType string `json:"mediaType"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	gID := parseUint(groupID)
+	post := models.Post{
+		Content:   input.Content,
+		ImageURL:  input.ImageURL,
+		VideoURL:  input.VideoURL,
+		MediaType: input.MediaType,
+		UserID:    userID.(uint),
+		GroupID:   &gID,
+	}
+
+	if err := db.DB.Create(&post).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create group post"})
+		return
+	}
+
+	db.DB.Preload("User").Preload("Group").First(&post, post.ID)
+	c.JSON(http.StatusCreated, post)
+}
