@@ -68,15 +68,11 @@ func SearchMusic(c *gin.Context) {
 					stream := ""
 					if len(item.DownloadUrl) > 0 { stream = item.DownloadUrl[len(item.DownloadUrl)-1].Link }
 					if stream == "" { continue }
-					
 					thumb := ""
 					if len(item.Image) > 0 { thumb = item.Image[len(item.Image)-1].Link }
 					
-					// Proxy all Saavn links too to bypass hotlinking protection
-					proxyURL := "/api/music/proxy/raw?url=" + url.QueryEscape(stream)
-					
 					allSongs = append(allSongs, models.Song{
-						Title: item.Name, Artist: item.PrimaryArtists, URL: proxyURL, ImageURL: thumb, Source: "hifi",
+						Title: item.Name, Artist: item.PrimaryArtists, URL: "/api/music/proxy/raw?url=" + url.QueryEscape(stream), ImageURL: thumb, Source: "hifi",
 					})
 				}
 				mu.Unlock()
@@ -121,40 +117,62 @@ func SearchMusic(c *gin.Context) {
 
 func ProxyStream(c *gin.Context) {
 	typeStr := c.Param("type")
-	id := c.Param("id")
+	
+	var finalStreamURL string
 
 	if typeStr == "raw" {
-		rawURL := c.Query("url")
-		if rawURL == "" { c.JSON(http.StatusBadRequest, gin.H{"error": "URL required"}); return }
-		http.Redirect(c.Writer, c.Request, rawURL, http.StatusTemporaryRedirect)
+		finalStreamURL = c.Query("url")
+	} else if typeStr == "yt" {
+		id := c.Param("id")
+		instances := []string{
+			"https://pipedapi.kavin.rocks",
+			"https://api.piped.victr.me",
+			"https://pipedapi.tokhmi.pw",
+			"https://piped-api.lunar.icu",
+		}
+		for _, inst := range instances {
+			client := &http.Client{Timeout: 5 * time.Second}
+			resp, err := client.Get(fmt.Sprintf("%s/streams/%s", inst, id))
+			if err != nil || resp.StatusCode != 200 { continue }
+			var res struct { AudioStreams []struct { URL string `json:"url"` } `json:"audioStreams"` }
+			if err := json.NewDecoder(resp.Body).Decode(&res); err == nil && len(res.AudioStreams) > 0 {
+				finalStreamURL = res.AudioStreams[0].URL
+				resp.Body.Close()
+				break
+			}
+			resp.Body.Close()
+		}
+	}
+
+	if finalStreamURL == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Stream not found"})
 		return
 	}
 
-	// YouTube (type == "yt")
-	instances := []string{
-		"https://pipedapi.kavin.rocks",
-		"https://api.piped.victr.me",
-		"https://pipedapi.tokhmi.pw",
-		"https://piped-api.garudalinux.org",
-		"https://piped-api.lunar.icu",
-	}
+	// ULTIMATE MODE: PIPE THE STREAM THROUGH SERVER
+	client := &http.Client{Timeout: 30 * time.Minute} // Long timeout for streaming
+	req, _ := http.NewRequest("GET", finalStreamURL, nil)
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("Range", c.GetHeader("Range")) // Support seeking!
 
-	for _, inst := range instances {
-		client := &http.Client{Timeout: 8 * time.Second}
-		resp, err := client.Get(fmt.Sprintf("%s/streams/%s", inst, id))
-		if err != nil || resp.StatusCode != 200 { continue }
-		
-		var res struct { 
-			AudioStreams []struct { URL string `json:"url"` } `json:"audioStreams"` 
-		}
-		if err := json.NewDecoder(resp.Body).Decode(&res); err == nil && len(res.AudioStreams) > 0 {
-			resp.Body.Close()
-			c.Redirect(http.StatusTemporaryRedirect, res.AudioStreams[0].URL)
-			return
-		}
-		resp.Body.Close()
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Streaming failed"})
+		return
 	}
-	c.JSON(http.StatusNotFound, gin.H{"error": "Failed to resolve stream"})
+	defer resp.Body.Close()
+
+	// Copy headers from source
+	for k, v := range resp.Header {
+		for _, val := range v {
+			c.Writer.Header().Add(k, val)
+		}
+	}
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.WriteHeader(resp.StatusCode)
+	
+	// Stream the data
+	_, _ = io.Copy(c.Writer, resp.Body)
 }
 
 func AddToMyMusic(c *gin.Context) {
