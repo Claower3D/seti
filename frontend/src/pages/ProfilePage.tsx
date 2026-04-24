@@ -232,10 +232,9 @@ export const ProfilePage = () => {
       const friends: any[] = friendsRes.data || [];
       const isFriend = friends.some((f: any) => f.id === profileUser.id);
       if (isFriend) { setFriendStatus('friends'); return; }
-
       // Check if we are following them (pending)
-      const requestsRes = await api.get('/friends/requests');
-      // Wait, /friends/requests usually returns incoming requests.
+      await api.get('/friends/requests');
+      // For now, if we sent a request but not friends, it's 'pending'.
       // We need a way to check outgoing.
       // For now, if we sent a request but not friends, it's 'pending'.
       // Let's rely on the profile response if I add it there?
