@@ -29,9 +29,9 @@ type SaavnResult struct {
 // Global User-Agent to avoid blocks
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-func fetchWithUA(url string) ([]byte, error) {
+func fetchWithUA(urlStr string) ([]byte, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest("GET", urlStr, nil)
 	req.Header.Set("User-Agent", userAgent)
 	resp, err := client.Do(req)
 	if err != nil { return nil, err }
@@ -76,7 +76,7 @@ func SearchMusic(c *gin.Context) {
 					})
 				}
 				mu.Unlock()
-				return // Success
+				return 
 			}
 		}
 	}()
@@ -89,25 +89,24 @@ func SearchMusic(c *gin.Context) {
 			"https://pipedapi.kavin.rocks/search?q=%s&filter=music_songs",
 			"https://piped-api.lunar.icu/search?q=%s&filter=music_songs",
 			"https://api.piped.victr.me/search?q=%s&filter=music_songs",
-			"https://pipedapi.leptons.xyz/search?q=%s&filter=music_songs",
 		}
 		for _, m := range pipedMirrors {
 			data, err := fetchWithUA(fmt.Sprintf(m, encodedQuery))
 			if err != nil { continue }
 			var pRes struct {
 				Items []struct {
-					Title string `json:"title"`
-					URL   string `json:"url"`
-					Uploader string `json:"uploaderName"`
+					Title     string `json:"title"`
+					URL       string `json:"url"`
+					Uploader  string `json:"uploaderName"`
 					Thumbnail string `json:"thumbnail"`
 				} `json:"items"`
 			}
 			if err := json.Unmarshal(data, &pRes); err == nil && len(pRes.Items) > 0 {
 				mu.Lock()
 				for _, item := range pRes.Items {
-					parts := strings.Split(item.URL, "=")
-					if len(parts) < 2 { continue }
-					vID := parts[1]
+					u, _ := url.Parse(item.URL)
+					vID := u.Query().Get("v")
+					if vID == "" { continue }
 					allSongs = append(allSongs, models.Song{
 						Title: item.Title, Artist: item.Uploader, URL: fmt.Sprintf("/api/music/proxy/%s", vID), ImageURL: item.Thumbnail, Source: "piped",
 					})
@@ -119,25 +118,25 @@ func SearchMusic(c *gin.Context) {
 	}()
 
 	wg.Wait()
-
-	// Dedup and send
 	c.JSON(http.StatusOK, allSongs)
 }
 
 func ProxyStream(c *gin.Context) {
 	videoID := c.Param("id")
-	// Try multiple instances for the actual stream URL
 	instances := []string{
 		"https://pipedapi.kavin.rocks",
 		"https://piped-api.lunar.icu",
 		"https://api.piped.victr.me",
-		"https://piped-api.garudalinux.org",
 	}
 
 	for _, inst := range instances {
 		data, err := fetchWithUA(fmt.Sprintf("%s/streams/%s", inst, videoID))
 		if err != nil { continue }
-		var res struct { AudioStreams []struct { URL string `json:"url" } `json:"audioStreams" }
+		var res struct { 
+			AudioStreams []struct { 
+				URL string `json:"url"` 
+			} `json:"audioStreams"` 
+		}
 		if err := json.Unmarshal(data, &res); err == nil && len(res.AudioStreams) > 0 {
 			c.Redirect(http.StatusTemporaryRedirect, res.AudioStreams[0].URL)
 			return
@@ -146,7 +145,6 @@ func ProxyStream(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{"error": "Failed to resolve stream"})
 }
 
-// User-Library logic (Remains same)
 func AddToMyMusic(c *gin.Context) {
 	var input models.Song
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -157,10 +155,7 @@ func AddToMyMusic(c *gin.Context) {
 	var song models.Song
 	if err := db.DB.Where("url = ?", input.URL).First(&song).Error; err != nil {
 		song = input
-		if err := db.DB.Create(&song).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save song"})
-			return
-		}
+		db.DB.Create(&song)
 	}
 	var userSong models.UserSong
 	if err := db.DB.Where("user_id = ? AND song_id = ?", userID, song.ID).First(&userSong).Error; err != nil {
