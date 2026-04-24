@@ -17,12 +17,19 @@ type MusicAPIResult struct {
 	Data   []struct {
 		ID           string `json:"id"`
 		Name         string `json:"name"`
-		Album        struct { Name string `json:"name"; } `json:"album"`
+		Album        struct { 
+			Name string `json:"name"` 
+		} `json:"album"`
 		Year         string `json:"year"`
 		Duration     string `json:"duration"`
 		Artist       string `json:"primaryArtists"`
-		Image        []struct { Link string `json:"link"; } `json:"image"`
-		DownloadURL  []struct { Link string `json:"link"; Quality string `json:"quality"; } `json:"downloadUrl"`
+		Image        []struct { 
+			Link string `json:"link"` 
+		} `json:"image"`
+		DownloadURL  []struct { 
+			Link    string `json:"link"` 
+			Quality string `json:"quality"` 
+		} `json:"downloadUrl"`
 	} `json:"data"`
 }
 
@@ -38,7 +45,6 @@ func SearchMusic(c *gin.Context) {
 	songs := []models.Song{}
 
 	// SOURCE 1: Global Hi-Fi Music API (JioSaavn base)
-	// This provides 320kbps studio versions of almost ALL global music
 	musicURL := fmt.Sprintf("https://saavn.me/search/songs?query=%s", encodedQuery)
 	resp, err := http.Get(musicURL)
 	if err == nil {
@@ -47,7 +53,6 @@ func SearchMusic(c *gin.Context) {
 		if err := json.NewDecoder(resp.Body).Decode(&res); err == nil && len(res.Data) > 0 {
 			for _, item := range res.Data {
 				streamURL := ""
-				// Pick 320kbps if available, else best possible
 				if len(item.DownloadURL) > 0 {
 					streamURL = item.DownloadURL[len(item.DownloadURL)-1].Link
 				}
@@ -68,7 +73,7 @@ func SearchMusic(c *gin.Context) {
 		}
 	}
 
-	// SOURCE 2: Fallback to YouTube Music via Piped (if Hi-Fi search fails)
+	// SOURCE 2: Fallback to YouTube Music via Piped
 	if len(songs) == 0 {
 		pipedURL := fmt.Sprintf("https://pipedapi.kavin.rocks/search?q=%s&filter=music_songs", encodedQuery)
 		resp, err := http.Get(pipedURL)
@@ -101,7 +106,6 @@ func SearchMusic(c *gin.Context) {
 	c.JSON(http.StatusOK, songs)
 }
 
-// ProxyStream remains for YouTube-based content
 func ProxyStream(c *gin.Context) {
 	videoID := c.Param("id")
 	instances := []string{"https://pipedapi.kavin.rocks", "https://piped-api.lunar.icu"}
@@ -111,7 +115,11 @@ func ProxyStream(c *gin.Context) {
 		if err != nil { continue }
 		defer resp.Body.Close()
 
-		var res struct { AudioStreams []struct { URL string `json:"url" } `json:"audioStreams" }
+		var res struct { 
+			AudioStreams []struct { 
+				URL string `json:"url"` 
+			} `json:"audioStreams"` 
+		}
 		if err := json.NewDecoder(resp.Body).Decode(&res); err == nil && len(res.AudioStreams) > 0 {
 			c.Redirect(http.StatusTemporaryRedirect, res.AudioStreams[0].URL)
 			return
