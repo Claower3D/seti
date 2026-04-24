@@ -540,15 +540,15 @@ body::after {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(5, 5, 20, 0.75);
+  background: rgba(5, 5, 20, 0.85);
   backdrop-filter: blur(40px);
   border-top: 1px solid var(--border);
-  padding: 8px 12px env(safe-area-inset-bottom);
+  padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
   z-index: 2000;
-  justify-content: center;
+  display: flex;
+  justify-content: space-around;
   align-items: center;
-  gap: 15px;
-  box-shadow: 0 -15px 50px rgba(0, 0, 0, 0.8), var(--glow);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
 }
 
 .mobile-nav a {
