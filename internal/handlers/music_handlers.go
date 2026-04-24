@@ -3,13 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
-	"regexp"
 	"social-network/internal/db"
 	"social-network/internal/models"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
