@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import api from '../api/client';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun, LogOut, MapPin, Globe, Calendar, Heart, AtSign, Info, Phone } from 'lucide-react';
+import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun, MapPin, Globe, Calendar, Heart, AtSign, Info, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface EditProfileModalProps {
