@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, SkipBack, SkipForward, Volume2, Maximize2, Minimize2, Music as MusicIcon, Repeat, Shuffle } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Maximize2, Minimize2, Repeat, Shuffle } from 'lucide-react';
 import { useMusic } from '../context/MusicContext';
 
 export const MusicPlayer = () => {
