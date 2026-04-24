@@ -21,6 +21,8 @@ export const MusicPage = () => {
   const [loading, setLoading] = useState(false);
   const { currentSong, isPlaying, playSong, pauseSong } = useMusic();
 
+  const isMobile = window.innerWidth < 768;
+
   useEffect(() => {
     const fetchMyMusic = async () => {
       try {
@@ -76,93 +78,97 @@ export const MusicPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px 140px' }}>
-      <div style={{ position: 'relative', height: '240px', borderRadius: '32px', overflow: 'hidden', marginBottom: '40px', display: 'flex', alignItems: 'flex-end', padding: '40px', background: 'linear-gradient(135deg, #1a1c2c 0%, #0a0c12 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
-         <div style={{ position: 'absolute', top: '0px', left: '0px', right: '0px', bottom: '0px', background: 'radial-gradient(circle at top right, #00f5ff 0%, transparent 70%)', opacity: 0.15 }} />
-         <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '30px', width: '100%' }}>
-            <div style={{ width: '120px', height: '120px', background: 'rgba(255,255,255,0.05)', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <MusicIcon size={48} color="#00f5ff" />
-            </div>
-            <div style={{ flex: 1 }}>
-               <h1 style={{ fontSize: '3rem', fontWeight: '900', color: 'white', margin: 0, letterSpacing: '-1px' }}>Музыка</h1>
-               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                  <button onClick={() => setTab('my')} style={{ padding: '10px 24px', borderRadius: '14px', border: 'none', background: tab === 'my' ? 'white' : 'rgba(255,255,255,0.1)', color: tab === 'my' ? 'black' : 'white', fontWeight: '800', cursor: 'pointer', transition: '0.3s' }}>Мои аудиозаписи</button>
-                  <button onClick={() => setTab('search')} style={{ padding: '10px 24px', borderRadius: '14px', border: 'none', background: tab === 'search' ? 'white' : 'rgba(255,255,255,0.1)', color: tab === 'search' ? 'black' : 'white', fontWeight: '800', cursor: 'pointer', transition: '0.3s' }}>Поиск песен</button>
-               </div>
-            </div>
-         </div>
+    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '10px 16px 140px' }}>
+      {/* Mini Adaptive Header */}
+      <div style={{ 
+        padding: isMobile ? '20px 16px' : '30px 24px', 
+        background: 'rgba(255,255,255,0.02)', 
+        borderRadius: '24px', 
+        border: '1px solid rgba(255,255,255,0.05)',
+        marginBottom: '24px',
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        justifyContent: 'space-between',
+        gap: '20px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ width: '48px', height: '48px', background: 'rgba(0,245,255,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00f5ff' }}>
+            <MusicIcon size={24} />
+          </div>
+          <h1 style={{ fontSize: '1.6rem', fontWeight: '900', color: 'white', margin: 0 }}>Музыка</h1>
+        </div>
+
+        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', padding: '4px', borderRadius: '12px' }}>
+          <button 
+            onClick={() => setTab('my')} 
+            style={{ 
+              padding: '8px 16px', borderRadius: '10px', border: 'none', 
+              background: tab === 'my' ? 'rgba(255,255,255,0.1)' : 'transparent', 
+              color: tab === 'my' ? 'white' : 'rgba(255,255,255,0.4)', 
+              fontWeight: '800', fontSize: '0.85rem', cursor: 'pointer', transition: '0.2s' 
+            }}>Моё</button>
+          <button 
+            onClick={() => setTab('search')} 
+            style={{ 
+              padding: '8px 16px', borderRadius: '10px', border: 'none', 
+              background: tab === 'search' ? 'rgba(255,255,255,0.1)' : 'transparent', 
+              color: tab === 'search' ? 'white' : 'rgba(255,255,255,0.4)', 
+              fontWeight: '800', fontSize: '0.85rem', cursor: 'pointer', transition: '0.2s' 
+            }}>Поиск</button>
+        </div>
       </div>
 
-      <form onSubmit={handleSearch} style={{ position: 'relative', marginBottom: '40px', maxWidth: '600px' }}>
-        <Search size={22} style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+      <form onSubmit={handleSearch} style={{ position: 'relative', marginBottom: '32px', width: '100%' }}>
+        <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
         <input 
           type="text" 
           value={query} 
           onChange={e => setQuery(e.target.value)}
-          placeholder="Поиск по миллионам треков..." 
-          style={{ width: '100%', padding: '20px 24px 20px 60px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', color: 'white', fontSize: '1.1rem', outline: 'none', transition: '0.3s' }}
+          placeholder="Искать музыку..." 
+          style={{ width: '100%', padding: '14px 16px 14px 48px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: 'white', fontSize: '0.95rem', outline: 'none' }}
         />
-        {loading && <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)' }}>...</div>}
+        {loading && <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', className: 'pulse' }}><div style={{ width: '4px', height: '4px', background: '#00f5ff', borderRadius: '50%' }} /></div>}
       </form>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div style={{ display: 'flex', padding: '0 20px 10px', color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
-           <div style={{ width: '60px' }}>#</div>
-           <div style={{ flex: 1 }}>Название</div>
-           <div style={{ width: '100px' }}>Время</div>
-           <div style={{ width: '80px' }}></div>
-        </div>
-
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {(tab === 'my' ? myMusic : searchResults).map((song, i) => (
           <motion.div 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.02 }}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.01 }}
             key={(song.id || '') + song.url} 
             style={{ 
               display: 'flex', 
               alignItems: 'center', 
-              padding: '12px 20px', 
-              borderRadius: '16px', 
+              padding: '10px 12px', 
+              borderRadius: '14px', 
               cursor: 'pointer',
-              background: currentSong?.url === song.url ? 'rgba(0, 245, 255, 0.08)' : 'transparent',
-              transition: '0.2s',
-              border: '1px solid transparent'
+              background: currentSong?.url === song.url ? 'rgba(0, 245, 255, 0.05)' : 'transparent',
+              transition: '0.2s'
             }}
             onClick={() => currentSong?.url === song.url && isPlaying ? pauseSong() : playSong(song)}
           >
-            <div style={{ width: '60px', position: 'relative' }}>
-               <div style={{ width: '44px', height: '44px', borderRadius: '10px', overflow: 'hidden', background: '#1a1c2c' }}>
-                  <img src={song.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-               </div>
-               <div style={{ position: 'absolute', inset: '0px', width: '44px', height: '44px', borderRadius: '10px', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: currentSong?.url === song.url ? 1 : 0, transition: '0.2s' }}>
-                  {currentSong?.url === song.url && isPlaying ? <Pause size={18} color="#00f5ff" /> : <Play size={18} color="white" fill="white" />}
+            <div style={{ position: 'relative', width: '42px', height: '42px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, marginRight: '14px' }}>
+               <img src={song.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+               <div style={{ position: 'absolute', inset: '0px', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: currentSong?.url === song.url && isPlaying ? 1 : 0 }}>
+                  <Pause size={14} color="#00f5ff" />
                </div>
             </div>
             
             <div style={{ flex: 1, minWidth: '0px' }}>
-              <div style={{ fontWeight: '800', color: currentSong?.url === song.url ? '#00f5ff' : 'white', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{song.title}</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '2px' }}>{song.artist}</div>
+              <div style={{ fontWeight: '700', color: currentSong?.url === song.url ? '#00f5ff' : 'white', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{song.title}</div>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', marginTop: '2px' }}>{song.artist}</div>
             </div>
 
-            <div style={{ width: '100px', color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem', fontWeight: '600' }}>
-              {song.duration > 0 ? `${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}` : '--:--'}
-            </div>
-
-            <div style={{ width: '80px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div style={{ width: '44px', display: 'flex', justifyContent: 'flex-end' }}>
               {tab === 'search' ? (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); addToLibrary(song); }}
-                  style={{ background: 'rgba(0,245,255,0.1)', border: 'none', borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#00f5ff' }}
-                >
+                <button onClick={(e) => { e.stopPropagation(); addToLibrary(song); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', cursor: 'pointer' }}>
                   <Plus size={18} />
                 </button>
               ) : (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); removeFromLibrary(song.id!); }}
-                  style={{ background: 'rgba(255,48,96,0.1)', border: 'none', borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff3060' }}
-                >
-                  <Trash2 size={18} />
+                <button onClick={(e) => { e.stopPropagation(); removeFromLibrary(song.id!); }} style={{ background: 'none', border: 'none', color: 'rgba(255,77,77,0.3)', cursor: 'pointer' }}>
+                  <Trash2 size={16} />
                 </button>
               )}
             </div>
