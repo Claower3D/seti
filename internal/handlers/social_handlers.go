@@ -182,6 +182,44 @@ func GetUserFriends(c *gin.Context) {
 	c.JSON(http.StatusOK, friends)
 }
 
+func GetUserFollowers(c *gin.Context) {
+	username := c.Param("username")
+	var user models.User
+	if err := db.DB.Where("LOWER(username) = LOWER(?)", username).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	followers := []models.User{}
+	db.DB.Raw(`
+		SELECT u.* FROM users u
+		JOIN friendships f ON f.user_id = u.id
+		WHERE f.friend_id = ? AND f.status = 'pending'
+		AND u.deleted_at IS NULL
+	`, user.ID).Scan(&followers)
+
+	c.JSON(http.StatusOK, followers)
+}
+
+func GetUserFollowing(c *gin.Context) {
+	username := c.Param("username")
+	var user models.User
+	if err := db.DB.Where("LOWER(username) = LOWER(?)", username).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	following := []models.User{}
+	db.DB.Raw(`
+		SELECT u.* FROM users u
+		JOIN friendships f ON f.friend_id = u.id
+		WHERE f.user_id = ? AND f.status = 'pending'
+		AND u.deleted_at IS NULL
+	`, user.ID).Scan(&following)
+
+	c.JSON(http.StatusOK, following)
+}
+
 
 func SearchUsers(c *gin.Context) {
 	query := c.Query("q")

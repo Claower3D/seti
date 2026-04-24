@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, X, Grid, Film, Zap, Settings, UserPlus, UserMinus, UserCheck } from 'lucide-react';
+import { Heart, MessageCircle, X, Grid, Film, Zap, Settings, UserPlus, UserMinus, UserCheck, Search, Users, UserRoundPlus, UserRoundMinus } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
 const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { isOpen: boolean, onClose: () => void, media: any, type: 'post' | 'wave', isMobile: boolean, owner: any }) => {
@@ -158,19 +158,60 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { i
   );
 };
 
-const FriendsModal = ({ isOpen, onClose, username }: { isOpen: boolean, onClose: () => void, username: string }) => {
-  const [friends, setFriends] = useState<any[]>([]);
+type SocialType = 'friends' | 'followers' | 'following';
+
+const SocialListModal = ({ isOpen, onClose, username, type: initialType, profileId, onAction }: { isOpen: boolean, onClose: () => void, username: string, type: SocialType, profileId: number, onAction?: () => void }) => {
+  const { user: currentUser } = useAuth();
+  const [listType, setListType] = useState<SocialType>(initialType);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setListType(initialType);
+    }
+  }, [isOpen, initialType]);
 
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
-      api.get(`/profile/${username}/friends`)
-        .then(res => setFriends(res.data || []))
+      const endpoint = `/profile/${username}/${listType}`;
+      api.get(endpoint)
+        .then(res => setUsers(res.data || []))
         .catch(() => {})
         .finally(() => setLoading(false));
     }
-  }, [isOpen, username]);
+  }, [isOpen, username, listType]);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter(u => 
+      u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (u.fullName && u.fullName.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }, [users, searchQuery]);
+
+  const handleAction = async (targetId: number, action: 'add' | 'remove') => {
+    setActionLoadingId(targetId);
+    try {
+      if (action === 'add') {
+        await api.post(`/friends/request/${targetId}`);
+      } else {
+        await api.delete(`/friends/${targetId}`);
+      }
+      // Refresh list
+      const res = await api.get(`/profile/${username}/${listType}`);
+      setUsers(res.data || []);
+      if (onAction) onAction();
+    } catch (err) {
+      console.error("Action error", err);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const isOwnModal = currentUser?.id === profileId;
 
   if (!isOpen) return null;
 
@@ -179,26 +220,87 @@ const FriendsModal = ({ isOpen, onClose, username }: { isOpen: boolean, onClose:
       <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
           style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }} />
+        
         <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="glass-panel" style={{ position: 'relative', width: '100%', maxWidth: '400px', padding: '24px', border: '1px solid var(--border-bright)', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.8), var(--glow)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--primary)', textShadow: 'var(--glow)' }}>Друзья</h3>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>
+          className="glass-panel" 
+          style={{ 
+            position: 'relative', width: '100%', maxWidth: '440px', 
+            padding: '0', border: '1px solid var(--border-bright)', 
+            maxHeight: '80vh', display: 'flex', flexDirection: 'column', 
+            boxShadow: '0 20px 60px rgba(0,0,0,0.8), var(--glow)',
+            overflow: 'hidden'
+          }}>
+          
+          {/* Tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            {(['friends', 'followers', 'following'] as SocialType[]).map(t => (
+              <button key={t} onClick={() => { setListType(t); setSearchQuery(''); }}
+                style={{ 
+                  flex: 1, padding: '16px', background: 'none', border: 'none', 
+                  color: listType === t ? 'var(--primary)' : 'rgba(255,255,255,0.4)',
+                  fontWeight: '800', fontSize: '0.8rem', cursor: 'pointer',
+                  borderBottom: listType === t ? '2px solid var(--primary)' : '2px solid transparent',
+                  transition: 'all 0.2s'
+                }}>
+                {t === 'friends' ? 'ДРУЗЬЯ' : t === 'followers' ? 'ПОДПИСЧИКИ' : 'ПОДПИСКИ'}
+              </button>
+            ))}
+            <button onClick={onClose} style={{ padding: '0 16px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X size={20} /></button>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
+
+          {/* Search */}
+          <div style={{ padding: '12px 16px', position: 'relative' }}>
+            <Search size={16} style={{ position: 'absolute', left: '28px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+            <input 
+              type="text" 
+              placeholder="Поиск по списку..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '10px 14px 10px 38px', color: 'white', fontSize: '0.9rem', outline: 'none' }}
+            />
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 16px' }}>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '20px' }}><div className="pulse" style={{ width: '4px', height: '4px', background: 'var(--primary)', margin: 'auto' }} /></div>
-            ) : friends.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Нет друзей</p>
+              <div style={{ textAlign: 'center', padding: '40px' }}><div className="pulse" style={{ width: '4px', height: '4px', background: 'var(--primary)', margin: 'auto' }} /></div>
+            ) : filteredUsers.length === 0 ? (
+              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '40px 0', fontSize: '0.9rem' }}>
+                <Users size={40} style={{ opacity: 0.1, marginBottom: '10px' }} />
+                <p>{searchQuery ? 'Ничего не найдено' : 'Список пуст'}</p>
+              </div>
             ) : (
-              friends.map(f => (
-                <Link key={f.id} to={`/profile/${f.username}`} onClick={onClose}
-                  style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', marginBottom: '8px', textDecoration: 'none', border: '1px solid transparent', transition: 'all 0.2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-bright)')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}>
-                  <img src={f.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + f.username} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid var(--border)' }} />
-                  <span style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>@{f.username}</span>
-                </Link>
+              filteredUsers.map(u => (
+                <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', marginBottom: '8px', border: '1px solid rgba(255,255,255,0.02)' }}>
+                  <Link to={`/profile/${u.username}`} onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, textDecoration: 'none' }}>
+                    <img src={u.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + u.username} alt="" style={{ width: '44px', height: '44px', borderRadius: '50%', border: '1px solid var(--border)' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: '800', color: 'white', fontSize: '0.9rem' }}>@{u.username}</span>
+                      <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>{u.fullName || 'Без имени'}</span>
+                    </div>
+                  </Link>
+                  
+                  {isOwnModal && (
+                    <button 
+                      disabled={actionLoadingId === u.id}
+                      onClick={() => handleAction(u.id, listType === 'following' || listType === 'friends' ? 'remove' : 'add')}
+                      style={{ 
+                        background: listType === 'friends' ? 'rgba(255,60,60,0.1)' : 'rgba(255,255,255,0.05)', 
+                        border: listType === 'friends' ? '1px solid rgba(255,60,60,0.2)' : '1px solid rgba(255,255,255,0.1)',
+                        color: listType === 'friends' ? '#ff4d4d' : 'white',
+                        padding: '8px 12px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
+                      }}>
+                      {actionLoadingId === u.id ? (
+                        <div className="pulse" style={{ width: '4px', height: '4px', background: 'currentColor' }} />
+                      ) : listType === 'friends' ? (
+                        <><UserRoundMinus size={14} /> Удалить</>
+                      ) : listType === 'following' ? (
+                        <><UserRoundMinus size={14} /> Отписаться</>
+                      ) : (
+                        <><UserRoundPlus size={14} /> В ответ</>
+                      )}
+                    </button>
+                  )}
+                </div>
               ))
             )}
           </div>
@@ -215,7 +317,10 @@ export const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'waves'>('posts');
-  const [isFriendsModalOpen, setIsFriendsModalOpen] = useState(false);
+  
+  const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
+  const [socialModalType, setSocialModalType] = useState<SocialType>('friends');
+
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [mediaType, setMediaType] = useState<'post' | 'wave'>('post');
 
@@ -232,15 +337,10 @@ export const ProfilePage = () => {
       const friends: any[] = friendsRes.data || [];
       const isFriend = friends.some((f: any) => f.id === profileUser.id);
       if (isFriend) { setFriendStatus('friends'); return; }
-      // Check if we are following them (pending)
-      await api.get('/friends/requests');
-      // For now, if we sent a request but not friends, it's 'pending'.
-      // We need a way to check outgoing.
-      // For now, if we sent a request but not friends, it's 'pending'.
-      // Let's rely on the profile response if I add it there?
-      // Actually, I can check if the profileUser.id is in a list of followed users if I had one.
-      // A simpler way: The backend knows if a relationship exists.
-      // For now, let's keep it simple and just update the UI after action.
+
+      const requestsRes = await api.get('/friends/requests');
+      // Check outgoing? Backend refactor should help. 
+      // For now client updates based on action.
       setFriendStatus('none');
     } catch { setFriendStatus('none'); }
   };
@@ -259,7 +359,6 @@ export const ProfilePage = () => {
          await api.delete(`/friends/${profileUser.id}`);
          setFriendStatus('none');
        }
-       // Refresh profile to get updated counts
        const updatedProfile = await api.get(`/profile/${username}`);
        setProfileUser(updatedProfile.data);
     } catch (err) {
@@ -286,6 +385,11 @@ export const ProfilePage = () => {
   useEffect(() => {
     if (profileUser && !isOwnProfile) fetchFriendStatus();
   }, [profileUser, isOwnProfile]);
+
+  const openSocialModal = (type: SocialType) => {
+    setSocialModalType(type);
+    setIsSocialModalOpen(true);
+  };
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: '80px' }}>
@@ -386,14 +490,14 @@ export const ProfilePage = () => {
             flexWrap: 'wrap'
           }}>
             <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.posts?.length || 0}</span> постов</div>
-            <div onClick={() => setIsFriendsModalOpen(true)} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.friendsCount || 0}</span> друзей</div>
-            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.followersCount || 0}</span> подписчиков</div>
-            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.followingCount || 0}</span> подписок</div>
+            <div onClick={() => openSocialModal('friends')} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.friendsCount || 0}</span> друзей</div>
+            <div onClick={() => openSocialModal('followers')} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.followersCount || 0}</span> подписчиков</div>
+            <div onClick={() => openSocialModal('following')} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.followingCount || 0}</span> подписок</div>
             <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.waves?.length || 0}</span> волн</div>
           </div>
 
           <div style={{ color: 'white' }}>
-            <h2 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '5px' }}>SETI User Matrix</h2>
+            <h2 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '5px' }}>{profileUser.fullName || 'SETI User Matrix'}</h2>
             <p style={{ fontSize: '0.95rem', color: '#f1f5f9', whiteSpace: 'pre-wrap' }}>
               {profileUser.bio || 'Этот пользователь ещё не загрузил данные своей биографии.'}
             </p>
@@ -469,7 +573,7 @@ export const ProfilePage = () => {
                 </motion.div>
               ))
             ) : (
-              <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '100px 0', color: 'rgba(255,255,255,0.3)' }}>Нет постов</div>
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>Нет публикаций</div>
             )
           ) : (
             (profileUser.waves || []).length > 0 ? (
@@ -479,41 +583,27 @@ export const ProfilePage = () => {
                   onClick={() => { setSelectedMedia(wave); setMediaType('wave'); }}
                   style={{ 
                     position: 'relative', 
-                    aspectRatio: '1/1', 
-                    background: 'rgba(0,0,0,0.2)', 
+                    aspectRatio: '9/16', 
+                    background: 'rgba(255,255,255,0.03)', 
                     overflow: 'hidden', 
                     cursor: 'pointer',
                     borderRadius: isMobile ? '8px' : '16px',
                     border: '1px solid var(--border)',
-                    boxShadow: 'var(--glow)',
-                    transition: 'border-color 0.3s, box-shadow 0.3s'
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = 'var(--primary)';
-                    e.currentTarget.style.boxShadow = 'var(--glow-strong)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = 'var(--border)';
-                    e.currentTarget.style.boxShadow = 'var(--glow)';
+                    boxShadow: 'var(--glow)'
                   }}
                 >
                   <video src={wave.videoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4), transparent)', display: 'flex', alignItems: 'flex-end', padding: '10px' }}>
-                    <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontWeight: '800' }}><Zap size={14} /> {wave.likesCount || 0}</div>
+                  <div style={{ position: 'absolute', bottom: '15px', left: '15px', color: 'white', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800' }}>
+                    <Zap size={16} fill="white" /> {wave.likesCount || 0}
                   </div>
                 </motion.div>
               ))
             ) : (
-              <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '100px 0', color: 'rgba(255,255,255,0.3)' }}>Нет волн</div>
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>Нет волн</div>
             )
           )}
         </AnimatePresence>
       </div>
-
-      <FriendsModal isOpen={isFriendsModalOpen} onClose={() => setIsFriendsModalOpen(false)} username={profileUser.username} />
-      
-      <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}
-        currentUser={profileUser} onUpdate={(updated) => setProfileUser({ ...profileUser, ...updated })} />
 
       <MediaViewerModal 
         isOpen={!!selectedMedia} 
@@ -523,6 +613,26 @@ export const ProfilePage = () => {
         isMobile={isMobile}
         owner={profileUser}
       />
+
+      <EditProfileModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        currentUser={currentUser}
+        onUpdate={(updated) => setProfileUser({ ...profileUser, ...updated })}
+      />
+
+      <SocialListModal 
+        isOpen={isSocialModalOpen}
+        onClose={() => setIsSocialModalOpen(false)}
+        username={username!}
+        type={socialModalType}
+        profileId={profileUser.id}
+        onAction={() => {
+           // Refetch counts if needed, but the modal refreshes itself internally.
+           // However we might want to refresh the ProfilePage stats too.
+           api.get(`/profile/${username}`).then(res => setProfileUser(res.data));
+        }}
+      />
     </div>
   );
-};
+};

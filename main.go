@@ -55,6 +55,8 @@ func main() {
 
 			protected.GET("/profile/:username", handlers.GetUserProfile)
 			protected.GET("/profile/:username/friends", handlers.GetUserFriends)
+			protected.GET("/profile/:username/followers", handlers.GetUserFollowers)
+			protected.GET("/profile/:username/following", handlers.GetUserFollowing)
 			protected.PUT("/profile", handlers.UpdateProfile)
 			protected.PUT("/security", handlers.UpdateSecurity)
 
