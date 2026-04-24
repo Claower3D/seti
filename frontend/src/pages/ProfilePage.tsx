@@ -384,6 +384,86 @@ const SocialListModal = ({ isOpen, onClose, username, type: initialType, profile
   );
 };
 
+const SakuraTreeHologram = () => {
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
+      {/* The Tree Structure */}
+      <svg viewBox="0 0 800 400" style={{ position: 'absolute', bottom: -50, right: '10%', width: '100%', height: 'auto', opacity: 0.25, filter: 'drop-shadow(0 0 20px #ff69b4)' }}>
+         <motion.path
+           initial={{ pathLength: 0 }}
+           animate={{ pathLength: 1 }}
+           transition={{ duration: 3 }}
+           d="M400,400 Q400,200 450,100 M400,350 Q300,250 250,200 M400,300 Q500,220 580,180 M250,200 Q200,150 180,80 M250,200 Q300,150 350,100 M580,180 Q650,150 700,100 M580,180 Q550,130 500,80"
+           stroke="#ffb7c5"
+           strokeWidth="4"
+           fill="none"
+         />
+         {/* Flower Clusters */}
+         {[
+           {x: 450, y: 100}, {x: 180, y: 80}, {x: 350, y: 100}, 
+           {x: 700, y: 100}, {x: 500, y: 80}, {x: 420, y: 150},
+           {x: 280, y: 170}, {x: 600, y: 160}, {x: 380, y: 80}
+         ].map((p, i) => (
+           <motion.circle
+             key={i}
+             initial={{ r: 0 }}
+             animate={{ r: [5, 12, 5], opacity: [0.3, 0.6, 0.3] }}
+             transition={{ duration: 3 + i%2, repeat: Infinity }}
+             cx={p.x} cy={p.y}
+             fill="#ff69b4"
+             style={{ filter: 'blur(5px)' }}
+           />
+         ))}
+      </svg>
+      {/* Falling Petals for the whole background */}
+      {Array.from({ length: 30 }).map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, y: -20, x: Math.random() * 100 + "%" }}
+          animate={{ opacity: [0, 1, 0], y: 500, x: (Math.random() * 10 + Math.random() * 10 - 10) + "%", rotate: 360 }}
+          transition={{ duration: Math.random() * 5 + 5, repeat: Infinity, delay: Math.random() * 10 }}
+          style={{
+            position: 'absolute',
+            width: '12px',
+            height: '12px',
+            background: '#ffb7c5',
+            borderRadius: '100% 0 100% 100%',
+            boxShadow: '0 0 10px #ffb7c5',
+          }}
+        />
+      ))}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(5,6,8,0) 60%, rgba(5,6,8,1) 100%)' }} />
+    </div>
+  );
+};
+
+const MatrixBackgroundHologram = ({ color }: { color: string }) => {
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0, opacity: 0.15 }}>
+      {Array.from({ length: 25 }).map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ y: -500 }}
+          animate={{ y: 500 }}
+          transition={{ duration: Math.random() * 10 + 5, repeat: Infinity, delay: Math.random() * 5, ease: 'linear' }}
+          style={{
+            position: 'absolute',
+            left: (i * 4) + "%",
+            color: color,
+            fontSize: '12px',
+            writingMode: 'vertical-rl',
+            fontFamily: 'monospace',
+            textShadow: `0 0 8px ${color}`,
+          }}
+        >
+          {Array.from({ length: 20 }).map(() => String.fromCharCode(0x30A0 + Math.random() * 96)).join('')}
+        </motion.div>
+      ))}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(5,6,8,0) 60%, rgba(5,6,8,1) 100%)' }} />
+    </div>
+  );
+};
+
 export const ProfilePage = () => {
   const { username } = useParams();
   const { user: currentUser } = useAuth();
@@ -477,7 +557,25 @@ export const ProfilePage = () => {
   );
 
   return (
-    <div style={{ maxWidth: '935px', margin: '0 auto', padding: isMobile ? '0 10px' : '0 20px' }}>
+    <div style={{ maxWidth: '935px', margin: '0 auto', padding: isMobile ? '0 10px' : '0 20px', position: 'relative' }}>
+      
+      {/* Background Hologram Banner */}
+      <div style={{ 
+        position: 'absolute', 
+        top: -60, 
+        left: 0, 
+        right: 0, 
+        height: '420px', 
+        zIndex: -1, 
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)'
+      }}>
+        {profileUser.hologram === 'sakura' && <SakuraTreeHologram />}
+        {profileUser.hologram === 'matrix' && <MatrixBackgroundHologram color={profileUser.neonColor} />}
+      </div>
+
       <div style={{ 
         display: 'flex', 
         gap: isMobile ? '20px' : '40px', 
