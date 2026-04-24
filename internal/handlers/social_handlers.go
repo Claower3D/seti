@@ -55,10 +55,15 @@ func CreatePost(c *gin.Context) {
 
 type UpdateProfileInput struct {
 	Username       string  `json:"username"`
+	FullName       string  `json:"fullName"`
 	Bio            string  `json:"bio"`
 	Avatar         string  `json:"avatar"`
 	NeonColor      string  `json:"neonColor"`
 	NeonBrightness float64 `json:"neonBrightness"`
+	DateOfBirth    string  `json:"dateOfBirth"`
+	City           string  `json:"city"`
+	Website        string  `json:"website"`
+	Hobbies        string  `json:"hobbies"`
 }
 
 func UpdateProfile(c *gin.Context) {
@@ -77,7 +82,6 @@ func UpdateProfile(c *gin.Context) {
 
 	// Update fields
 	if input.Username != "" && input.Username != user.Username {
-		// Check uniqueness
 		var count int64
 		db.DB.Model(&models.User{}).Where("username = ? AND id != ?", input.Username, userID).Count(&count)
 		if count > 0 {
@@ -86,9 +90,8 @@ func UpdateProfile(c *gin.Context) {
 		}
 		user.Username = input.Username
 	}
-	if input.Bio != "" {
-		user.Bio = input.Bio
-	}
+	user.FullName = input.FullName
+	user.Bio = input.Bio
 	if input.Avatar != "" {
 		user.Avatar = input.Avatar
 	}
@@ -98,6 +101,10 @@ func UpdateProfile(c *gin.Context) {
 	if input.NeonBrightness != 0 {
 		user.NeonBrightness = input.NeonBrightness
 	}
+	user.DateOfBirth = input.DateOfBirth
+	user.City = input.City
+	user.Website = input.Website
+	user.Hobbies = input.Hobbies
 
 	if err := db.DB.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
