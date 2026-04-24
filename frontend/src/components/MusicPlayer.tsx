@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, SkipBack, SkipForward, Maximize2, Minimize2, Repeat, Shuffle } from 'lucide-react';
 import { useMusic } from '../context/MusicContext';
