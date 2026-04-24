@@ -3,14 +3,18 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
+	"regexp"
 	"social-network/internal/db"
 	"social-network/internal/models"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-// SearchMusic searches for music via Piped API (YouTube Music proxy)
+// SearchMusic searches for music directly through YouTube to ensure 100% up-time
 func SearchMusic(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -18,52 +22,80 @@ func SearchMusic(c *gin.Context) {
 		return
 	}
 
-	// Piped API (YouTube proxy) - Search for songs
-	url := fmt.Sprintf("https://pipedapi.kavin.rocks/search?q=%s&filter=music_songs", query)
+	// Double-encode query for YouTube
+	safeQuery := url.QueryEscape(query)
+	searchURL := fmt.Sprintf("https://www.youtube.com/results?search_query=%s&sp=EgIQAQ%253D%253D", safeQuery)
 
-	resp, err := http.Get(url)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", searchURL, nil)
+	// Mask as a real browser to avoid being blocked
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+	
+	resp, err := client.Do(req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Search service temporarily unavailable"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reach search source"})
 		return
 	}
 	defer resp.Body.Close()
 
-	var result struct {
-		Items []struct {
-			Title      string `json:"title"`
-			Uploader   string `json:"uploaderName"`
-			Thumbnail  string `json:"thumbnail"`
-			URL        string `json:"url"` // This contains /watch?v=ID
-			Duration   int    `json:"duration"`
-		} `json:"items"`
-	}
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
 
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse music data"})
+	// Extract ytInitialData which contains the search results
+	startTag := "var ytInitialData = "
+	startIndex := strings.Index(bodyStr, startTag)
+	if startIndex == -1 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Search engine error (no data)"})
 		return
 	}
 
-	// Convert to our internal format
-	songs := []models.Song{}
-	for _, r := range result.Items {
-		videoID := ""
-		if len(r.URL) > 9 {
-			videoID = r.URL[9:]
-		}
+	dataPart := bodyStr[startIndex+len(startTag):]
+	endIndex := strings.Index(dataPart, ";</script>")
+	if endIndex == -1 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Search engine error (parse error)"})
+		return
+	}
 
-		if videoID == "" {
+	jsonData := dataPart[:endIndex]
+	
+	// Convert to internal format (simplified since we just need video IDs, titles and thumbs)
+	songs := []models.Song{}
+	
+	// We use regex to extract what we need quickly without complex JSON parsing of huge YT objects
+	re := regexp.MustCompile(`"videoRenderer":\{"videoId":"([^"]+)","thumbnail":\{"thumbnails":\[\{"url":"([^"]+)"[^}]+\]\},"title":\{"runs":\[\{"text":"([^"]+)"\}\]\},"longBylineText":\{"runs":\[\{"text":"([^"]+)"`)
+	matches := re.FindAllStringSubmatch(jsonData, 20)
+
+	for _, m := range matches {
+		if len(m) < 5 {
 			continue
 		}
-
 		songs = append(songs, models.Song{
-			Title:    r.Title,
-			Artist:   r.Uploader,
-			// Using our internal proxy to get the real stream URL
-			URL:      fmt.Sprintf("/api/music/proxy/%s", videoID),
-			ImageURL: r.Thumbnail,
-			Duration: r.Duration,
-			Source:   "youtube",
+			Title:    m[3],
+			Artist:   m[4],
+			URL:      fmt.Sprintf("/api/music/proxy/%s", m[1]),
+			ImageURL: m[2],
+			Duration: 0, // YouTube search doesn't easily giveaway duration in this simple format
+			Source:   "youtube_direct",
 		})
+	}
+
+	if len(songs) == 0 {
+		// Fallback to Piped if scraping fails (Plan B)
+		apiURL := fmt.Sprintf("https://piped-api.lunar.icu/search?q=%s&filter=music_songs", safeQuery)
+		resp, err := http.Get(apiURL)
+		if err == nil {
+			defer resp.Body.Close()
+			var pResult struct { Items []struct { Title string `json:"title"`; Uploader string `json:"uploaderName"`; Thumbnail string `json:"thumbnail"`; URL string `json:"url"` } }
+			if err := json.NewDecoder(resp.Body).Decode(&pResult); err == nil {
+				for _, r := range pResult.Items {
+					if len(r.URL) > 9 {
+						songs = append(songs, models.Song{
+							Title: r.Title, Artist: r.Uploader, URL: fmt.Sprintf("/api/music/proxy/%s", r.URL[9:]), ImageURL: r.Thumbnail, Source: "piped_fallback",
+						})
+					}
+				}
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, songs)
@@ -76,30 +108,42 @@ func ProxyStream(c *gin.Context) {
 		return
 	}
 
-	// Fetch stream info from Piped
-	url := fmt.Sprintf("https://pipedapi.kavin.rocks/streams/%s", videoID)
-	resp, err := http.Get(url)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resolve stream"})
-		return
-	}
-	defer resp.Body.Close()
-
-	var result struct {
-		AudioStreams []struct {
-			URL      string `json:"url"`
-			Format   string `json:"format"`
-			MimeType string `json:"mimeType"`
-		} `json:"audioStreams"`
+	// List of relatively stable Piped instances to try
+	instances := []string{
+		"https://pipedapi.kavin.rocks",
+		"https://piped-api.lunar.icu",
+		"https://api.piped.victr.me",
+		"https://pipedapi.leptons.xyz",
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil || len(result.AudioStreams) == 0 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "No audio stream found"})
+	var streamURL string
+	for _, instance := range instances {
+		url := fmt.Sprintf("%s/streams/%s", instance, videoID)
+		resp, err := http.Get(url)
+		if err != nil {
+			continue
+		}
+		defer resp.Body.Close()
+
+		var result struct {
+			AudioStreams []struct {
+				URL string `json:"url"`
+			} `json:"audioStreams"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&result); err == nil && len(result.AudioStreams) > 0 {
+			streamURL = result.AudioStreams[0].URL
+			break
+		}
+	}
+
+	if streamURL == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resolve stream after trying multiple mirrors"})
 		return
 	}
 
 	// Redirect to the first audio stream
-	c.Redirect(http.StatusTemporaryRedirect, result.AudioStreams[0].URL)
+	c.Redirect(http.StatusTemporaryRedirect, streamURL)
 }
 
 func AddToMyMusic(c *gin.Context) {
