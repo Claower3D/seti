@@ -10,57 +10,32 @@ import (
 	"social-network/internal/models"
 	"sync"
 	"time"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 )
 
 // Global User-Agent
-const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-// Defined outside to prevent nested struct parsing errors
 type SaavnSong struct {
 	Name           string `json:"name"`
 	PrimaryArtists string `json:"primaryArtists"`
-	Image          []struct {
-		Link string `json:"link"`
-	} `json:"image"`
-	DownloadUrl []struct {
-		Link string `json:"link"`
-	} `json:"downloadUrl"`
+	Image          []struct { Link string `json:"link"` } `json:"image"`
+	DownloadUrl    []struct { Link string `json:"link"` } `json:"downloadUrl"`
 }
 
 type SaavnResult struct {
-	Status string      `json:"status"`
 	Data   []SaavnSong `json:"data"`
 }
 
-type PipedItem struct {
-	Title     string `json:"title"`
-	URL       string `json:"url"`
-	Uploader  string `json:"uploaderName"`
-	Thumbnail string `json:"thumbnail"`
-}
-
-type PipedSearchResult struct {
-	Items []PipedItem `json:"items"`
-}
-
-type PipedStream struct {
-	URL string `json:"url"`
-}
-
-type PipedStreamResult struct {
-	AudioStreams []PipedStream `json:"audioStreams"`
-}
-
 func fetchWithUA(targetUrl string) ([]byte, error) {
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := &http.Client{Timeout: 10 * time.Second}
 	req, _ := http.NewRequest("GET", targetUrl, nil)
 	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
 	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
+	if err != nil { return nil, err }
 	defer resp.Body.Close()
 	return io.ReadAll(resp.Body)
 }
@@ -77,7 +52,7 @@ func SearchMusic(c *gin.Context) {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	// ENGINE 1: JioSaavn
+	// ENGINE 1: JioSaavn (Pure High-Quality Audio)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -93,57 +68,48 @@ func SearchMusic(c *gin.Context) {
 				mu.Lock()
 				for _, item := range res.Data {
 					stream := ""
-					if len(item.DownloadUrl) > 0 {
-						stream = item.DownloadUrl[len(item.DownloadUrl)-1].Link
-					}
+					if len(item.DownloadUrl) > 0 { stream = item.DownloadUrl[len(item.DownloadUrl)-1].Link }
 					thumb := ""
-					if len(item.Image) > 0 {
-						thumb = item.Image[len(item.Image)-1].Link
-					}
+					if len(item.Image) > 0 { thumb = item.Image[len(item.Image)-1].Link }
 					allSongs = append(allSongs, models.Song{
-						Title:    item.Name,
-						Artist:   item.PrimaryArtists,
-						URL:      stream,
-						ImageURL: thumb,
-						Source:   "hifi",
+						Title: item.Name, Artist: item.PrimaryArtists, URL: stream, ImageURL: thumb, Source: "hifi",
 					})
 				}
 				mu.Unlock()
-				return
+				return 
 			}
 		}
 	}()
 
-	// ENGINE 2: Piped Music
+	// ENGINE 2: YouTube Scraper (Bulletproof Coverage)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		pipedMirrors := []string{
-			"https://pipedapi.kavin.rocks/search?q=%s&filter=music_songs",
-			"https://piped-api.lunar.icu/search?q=%s&filter=music_songs",
+		searchURL := fmt.Sprintf("https://www.youtube.com/results?search_query=%s&sp=EgIQAQ%%253D%%253D", encodedQuery)
+		data, err := fetchWithUA(searchURL)
+		if err != nil { return }
+		
+		html := string(data)
+		// Extract video IDs and Titles using regex (simple but surprisingly robust scraper)
+		vIDRegex := regexp.MustCompile(`"videoId":"([^"]+)"`)
+		titleRegex := regexp.MustCompile(`"title":\{"runs":\[\{"text":"([^"]+)"\}\]`)
+		
+		vIDs := vIDRegex.FindAllStringSubmatch(html, 15)
+		titles := titleRegex.FindAllStringSubmatch(html, 15)
+
+		mu.Lock()
+		for i := 0; i < len(vIDs) && i < len(titles); i++ {
+			vID := vIDs[i][1]
+			title := titles[i][1]
+			allSongs = append(allSongs, models.Song{
+				Title: title,
+				Artist: "YouTube Music",
+				URL: fmt.Sprintf("/api/music/proxy/%s", vID),
+				ImageURL: fmt.Sprintf("https://i.ytimg.com/vi/%s/mqdefault.jpg", vID),
+				Source: "youtube",
+			})
 		}
-		for _, m := range pipedMirrors {
-			data, err := fetchWithUA(fmt.Sprintf(m, encodedQuery))
-			if err != nil { continue }
-			var res PipedSearchResult
-			if err := json.Unmarshal(data, &res); err == nil && len(res.Items) > 0 {
-				mu.Lock()
-				for _, item := range res.Items {
-					u, _ := url.Parse(item.URL)
-					vID := u.Query().Get("v")
-					if vID == "" { continue }
-					allSongs = append(allSongs, models.Song{
-						Title:    item.Title,
-						Artist:   item.Uploader,
-						URL:      fmt.Sprintf("/api/music/proxy/%s", vID),
-						ImageURL: item.Thumbnail,
-						Source:   "piped",
-					})
-				}
-				mu.Unlock()
-				return
-			}
-		}
+		mu.Unlock()
 	}()
 
 	wg.Wait()
@@ -154,14 +120,16 @@ func ProxyStream(c *gin.Context) {
 	videoID := c.Param("id")
 	instances := []string{
 		"https://pipedapi.kavin.rocks",
-		"https://piped-api.lunar.icu",
 		"https://api.piped.victr.me",
+		"https://piped-api.lunar.icu",
 	}
 
 	for _, inst := range instances {
 		data, err := fetchWithUA(fmt.Sprintf("%s/streams/%s", inst, videoID))
 		if err != nil { continue }
-		var res PipedStreamResult
+		var res struct { 
+			AudioStreams []struct { URL string `json:"url"` } `json:"audioStreams"` 
+		}
 		if err := json.Unmarshal(data, &res); err == nil && len(res.AudioStreams) > 0 {
 			c.Redirect(http.StatusTemporaryRedirect, res.AudioStreams[0].URL)
 			return
