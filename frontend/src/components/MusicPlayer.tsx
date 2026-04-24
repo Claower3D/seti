@@ -1,87 +1,158 @@
-import { motion } from 'framer-motion';
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, Pause, SkipBack, SkipForward, Volume2, Maximize2, Minimize2, Music as MusicIcon, Repeat, Shuffle } from 'lucide-react';
 import { useMusic } from '../context/MusicContext';
 
 export const MusicPlayer = () => {
   const { currentSong, isPlaying, togglePlay, currentTime, duration, seek } = useMusic();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (!currentSong) return null;
 
   return (
-    <motion.div 
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      style={{ 
-        position: 'fixed', 
-        bottom: '80px', 
-        left: '50%', 
-        transform: 'translateX(-50%)',
-        width: 'calc(100% - 40px)',
-        maxWidth: '800px',
-        background: 'rgba(10, 12, 25, 0.8)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid var(--border-bright)',
-        borderRadius: '24px',
-        padding: '12px 20px',
-        zIndex: 1000,
-        boxShadow: '0 20px 40px rgba(0,0,0,0.6), var(--glow)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '20px'
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
-        <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
-           <img src={currentSong.imageUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }} />
-           {isPlaying && (
-             <motion.div 
-               animate={{ rotate: 360 }}
-               transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
-               style={{ position: 'absolute', inset: 0, border: '2px solid var(--primary)', borderRadius: '12px', pointerEvents: 'none' }}
-             />
-           )}
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: '0.9rem', fontWeight: '900', color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentSong.title}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '700' }}>{currentSong.artist}</div>
-        </div>
-      </div>
+    <AnimatePresence>
+      <motion.div 
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ 
+          y: 0, 
+          opacity: 1,
+          height: isExpanded ? '100dvh' : '90px',
+          bottom: isExpanded ? 0 : '20px',
+          width: isExpanded ? '100%' : 'calc(100% - 32px)',
+          borderRadius: isExpanded ? '0px' : '24px',
+        }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        style={{ 
+          position: 'fixed', 
+          left: '50%', 
+          transform: 'translateX(-50%)',
+          background: 'rgba(15, 18, 30, 0.85)',
+          backdropFilter: 'blur(30px) saturate(150%)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          zIndex: 2000,
+          boxShadow: '0 25px 50px rgba(0,0,0,0.8), var(--glow)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {/* Background Blur for Expanded Mode */}
+        {isExpanded && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: -1, overflow: 'hidden' }}>
+            <img src={currentSong.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(100px) brightness(0.4)', transform: 'scale(1.5)' }} />
+          </div>
+        )}
 
-      <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '24px' }}>
-          <SkipBack size={20} color="white" style={{ opacity: 0.5, cursor: 'not-allowed' }} />
-          <button onClick={togglePlay} style={{ background: 'var(--primary)', border: 'none', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--glow)' }}>
-            {isPlaying ? <Pause size={24} color="black" /> : <Play size={24} color="black" fill="black" style={{ marginLeft: '2px' }} />}
-          </button>
-          <SkipForward size={20} color="white" style={{ opacity: 0.5, cursor: 'not-allowed' }} />
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', minWidth: '35px' }}>
-            {Math.floor(currentTime / 60)}:{(Math.floor(currentTime % 60)).toString().padStart(2, '0')}
-          </span>
-          <div 
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              seek((x / rect.width) * duration);
-            }}
-            style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', cursor: 'pointer', position: 'relative' }}
-          >
+        {/* Compact View Content */}
+        {!isExpanded && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '12px 24px', height: '100%' }}>
+            <div 
+              onClick={() => setIsExpanded(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0, cursor: 'pointer' }}
+            >
+              <div style={{ position: 'relative', width: '56px', height: '56px', flexShrink: 0 }}>
+                <img src={currentSong.imageUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover', boxShadow: '0 8px 16px rgba(0,0,0,0.4)' }} />
+                {isPlaying && (
+                  <motion.div 
+                    animate={{ scale: [1, 1.1, 1] }} 
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    style={{ position: 'absolute', inset: -2, border: '2px solid var(--primary)', borderRadius: '16px', opacity: 0.5 }}
+                  />
+                )}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '1rem', fontWeight: '900', color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentSong.title}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '700', letterSpacing: '0.5px' }}>{currentSong.artist}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', className: 'desktop-only' }}>
+                <SkipBack size={22} color="white" style={{ opacity: 0.4, cursor: 'default' }} />
+                <button onClick={togglePlay} style={{ background: 'var(--primary)', border: 'none', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--glow-strong)' }}>
+                  {isPlaying ? <Pause size={26} color="black" fill="black" /> : <Play size={26} color="black" fill="black" style={{ marginLeft: '4px' }} />}
+                </button>
+                <SkipForward size={22} color="white" style={{ opacity: 0.4, cursor: 'default' }} />
+              </div>
+              <Maximize2 size={20} color="white" style={{ opacity: 0.5, cursor: 'pointer' }} onClick={() => setIsExpanded(true)} />
+            </div>
+          </div>
+        )}
+
+        {/* Expanded View Content */}
+        {isExpanded && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '40px 30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
+              <Minimize2 size={28} color="white" style={{ cursor: 'pointer', opacity: 0.7 }} onClick={() => setIsExpanded(false)} />
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: '900', color: 'var(--primary)', letterSpacing: '3px', textTransform: 'uppercase' }}>Now Playing</div>
+              </div>
+              <div style={{ width: '28px' }} />
+            </div>
+
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '40px' }}>
+              <motion.div 
+                animate={{ scale: isPlaying ? 1 : 0.9, rotate: isPlaying ? [0, 1, -1, 0] : 0 }}
+                transition={{ duration: 4, repeat: Infinity }}
+                style={{ width: '100%', maxWidth: '340px', aspectRatio: '1/1', borderRadius: '32px', overflow: 'hidden', boxShadow: '0 30px 60px rgba(0,0,0,0.6), var(--glow-strong)' }}
+              >
+                <img src={currentSong.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </motion.div>
+
+              <div style={{ textAlign: 'center', width: '100%' }}>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'white', marginBottom: '8px' }}>{currentSong.title}</h2>
+                <p style={{ fontSize: '1.1rem', color: 'var(--primary)', fontWeight: '700' }}>{currentSong.artist}</p>
+              </div>
+
+              <div style={{ width: '100%', maxWidth: '500px' }}>
+                <div 
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    seek((x / rect.width) * duration);
+                  }}
+                  style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', cursor: 'pointer', position: 'relative', marginBottom: '12px' }}
+                >
+                  <motion.div 
+                    style={{ height: '100%', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', borderRadius: '4px', boxShadow: 'var(--glow)', width: `${(currentTime / duration) * 100}%` }}
+                  />
+                  <div style={{ position: 'absolute', top: '50%', left: `${(currentTime / duration) * 100}%`, width: '16px', height: '16px', background: 'white', borderRadius: '50%', transform: 'translate(-50%, -50%)', border: '3px solid var(--primary)', boxShadow: '0 0 10px var(--primary)' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', fontWeight: '800' }}>
+                  <span>{Math.floor(currentTime / 60)}:{(Math.floor(currentTime % 60)).toString().padStart(2, '0')}</span>
+                  <span>{Math.floor(duration / 60)}:{(Math.floor(duration % 60)).toString().padStart(2, '0')}</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+                <Shuffle size={24} color="white" style={{ opacity: 0.3 }} />
+                <SkipBack size={36} color="white" fill="white" style={{ opacity: 0.8 }} />
+                <button onClick={togglePlay} style={{ background: 'white', border: 'none', width: '84px', height: '84px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 30px rgba(255,255,255,0.3)' }}>
+                  {isPlaying ? <Pause size={42} color="black" fill="black" /> : <Play size={42} color="black" fill="black" style={{ marginLeft: '6px' }} />}
+                </button>
+                <SkipForward size={36} color="white" fill="white" style={{ opacity: 0.8 }} />
+                <Repeat size={24} color="white" style={{ opacity: 0.3 }} />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', maxWidth: '300px', marginTop: '20px' }}>
+                <Volume2 size={20} color="white" style={{ opacity: 0.5 }} />
+                <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px' }}>
+                   <div style={{ width: '70%', height: '100%', background: 'rgba(255,255,255,0.6)', borderRadius: '2px' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Progress bar in compact mode */}
+        {!isExpanded && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', background: 'rgba(255,255,255,0.05)' }}>
             <motion.div 
-              style={{ height: '100%', background: 'var(--primary)', borderRadius: '2px', boxShadow: 'var(--glow)', width: `${(currentTime / duration) * 100}%` }}
+              style={{ height: '100%', background: 'var(--primary)', width: `${(currentTime / duration) * 100}%`, boxShadow: '0 0 10px var(--primary)' }}
             />
           </div>
-          <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', minWidth: '35px' }}>
-            {Math.floor(duration / 60)}:{(Math.floor(duration % 60)).toString().padStart(2, '0')}
-          </span>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <Volume2 size={20} color="white" style={{ opacity: 0.6 }} />
-        <div style={{ width: '80px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px' }} />
-      </div>
-    </motion.div>
+        )}
+      </motion.div>
+    </AnimatePresence>
   );
 };

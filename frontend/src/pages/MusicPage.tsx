@@ -68,68 +68,95 @@ export const MusicPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 20px 100px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--primary)', textShadow: 'var(--glow)' }}>МУЗЫКА</h1>
-        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '14px', border: '1px solid var(--border)' }}>
-          <button onClick={() => setTab('my')} style={{ padding: '8px 16px', borderRadius: '11px', border: 'none', background: tab === 'my' ? 'var(--primary)' : 'transparent', color: tab === 'my' ? 'black' : 'white', fontWeight: '800', cursor: 'pointer', transition: '0.2s' }}>Мои треки</button>
-          <button onClick={() => setTab('search')} style={{ padding: '8px 16px', borderRadius: '11px', border: 'none', background: tab === 'search' ? 'var(--primary)' : 'transparent', color: tab === 'search' ? 'black' : 'white', fontWeight: '800', cursor: 'pointer', transition: '0.2s' }}>Поиск</button>
-        </div>
+    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px 140px' }}>
+      <div style={{ position: 'relative', height: '240px', borderRadius: '32px', overflow: 'hidden', marginBottom: '40px', display: 'flex', alignItems: 'flex-end', padding: '40px', background: 'linear-gradient(135deg, #1a1c2c 0%, #0a0c12 100%)', border: '1px solid var(--border-bright)' }}>
+         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'radial-gradient(circle at top right, var(--primary)0%, transparent 70%)', opacity: 0.15 }} />
+         <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '30px', width: '100%' }}>
+            <div style={{ width: '120px', height: '120px', background: 'rgba(255,255,255,0.05)', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'var(--glow)' }}>
+                <MusicIcon size={48} color="var(--primary)" />
+            </div>
+            <div style={{ flex: 1 }}>
+               <h1 style={{ fontSize: '3rem', fontWeight: '900', color: 'white', margin: 0, letterSpacing: '-1px' }}>Музыка</h1>
+               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                  <button onClick={() => setTab('my')} style={{ padding: '10px 24px', borderRadius: '14px', border: 'none', background: tab === 'my' ? 'white' : 'rgba(255,255,255,0.1)', color: tab === 'my' ? 'black' : 'white', fontWeight: '800', cursor: 'pointer', transition: '0.3s' }}>Мои аудиозаписи</button>
+                  <button onClick={() => setTab('search')} style={{ padding: '10px 24px', borderRadius: '14px', border: 'none', background: tab === 'search' ? 'white' : 'rgba(255,255,255,0.1)', color: tab === 'search' ? 'black' : 'white', fontWeight: '800', cursor: 'pointer', transition: '0.3s' }}>Поиск песен</button>
+               </div>
+            </div>
+         </div>
       </div>
 
-      <form onSubmit={handleSearch} style={{ position: 'relative', marginBottom: '30px' }}>
-        <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+      <form onSubmit={handleSearch} style={{ position: 'relative', marginBottom: '40px', maxWidth: '600px' }}>
+        <Search size={22} style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
         <input 
           type="text" 
           value={query} 
           onChange={e => setQuery(e.target.value)}
-          placeholder="Поиск музыки с Jamendo API..." 
-          style={{ width: '100%', padding: '16px 20px 16px 48px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '16px', color: 'white', fontSize: '1rem', outline: 'none' }}
+          placeholder="Поиск по миллионам треков..." 
+          style={{ width: '100%', padding: '20px 24px 20px 60px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '20px', color: 'white', fontSize: '1.1rem', outline: 'none', transition: '0.3s' }}
+          onFocus={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+          onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
         />
-        {loading && <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)' }} className="pulse">...</div>}
+        {loading && <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)' }} className="pulse">...</div>}
       </form>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', padding: '0 20px 10px', color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
+           <div style={{ width: '60px' }}>#</div>
+           <div style={{ flex: 1 }}>Название</div>
+           <div style={{ width: '100px' }}>Длительность</div>
+           <div style={{ width: '80px' }}></div>
+        </div>
+
         {(tab === 'my' ? myMusic : searchResults).map((song, i) => (
           <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.03 }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.02 }}
             key={song.id || song.url} 
-            className="glass-panel" 
-            style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 18px', borderRadius: '18px', border: currentSong?.url === song.url ? '1px solid var(--primary)' : '1px solid var(--border)' }}
+            className="song-row"
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              padding: '12px 20px', 
+              borderRadius: '16px', 
+              cursor: 'pointer',
+              background: currentSong?.url === song.url ? 'rgba(0, 245, 255, 0.08)' : 'transparent',
+              border: '1px solid transparent',
+              transition: '0.2s'
+            }}
+            onClick={() => currentSong?.url === song.url && isPlaying ? pauseSong() : playSong(song)}
           >
-            <div style={{ position: 'relative', width: '54px', height: '54px', flexShrink: 0 }}>
-              <img src={song.imageUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }} />
-              <button 
-                onClick={() => currentSong?.url === song.url && isPlaying ? pauseSong() : playSong(song)}
-                style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: currentSong?.url === song.url ? 1 : 0, transition: '0.2s' }}
-                className="play-hover"
-              >
-                {currentSong?.url === song.url && isPlaying ? <Pause size={24} color="var(--primary)" /> : <Play size={24} color="white" fill="white" />}
-              </button>
+            <div style={{ width: '60px', position: 'relative' }}>
+               <div style={{ width: '44px', height: '44px', borderRadius: '10px', overflow: 'hidden', background: '#1a1c2c' }}>
+                  <img src={song.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+               </div>
+               <div className="play-overlay" style={{ position: 'absolute', inset: 0, width: '44px', height: '44px', borderRadius: '10px', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: currentSong?.url === song.url ? 1 : 0, transition: '0.2s' }}>
+                  {currentSong?.url === song.url && isPlaying ? <Pause size={18} color="var(--primary)" /> : <Play size={18} color="white" fill="white" />}
+               </div>
             </div>
             
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: '800', color: 'white', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '2px' }}>{song.artist}</div>
+              <div style={{ fontWeight: '800', color: currentSong?.url === song.url ? 'var(--primary)' : 'white', fontSize: '0.95rem' }}>{song.title}</div>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '2px' }}>{song.artist}</div>
             </div>
 
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '600' }}>
-              {Math.floor(song.duration / 60)}:{(song.duration % 60).toString().padStart(2, '0')}
+            <div style={{ width: '100px', color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem', fontWeight: '600' }}>
+              {song.duration > 0 ? `${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}` : '--:--'}
             </div>
 
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ width: '80px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               {tab === 'search' ? (
                 <button 
-                  onClick={() => addToLibrary(song)}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--primary)' }}
+                  onClick={(e) => { e.stopPropagation(); addToLibrary(song); }}
+                  className="action-btn"
+                  style={{ background: 'rgba(0,245,255,0.1)', border: 'none', borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--primary)' }}
                 >
                   <Plus size={18} />
                 </button>
               ) : (
                 <button 
-                  onClick={() => removeFromLibrary(song.id!)}
+                  onClick={(e) => { e.stopPropagation(); removeFromLibrary(song.id!); }}
+                  className="action-btn"
                   style={{ background: 'rgba(255,48,96,0.1)', border: 'none', borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff3060' }}
                 >
                   <Trash2 size={18} />
@@ -138,17 +165,12 @@ export const MusicPage = () => {
             </div>
           </motion.div>
         ))}
-
-        {(tab === 'my' ? myMusic : searchResults).length === 0 && !loading && (
-          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
-            <MusicIcon size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
-            <p>{tab === 'my' ? 'Ваша библиотека пуста. Найдите что-нибудь в поиске!' : 'Ничего не найдено. Начните поиск!'}</p>
-          </div>
-        )}
       </div>
 
       <style>{`
-        .play-hover:hover { opacity: 1 !important; }
+        .song-row:hover { background: rgba(255,255,255,0.04) !important; }
+        .song-row:hover .play-overlay { opacity: 1 !important; }
+        .action-btn:hover { transform: scale(1.1); filter: brightness(1.2); }
       `}</style>
     </div>
   );
