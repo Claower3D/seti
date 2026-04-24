@@ -63,6 +63,21 @@ return
 c.JSON(http.StatusOK, gin.H{"message": "Friend request declined"})
 }
 
+func RemoveFriend(c *gin.Context) {
+	userID, _ := c.Get("userId")
+	friendID := c.Param("id")
+
+	var fid uint
+	fmt.Sscanf(friendID, "%d", &fid)
+
+	db.DB.Where(
+		"(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)",
+		userID, fid, fid, userID,
+	).Delete(&models.Friendship{})
+
+	c.JSON(http.StatusOK, gin.H{"message": "Friend removed"})
+}
+
 func GetFriends(c *gin.Context) {
 userID, _ := c.Get("userId")
 friends := []models.User{}

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, X, Grid, Film, Zap, Settings } from 'lucide-react';
+import { Heart, MessageCircle, X, Grid, Film, Zap, Settings, UserPlus, UserMinus, UserCheck } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
 const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { isOpen: boolean, onClose: () => void, media: any, type: 'post' | 'wave', isMobile: boolean, owner: any }) => {
@@ -222,6 +222,25 @@ export const ProfilePage = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const isOwnProfile = currentUser?.username === username;
+  const [friendStatus, setFriendStatus] = useState<'none' | 'pending' | 'friends'>('none');
+  const [friendActionLoading, setFriendActionLoading] = useState(false);
+
+  const fetchFriendStatus = async () => {
+    if (isOwnProfile || !username) return;
+    try {
+      const [friendsRes] = await Promise.all([
+        api.get('/friends'),
+      ]);
+      const friends: any[] = friendsRes.data || [];
+      const profile = await api.get(`/profile/${username}`);
+      const targetId = profile.data?.id;
+      const isFriend = friends.some((f: any) => f.id === targetId);
+      if (isFriend) { setFriendStatus('friends'); return; }
+      // check outgoing pending (we sent to them)
+      // we do a simple approach: try to send, if error => pending or friends
+      setFriendStatus('none');
+    } catch { setFriendStatus('none'); }
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -236,6 +255,10 @@ export const ProfilePage = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [username]);
+
+  useEffect(() => {
+    if (profileUser && !isOwnProfile) fetchFriendStatus();
+  }, [profileUser, isOwnProfile]);
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: '80px' }}>
@@ -297,8 +320,45 @@ export const ProfilePage = () => {
                 Настройки
               </button>
             )}
-            {!isOwnProfile && (
-              <button className="btn-primary" style={{ padding: '8px 24px' }}>Подписаться</button>
+            {!isOwnProfile && friendStatus === 'none' && (
+              <button
+                disabled={friendActionLoading}
+                onClick={async () => {
+                  setFriendActionLoading(true);
+                  try {
+                    await api.post(`/friends/request/${profileUser.id}`);
+                    setFriendStatus('pending');
+                  } catch {} finally { setFriendActionLoading(false); }
+                }}
+                className="btn-primary"
+                style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <UserPlus size={16} /> Добавить в друзья
+              </button>
+            )}
+            {!isOwnProfile && friendStatus === 'pending' && (
+              <button
+                disabled
+                className="btn-primary"
+                style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6 }}
+              >
+                <UserCheck size={16} /> Заявка отправлена
+              </button>
+            )}
+            {!isOwnProfile && friendStatus === 'friends' && (
+              <button
+                disabled={friendActionLoading}
+                onClick={async () => {
+                  setFriendActionLoading(true);
+                  try {
+                    await api.delete(`/friends/${profileUser.id}`);
+                    setFriendStatus('none');
+                  } catch {} finally { setFriendActionLoading(false); }
+                }}
+                style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '12px', border: '1px solid rgba(255,60,60,0.4)', background: 'rgba(255,60,60,0.08)', color: 'rgba(255,100,100,0.9)', fontWeight: '800', cursor: 'pointer', fontSize: '0.88rem' }}
+              >
+                <UserMinus size={16} /> Удалить из друзей
+              </button>
             )}
           </div>
 

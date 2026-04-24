@@ -62,6 +62,7 @@ func main() {
 			protected.POST("/friends/request/:id", handlers.SendFriendRequest)
 			protected.POST("/friends/accept/:id", handlers.AcceptFriendRequest)
 			protected.DELETE("/friends/request/:id", handlers.DeclineFriendRequest)
+			protected.DELETE("/friends/:id", handlers.RemoveFriend)
 
 			protected.POST("/upload", handlers.UploadFile)
 			protected.GET("/groups", handlers.GetGroups)
