@@ -14,25 +14,25 @@ export const MusicPlayer = () => {
   return (
     <AnimatePresence>
       <motion.div 
-        initial={{ y: 100, opacity: 0 }}
+        initial={{ x: '-50%', y: 100, opacity: 0 }}
         animate={{ 
+          x: '-50%',
           y: 0, 
           opacity: 1,
-          height: isExpanded ? '100%' : '90px',
-          bottom: isExpanded ? '0px' : '20px',
+          height: isExpanded ? '100%' : '80px',
+          bottom: isExpanded ? '0px' : '16px',
           width: isExpanded ? '100%' : 'calc(100% - 32px)',
-          borderRadius: isExpanded ? '0px' : '24px',
+          borderRadius: isExpanded ? '0px' : '20px',
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         style={{ 
           position: 'fixed', 
           left: '50%', 
-          transform: 'translateX(-50%)',
           background: 'rgba(15, 18, 30, 0.95)',
           backdropFilter: 'blur(30px) saturate(150%)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           zIndex: 2000,
-          boxShadow: '0 25px 50px rgba(0,0,0,0.8), 0 0 20px rgba(0,245,255,0.2)',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.6), 0 0 15px rgba(0,245,255,0.15)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'
