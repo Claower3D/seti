@@ -3,8 +3,82 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, X, Grid, Film, Zap, Settings, UserPlus, UserMinus, UserCheck, Search, Users, UserRoundPlus, UserRoundMinus } from 'lucide-react';
+import { Heart, MessageCircle, X, Grid, Film, Zap, Settings, UserPlus, UserMinus, UserCheck, Search, Users, UserRoundPlus, UserRoundMinus, Sparkles } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
+
+const SakuraHologram = () => {
+  const petals = useMemo(() => Array.from({ length: 15 }), []);
+  return (
+    <div style={{ position: 'absolute', inset: -20, pointerEvents: 'none', zIndex: 5, overflow: 'hidden', borderRadius: '50%' }}>
+      {petals.map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ 
+            opacity: 0, 
+            y: -20, 
+            x: Math.random() * 100 - 50, 
+            rotate: 0,
+            scale: Math.random() * 0.5 + 0.5 
+          }}
+          animate={{ 
+            opacity: [0, 0.8, 0], 
+            y: 120, 
+            x: (Math.random() * 100 - 50) + (Math.sin(i) * 20),
+            rotate: 360 
+          }}
+          transition={{ 
+            duration: Math.random() * 3 + 2, 
+            repeat: Infinity, 
+            delay: Math.random() * 5,
+            ease: "linear"
+          }}
+          style={{
+            position: 'absolute',
+            left: `${Math.random() * 100}%`,
+            width: '10px',
+            height: '10px',
+            background: '#ffb7c5',
+            borderRadius: '50% 0 50% 50%',
+            boxShadow: '0 0 10px #ff69b4',
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const MatrixHologram = ({ color }: { color: string }) => {
+  const columns = useMemo(() => Array.from({ length: 10 }), []);
+  return (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5, overflow: 'hidden', borderRadius: '50%', opacity: 0.4 }}>
+      {columns.map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ y: -100 }}
+          animate={{ y: 150 }}
+          transition={{ 
+            duration: Math.random() * 2 + 1, 
+            repeat: Infinity, 
+            delay: Math.random() * 2,
+            ease: "linear"
+          }}
+          style={{
+            position: 'absolute',
+            left: `${i * 10}%`,
+            color: color,
+            fontSize: '8px',
+            fontWeight: 'bold',
+            writingMode: 'vertical-rl',
+            textShadow: `0 0 5px ${color}`,
+            fontFamily: 'monospace'
+          }}
+        >
+          {Array.from({ length: 10 }).map(() => String.fromCharCode(0x30A0 + Math.random() * 96)).join('')}
+        </motion.div>
+      ))}
+    </div>
+  );
+};
 
 const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { isOpen: boolean, onClose: () => void, media: any, type: 'post' | 'wave', isMobile: boolean, owner: any }) => {
   const displayUser = media?.user || owner;
@@ -414,7 +488,18 @@ export const ProfilePage = () => {
       }}>
         <div style={{ position: 'relative' }}>
           <img src={profileUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profileUser.username}
-            alt="avatar" style={{ width: isMobile ? '90px' : '110px', height: isMobile ? '90px' : '110px', borderRadius: '50%', border: '2px solid var(--border)', padding: '4px', objectFit: 'cover' }} />
+            alt="avatar" style={{ width: isMobile ? '90px' : '110px', height: isMobile ? '90px' : '110px', borderRadius: '50%', border: `2px solid ${profileUser.neonColor || 'var(--border)'}`, padding: '4px', objectFit: 'cover', boxShadow: `0 0 20px ${profileUser.neonColor}33` }} />
+          
+          {profileUser.hologram === 'sakura' && <SakuraHologram />}
+          {profileUser.hologram === 'matrix' && <MatrixHologram color={profileUser.neonColor} />}
+          
+          <motion.div
+            animate={{ 
+              boxShadow: [`0 0 15px ${profileUser.neonColor}22`, `0 0 35px ${profileUser.neonColor}44`, `0 0 15px ${profileUser.neonColor}22`]
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+            style={{ position: 'absolute', inset: 0, borderRadius: '50%', pointerEvents: 'none' }}
+          />
         </div>
         
         <div style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}>

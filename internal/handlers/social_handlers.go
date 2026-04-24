@@ -65,6 +65,7 @@ type UpdateProfileInput struct {
 	Website        string  `json:"website"`
 	Hobbies        string  `json:"hobbies"`
 	Phone          string  `json:"phone"`
+	Hologram       string  `json:"hologram"`
 }
 
 func UpdateProfile(c *gin.Context) {
@@ -106,6 +107,7 @@ func UpdateProfile(c *gin.Context) {
 	user.City = input.City
 	user.Website = input.Website
 	user.Hobbies = input.Hobbies
+	user.Hologram = input.Hologram
 	if input.Phone != "" && input.Phone != user.Phone {
 		var count int64
 		db.DB.Model(&models.User{}).Where("phone = ? AND id != ?", input.Phone, userID).Count(&count)

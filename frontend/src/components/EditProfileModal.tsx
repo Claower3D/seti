@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import api from '../api/client';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun, MapPin, Globe, Calendar, Heart, AtSign, Info, Phone } from 'lucide-react';
+import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun, MapPin, Globe, Calendar, Heart, AtSign, Info, Phone, Sparkles, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface EditProfileModalProps {
@@ -20,6 +20,20 @@ const NEON_PRESETS = [
   { name: 'Electric Orange', color: '#ff5f1f' },
   { name: 'Crimson Glow',    color: '#ff0033' },
 ];
+
+const HOLOGRAMS = [
+  { id: 'none',   name: 'Без эффекта', icon: X },
+  { id: 'sakura', name: 'Сакура',      icon: FlowerIcon },
+  { id: 'matrix', name: 'Матрица',    icon: Zap },
+];
+
+function FlowerIcon({ size, color }: { size?: number, color?: string }) {
+  return (
+    <svg width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 7.5V2" /><path d="m4.93 4.93 3.89 3.89" /><path d="M2 12h5.5" /><path d="m4.93 19.07 3.89-3.89" /><path d="M12 16.5V22" /><path d="m19.07 19.07-3.89-3.89" /><path d="M22 12h-5.5" /><path d="m19.07 4.93-3.89 3.89" />
+    </svg>
+  );
+}
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
   <label style={{ display: 'block', marginBottom: '8px', color: 'rgba(255,255,255,0.4)', fontWeight: '700', fontSize: '0.7rem', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
@@ -49,6 +63,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
   // Design
   const [neonColor,      setNeonColor]      = useState(currentUser?.neonColor      || '#00f5ff');
   const [neonBrightness, setNeonBrightness] = useState(currentUser?.neonBrightness || 1.0);
+  const [hologram,       setHologram]       = useState(currentUser?.hologram       || 'none');
 
   // Security
   const [currentPassword, setCurrentPassword] = useState('');
@@ -89,7 +104,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
     try {
       const res = await api.put('/profile', {
         username, fullName, bio, avatar, phone,
-        neonColor, neonBrightness,
+        neonColor, neonBrightness, hologram,
         dateOfBirth, city, website, hobbies,
       });
       onUpdate(res.data);
@@ -298,10 +313,35 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                     <FieldLabel>NEON PRESETS</FieldLabel>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                       {NEON_PRESETS.map(preset => (
-                        <button key={preset.color} onClick={() => { setNeonColor(preset.color); updateUser({ ...currentUser, neonColor: preset.color, neonBrightness }); }}
-                          style={{ padding: '12px 8px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: `2px solid ${neonColor === preset.color ? preset.color : 'transparent'}`, cursor: 'pointer' }}>
+                        <button key={preset.color} onClick={() => { setNeonColor(preset.color); updateUser({ ...currentUser, neonColor: preset.color, neonBrightness, hologram }); }}
+                          style={{ padding: '12px 8px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: `2px solid ${neonColor === preset.color ? preset.color : 'transparent'}`, cursor: 'pointer', transition: 'all 0.2s' }}>
                           <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: preset.color, margin: '0 auto 8px', boxShadow: `0 0 10px ${preset.color}` }} />
-                          <span style={{ fontSize: '0.65rem', color: 'white' }}>{preset.name}</span>
+                          <span style={{ fontSize: '0.65rem', color: 'white', fontWeight: '600' }}>{preset.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <FieldLabel>HOLOGRAM EFFECTS (ГАЛЛОГРАММА)</FieldLabel>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                      {HOLOGRAMS.map(h => (
+                        <button key={h.id} onClick={() => { setHologram(h.id); updateUser({ ...currentUser, neonColor, neonBrightness, hologram: h.id }); }}
+                          style={{ 
+                            padding: '16px 8px', 
+                            borderRadius: '14px', 
+                            background: hologram === h.id ? `${neonColor}15` : 'rgba(255,255,255,0.03)', 
+                            border: `1px solid ${hologram === h.id ? neonColor : 'rgba(255,255,255,0.08)'}`, 
+                            cursor: 'pointer', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center', 
+                            gap: '8px',
+                            transition: 'all 0.2s',
+                            boxShadow: hologram === h.id ? `0 0 15px ${neonColor}22` : 'none'
+                          }}>
+                          <h.icon size={20} color={hologram === h.id ? neonColor : 'rgba(255,255,255,0.4)'} />
+                          <span style={{ fontSize: '0.65rem', color: hologram === h.id ? 'white' : 'rgba(255,255,255,0.4)', fontWeight: '700' }}>{h.name}</span>
                         </button>
                       ))}
                     </div>
@@ -312,7 +352,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.03)', padding: '14px 18px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
                       <Sun size={18} color={neonColor} />
                       <input type="range" min="0" max="1.5" step="0.05" value={neonBrightness}
-                        onChange={e => { const v = parseFloat(e.target.value); setNeonBrightness(v); updateUser({ ...currentUser, neonColor, neonBrightness: v }); }}
+                        onChange={e => { const v = parseFloat(e.target.value); setNeonBrightness(v); updateUser({ ...currentUser, neonColor, neonBrightness: v, hologram }); }}
                         style={{ flex: 1, accentColor: neonColor, cursor: 'pointer' }} />
                       <span style={{ minWidth: '40px', fontSize: '0.85rem', fontWeight: '800', color: neonColor }}>{Math.round(neonBrightness * 100)}%</span>
                     </div>
