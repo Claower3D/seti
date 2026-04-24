@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SearchMusic searches for music directly through YouTube to ensure 100% up-time
+// SearchMusic uses a failover engine to search multiple high-reliability sources
 func SearchMusic(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -22,80 +22,79 @@ func SearchMusic(c *gin.Context) {
 		return
 	}
 
-	// Double-encode query for YouTube
-	safeQuery := url.QueryEscape(query)
-	searchURL := fmt.Sprintf("https://www.youtube.com/results?search_query=%s&sp=EgIQAQ%253D%253D", safeQuery)
-
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", searchURL, nil)
-	// Mask as a real browser to avoid being blocked
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-	
-	resp, err := client.Do(req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reach search source"})
-		return
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	bodyStr := string(body)
-
-	// Extract ytInitialData which contains the search results
-	startTag := "var ytInitialData = "
-	startIndex := strings.Index(bodyStr, startTag)
-	if startIndex == -1 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Search engine error (no data)"})
-		return
-	}
-
-	dataPart := bodyStr[startIndex+len(startTag):]
-	endIndex := strings.Index(dataPart, ";</script>")
-	if endIndex == -1 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Search engine error (parse error)"})
-		return
-	}
-
-	jsonData := dataPart[:endIndex]
-	
-	// Convert to internal format (simplified since we just need video IDs, titles and thumbs)
+	encodedQuery := url.QueryEscape(query)
 	songs := []models.Song{}
-	
-	// We use regex to extract what we need quickly without complex JSON parsing of huge YT objects
-	re := regexp.MustCompile(`"videoRenderer":\{"videoId":"([^"]+)","thumbnail":\{"thumbnails":\[\{"url":"([^"]+)"[^}]+\]\},"title":\{"runs":\[\{"text":"([^"]+)"\}\]\},"longBylineText":\{"runs":\[\{"text":"([^"]+)"`)
-	matches := re.FindAllStringSubmatch(jsonData, 20)
 
-	for _, m := range matches {
-		if len(m) < 5 {
+	// Source 1 & 2: Invidious Instances (Decentralized YouTube)
+	invidiousInstances := []string{
+		"https://iv.melmac.space",
+		"https://invidious.projectsegfau.lt",
+		"https://inv.tux.im",
+		"https://invidious.nerdvpn.de",
+	}
+
+	for _, instance := range invidiousInstances {
+		searchURL := fmt.Sprintf("%s/api/v1/search?q=%s&type=video", instance, encodedQuery)
+		resp, err := http.Get(searchURL)
+		if err != nil {
 			continue
 		}
-		songs = append(songs, models.Song{
-			Title:    m[3],
-			Artist:   m[4],
-			URL:      fmt.Sprintf("/api/music/proxy/%s", m[1]),
-			ImageURL: m[2],
-			Duration: 0, // YouTube search doesn't easily giveaway duration in this simple format
-			Source:   "youtube_direct",
-		})
+		defer resp.Body.Close()
+
+		var results []struct {
+			Title         string `json:"title"`
+			VideoID       string `json:"videoId"`
+			Author        string `json:"author"`
+			VideoThumbnails []struct {
+				URL string `json:"url"`
+			} `json:"videoThumbnails"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&results); err == nil && len(results) > 0 {
+			for _, r := range results {
+				thumb := ""
+				if len(r.VideoThumbnails) > 0 {
+					thumb = r.VideoThumbnails[0].URL
+				}
+				songs = append(songs, models.Song{
+					Title:    r.Title,
+					Artist:   r.Author,
+					URL:      fmt.Sprintf("/api/music/proxy/%s", r.VideoID),
+					ImageURL: thumb,
+					Source:   "invidious",
+				})
+			}
+			break // Found results, stop searching
+		}
 	}
 
+	// Source 3: Deezer (Fallback for meta-data if YouTube-based search fails)
 	if len(songs) == 0 {
-		// Fallback to Piped if scraping fails (Plan B)
-		apiURL := fmt.Sprintf("https://piped-api.lunar.icu/search?q=%s&filter=music_songs", safeQuery)
-		resp, err := http.Get(apiURL)
+		deezerURL := fmt.Sprintf("https://api.deezer.com/search?q=%s&limit=20", encodedQuery)
+		resp, err := http.Get(deezerURL)
 		if err == nil {
 			defer resp.Body.Close()
-			var pResult struct { Items []struct { Title string `json:"title"`; Uploader string `json:"uploaderName"`; Thumbnail string `json:"thumbnail"`; URL string `json:"url"` } }
-			if err := json.NewDecoder(resp.Body).Decode(&pResult); err == nil {
-				for _, r := range pResult.Items {
-					if len(r.URL) > 9 {
-						songs = append(songs, models.Song{
-							Title: r.Title, Artist: r.Uploader, URL: fmt.Sprintf("/api/music/proxy/%s", r.URL[9:]), ImageURL: r.Thumbnail, Source: "piped_fallback",
-						})
-					}
+			var dResult struct {
+				Data []struct {
+					Title string `json:"title"`
+					Artist struct { Name string `json:"name"` } `json:"artist"`
+					Preview string `json:"preview"`
+					Album struct { CoverMedium string `json:"cover_medium"` } `json:"album"`
+				} `json:"data"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&dResult); err == nil {
+				for _, r := range dResult.Data {
+					songs = append(songs, models.Song{
+						Title: r.Title, Artist: r.Artist.Name, URL: r.Preview, ImageURL: r.Album.CoverMedium, Source: "deezer",
+					})
 				}
 			}
 		}
+	}
+
+	if len(songs) == 0 {
+		c.JSON(http.StatusOK, []models.Song{}) // Return empty but valid array
+		return
 	}
 
 	c.JSON(http.StatusOK, songs)
