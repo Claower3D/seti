@@ -408,6 +408,10 @@ function AppInner() {
   return (
     <div className="main-layout">
       <div className="hologram-container">
+        <div className="hologram-core" />
+        <div className="hologram-radar" />
+        <div className="hologram-ring" />
+        <div className="hologram-ring" />
         <div className="hologram-ring" />
         <div className="hologram-ring" />
         <div className="hologram-ring" />
