@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, Trash2, Music as MusicIcon, Play, Pause, Headphones, Disc } from 'lucide-react';
+import { Search, Plus, Trash2, Music as MusicIcon, Play, Headphones, Disc } from 'lucide-react';
 import api from '../api/client';
 import { useMusic } from '../context/MusicContext';
 
