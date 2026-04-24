@@ -128,7 +128,7 @@ export const MusicPage = () => {
           placeholder="Искать музыку..." 
           style={{ width: '100%', padding: '14px 16px 14px 48px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: 'white', fontSize: '0.95rem', outline: 'none' }}
         />
-        {loading && <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', className: 'pulse' }}><div style={{ width: '4px', height: '4px', background: '#00f5ff', borderRadius: '50%' }} /></div>}
+        {loading && <div className="pulse" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)' }}><div style={{ width: '4px', height: '4px', background: '#00f5ff', borderRadius: '50%' }} /></div>}
       </form>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
