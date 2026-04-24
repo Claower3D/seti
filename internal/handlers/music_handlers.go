@@ -15,7 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Global User-Agent
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
 type SaavnSong struct {
@@ -26,14 +25,13 @@ type SaavnSong struct {
 }
 
 type SaavnResult struct {
-	Data   []SaavnSong `json:"data"`
+	Data []SaavnSong `json:"data"`
 }
 
 func fetchWithUA(targetUrl string) ([]byte, error) {
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 12 * time.Second}
 	req, _ := http.NewRequest("GET", targetUrl, nil)
 	req.Header.Set("User-Agent", userAgent)
-	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
 	resp, err := client.Do(req)
 	if err != nil { return nil, err }
 	defer resp.Body.Close()
@@ -52,7 +50,7 @@ func SearchMusic(c *gin.Context) {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	// ENGINE 1: JioSaavn (Pure High-Quality Audio)
+	// ENGINE 1: JioSaavn
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -69,10 +67,16 @@ func SearchMusic(c *gin.Context) {
 				for _, item := range res.Data {
 					stream := ""
 					if len(item.DownloadUrl) > 0 { stream = item.DownloadUrl[len(item.DownloadUrl)-1].Link }
+					if stream == "" { continue }
+					
 					thumb := ""
 					if len(item.Image) > 0 { thumb = item.Image[len(item.Image)-1].Link }
+					
+					// Proxy all Saavn links too to bypass hotlinking protection
+					proxyURL := "/api/music/proxy/raw?url=" + url.QueryEscape(stream)
+					
 					allSongs = append(allSongs, models.Song{
-						Title: item.Name, Artist: item.PrimaryArtists, URL: stream, ImageURL: thumb, Source: "hifi",
+						Title: item.Name, Artist: item.PrimaryArtists, URL: proxyURL, ImageURL: thumb, Source: "hifi",
 					})
 				}
 				mu.Unlock()
@@ -81,7 +85,7 @@ func SearchMusic(c *gin.Context) {
 		}
 	}()
 
-	// ENGINE 2: YouTube Scraper (Bulletproof Coverage)
+	// ENGINE 2: YouTube Scraper
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -90,7 +94,6 @@ func SearchMusic(c *gin.Context) {
 		if err != nil { return }
 		
 		html := string(data)
-		// Extract video IDs and Titles using regex (simple but surprisingly robust scraper)
 		vIDRegex := regexp.MustCompile(`"videoId":"([^"]+)"`)
 		titleRegex := regexp.MustCompile(`"title":\{"runs":\[\{"text":"([^"]+)"\}\]`)
 		
@@ -104,7 +107,7 @@ func SearchMusic(c *gin.Context) {
 			allSongs = append(allSongs, models.Song{
 				Title: title,
 				Artist: "YouTube Music",
-				URL: fmt.Sprintf("/api/music/proxy/%s", vID),
+				URL: fmt.Sprintf("/api/music/proxy/yt/%s", vID),
 				ImageURL: fmt.Sprintf("https://i.ytimg.com/vi/%s/mqdefault.jpg", vID),
 				Source: "youtube",
 			})
@@ -117,23 +120,39 @@ func SearchMusic(c *gin.Context) {
 }
 
 func ProxyStream(c *gin.Context) {
-	videoID := c.Param("id")
+	typeStr := c.Param("type")
+	id := c.Param("id")
+
+	if typeStr == "raw" {
+		rawURL := c.Query("url")
+		if rawURL == "" { c.JSON(http.StatusBadRequest, gin.H{"error": "URL required"}); return }
+		http.Redirect(c.Writer, c.Request, rawURL, http.StatusTemporaryRedirect)
+		return
+	}
+
+	// YouTube (type == "yt")
 	instances := []string{
 		"https://pipedapi.kavin.rocks",
 		"https://api.piped.victr.me",
+		"https://pipedapi.tokhmi.pw",
+		"https://piped-api.garudalinux.org",
 		"https://piped-api.lunar.icu",
 	}
 
 	for _, inst := range instances {
-		data, err := fetchWithUA(fmt.Sprintf("%s/streams/%s", inst, videoID))
-		if err != nil { continue }
+		client := &http.Client{Timeout: 8 * time.Second}
+		resp, err := client.Get(fmt.Sprintf("%s/streams/%s", inst, id))
+		if err != nil || resp.StatusCode != 200 { continue }
+		
 		var res struct { 
 			AudioStreams []struct { URL string `json:"url"` } `json:"audioStreams"` 
 		}
-		if err := json.Unmarshal(data, &res); err == nil && len(res.AudioStreams) > 0 {
+		if err := json.NewDecoder(resp.Body).Decode(&res); err == nil && len(res.AudioStreams) > 0 {
+			resp.Body.Close()
 			c.Redirect(http.StatusTemporaryRedirect, res.AudioStreams[0].URL)
 			return
 		}
+		resp.Body.Close()
 	}
 	c.JSON(http.StatusNotFound, gin.H{"error": "Failed to resolve stream"})
 }

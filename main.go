@@ -101,7 +101,8 @@ func main() {
 			protected.GET("/music/my", handlers.GetMyMusic)
 			protected.POST("/music/my", handlers.AddToMyMusic)
 			protected.DELETE("/music/my/:id", handlers.RemoveFromMyMusic)
-			protected.GET("/music/proxy/:id", handlers.ProxyStream)
+			protected.GET("/music/proxy/:type", handlers.ProxyStream)
+			protected.GET("/music/proxy/:type/:id", handlers.ProxyStream)
 		}
 	}
 
