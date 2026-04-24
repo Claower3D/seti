@@ -44,6 +44,7 @@ func main() {
 			protected.GET("/me", handlers.GetMe)
 			protected.GET("/stories", handlers.GetStories)
 			protected.POST("/stories", handlers.CreateStory)
+			protected.DELETE("/stories/:id", handlers.DeleteStory)
 			protected.GET("/posts", handlers.GetPosts)
 			protected.POST("/posts", handlers.CreatePost)
 			protected.DELETE("/posts/:id", handlers.DeletePost)

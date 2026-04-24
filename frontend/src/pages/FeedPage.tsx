@@ -236,6 +236,17 @@ export const FeedPage = () => {
     } catch { alert('Ошибка загрузки истории'); } finally { setIsUploadingStory(false); }
   };
 
+  const handleDeleteStory = async (storyId: number) => {
+    try {
+      await api.delete(`/stories/${storyId}`);
+      setStories(prev => prev.filter(s => s.id !== storyId));
+      // Move to next or close
+      const newStories = stories.filter(s => s.id !== storyId);
+      if (newStories.length === 0) { setActiveStoryIdx(null); }
+      else if (activeStoryIdx !== null && activeStoryIdx >= newStories.length) { setActiveStoryIdx(newStories.length - 1); }
+    } catch { alert('Ошибка при удалении истории'); }
+  };
+
   return (
     <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
       <div className="feed-container">
@@ -501,9 +512,19 @@ export const FeedPage = () => {
                     <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}>Signal Active • SETI</div>
                   </div>
                 </div>
-                <button onClick={() => setActiveStoryIdx(null)} style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                   <X size={20} />
-                </button>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {stories[activeStoryIdx].userId === user?.id && (
+                    <button
+                      onClick={() => handleDeleteStory(stories[activeStoryIdx].id)}
+                      style={{ background: 'rgba(255,0,85,0.2)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,0,85,0.4)', color: '#ff3060', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                  <button onClick={() => setActiveStoryIdx(null)} style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                     <X size={20} />
+                  </button>
+                </div>
               </div>
 
               <img src={stories[activeStoryIdx].imageUrl} alt="story"

@@ -364,3 +364,22 @@ func CreateStory(c *gin.Context) {
 	c.JSON(http.StatusCreated, story)
 }
 
+func DeleteStory(c *gin.Context) {
+	userID, _ := c.Get("userId")
+	storyID := c.Param("id")
+
+	var story models.Story
+	if err := db.DB.First(&story, storyID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Story not found"})
+		return
+	}
+
+	if story.UserID != userID.(uint) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Not your story"})
+		return
+	}
+
+	db.DB.Delete(&story)
+	c.JSON(http.StatusOK, gin.H{"message": "Story deleted"})
+}
+
