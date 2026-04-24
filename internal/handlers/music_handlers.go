@@ -15,31 +15,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Music API Result Structure (JioSaavn)
+// SaavnResult Structure (Corrected Tags)
 type SaavnResult struct {
 	Status string `json:"status"`
 	Data   []struct {
-		Name         string `json:"name"`
-		Artist       string `json:"primaryArtists"`
-		Image        []struct { Link string `json:"link"` } `json:"image"`
-		DownloadURL  []struct { Link string `json:"link"` } `json:"downloadUrl"`
+		Name           string `json:"name"`
+		PrimaryArtists string `json:"primaryArtists"`
+		Image          []struct {
+			Link string `json:"link"`
+		} `json:"image"`
+		DownloadUrl []struct {
+			Link string `json:"link"`
+		} `json:"downloadUrl"`
 	} `json:"data"`
 }
 
-// Global User-Agent to avoid blocks
+// Global User-Agent
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-func fetchWithUA(urlStr string) ([]byte, error) {
-	client := &http.Client{Timeout: 10 * time.Second}
-	req, _ := http.NewRequest("GET", urlStr, nil)
+func fetchWithUA(targetUrl string) ([]byte, error) {
+	client := &http.Client{Timeout: 15 * time.Second}
+	req, _ := http.NewRequest("GET", targetUrl, nil)
 	req.Header.Set("User-Agent", userAgent)
 	resp, err := client.Do(req)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer resp.Body.Close()
 	return io.ReadAll(resp.Body)
 }
 
-// SearchMusic now uses an indestructible multi-source failover engine
 func SearchMusic(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -52,7 +57,7 @@ func SearchMusic(c *gin.Context) {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	// ENGINE 1: JioSaavn Mirrors (High Quality Studio Tracks)
+	// ENGINE 1: JioSaavn (Pure Audio)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -62,37 +67,48 @@ func SearchMusic(c *gin.Context) {
 		}
 		for _, m := range mirrors {
 			data, err := fetchWithUA(fmt.Sprintf(m, encodedQuery))
-			if err != nil { continue }
+			if err != nil {
+				continue
+			}
 			var res SaavnResult
 			if err := json.Unmarshal(data, &res); err == nil && len(res.Data) > 0 {
 				mu.Lock()
 				for _, item := range res.Data {
 					stream := ""
-					if len(item.DownloadURL) > 0 { stream = item.DownloadURL[len(item.DownloadURL)-1].Link }
+					if len(item.DownloadUrl) > 0 {
+						stream = item.DownloadUrl[len(item.DownloadUrl)-1].Link
+					}
 					thumb := ""
-					if len(item.Image) > 0 { thumb = item.Image[len(item.Image)-1].Link }
+					if len(item.Image) > 0 {
+						thumb = item.Image[len(item.Image)-1].Link
+					}
 					allSongs = append(allSongs, models.Song{
-						Title: item.Name, Artist: item.Artist, URL: stream, ImageURL: thumb, Source: "hifi",
+						Title:    item.Name,
+						Artist:   item.PrimaryArtists,
+						URL:      stream,
+						ImageURL: thumb,
+						Source:   "hifi",
 					})
 				}
 				mu.Unlock()
-				return 
+				return
 			}
 		}
 	}()
 
-	// ENGINE 2: YouTube Music / Piped Mirrors (Absolute Coverage)
+	// ENGINE 2: Piped Music (Universal Fallback)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		pipedMirrors := []string{
 			"https://pipedapi.kavin.rocks/search?q=%s&filter=music_songs",
 			"https://piped-api.lunar.icu/search?q=%s&filter=music_songs",
-			"https://api.piped.victr.me/search?q=%s&filter=music_songs",
 		}
 		for _, m := range pipedMirrors {
 			data, err := fetchWithUA(fmt.Sprintf(m, encodedQuery))
-			if err != nil { continue }
+			if err != nil {
+				continue
+			}
 			var pRes struct {
 				Items []struct {
 					Title     string `json:"title"`
@@ -106,9 +122,15 @@ func SearchMusic(c *gin.Context) {
 				for _, item := range pRes.Items {
 					u, _ := url.Parse(item.URL)
 					vID := u.Query().Get("v")
-					if vID == "" { continue }
+					if vID == "" {
+						continue
+					}
 					allSongs = append(allSongs, models.Song{
-						Title: item.Title, Artist: item.Uploader, URL: fmt.Sprintf("/api/music/proxy/%s", vID), ImageURL: item.Thumbnail, Source: "piped",
+						Title:    item.Title,
+						Artist:   item.Uploader,
+						URL:      fmt.Sprintf("/api/music/proxy/%s", vID),
+						ImageURL: item.Thumbnail,
+						Source:   "piped",
 					})
 				}
 				mu.Unlock()
@@ -131,11 +153,13 @@ func ProxyStream(c *gin.Context) {
 
 	for _, inst := range instances {
 		data, err := fetchWithUA(fmt.Sprintf("%s/streams/%s", inst, videoID))
-		if err != nil { continue }
-		var res struct { 
-			AudioStreams []struct { 
-				URL string `json:"url"` 
-			} `json:"audioStreams"` 
+		if err != nil {
+			continue
+		}
+		var res struct {
+			AudioStreams []struct {
+				URL string `json:"url"`
+			} `json:"audioStreams"`
 		}
 		if err := json.Unmarshal(data, &res); err == nil && len(res.AudioStreams) > 0 {
 			c.Redirect(http.StatusTemporaryRedirect, res.AudioStreams[0].URL)
