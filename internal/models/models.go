@@ -23,7 +23,7 @@ type User struct {
 	City           string         `json:"city"`
 	Website        string         `json:"website"`
 	Hobbies        string         `json:"hobbies"`
-	Hologram       string         `gorm:"default:'none'" json:"hologram"` // 'none', 'sakura', 'matrix'
+	Hologram       string         `gorm:"default:'none'" json:"hologram"` // 'none', 'matrix'
 	CreatedAt      time.Time      `json:"createdAt"`
 	UpdatedAt      time.Time      `json:"updatedAt"`
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
