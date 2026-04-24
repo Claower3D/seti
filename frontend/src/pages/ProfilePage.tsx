@@ -338,7 +338,7 @@ export const ProfilePage = () => {
       const isFriend = friends.some((f: any) => f.id === profileUser.id);
       if (isFriend) { setFriendStatus('friends'); return; }
 
-      const requestsRes = await api.get('/friends/requests');
+      await api.get('/friends/requests');
       // Check outgoing? Backend refactor should help. 
       // For now client updates based on action.
       setFriendStatus('none');
