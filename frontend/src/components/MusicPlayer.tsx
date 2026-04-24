@@ -4,7 +4,7 @@ import { Play, Pause, SkipBack, SkipForward, Minimize2, Repeat, Shuffle, X, Musi
 import { useMusic } from '../context/MusicContext';
 
 export const MusicPlayer = () => {
-  const { currentSong, isPlaying, togglePlay, currentTime, duration, seek, pauseSong, playSong } = useMusic();
+  const { currentSong, isPlaying, togglePlay, currentTime, duration, seek, pauseSong } = useMusic();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
