@@ -40,6 +40,33 @@ const MatrixHologram = ({ color }: { color: string }) => {
   );
 };
 
+const MatrixBackgroundHologram = ({ color }: { color: string }) => {
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0, opacity: 0.15 }}>
+      {Array.from({ length: 25 }).map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ y: -500 }}
+          animate={{ y: 500 }}
+          transition={{ duration: Math.random() * 10 + 5, repeat: Infinity, delay: Math.random() * 5, ease: 'linear' }}
+          style={{
+            position: 'absolute',
+            left: (i * 4) + "%",
+            color: color,
+            fontSize: '12px',
+            writingMode: 'vertical-rl',
+            fontFamily: 'monospace',
+            textShadow: `0 0 8px ${color}`,
+          }}
+        >
+          {Array.from({ length: 20 }).map(() => String.fromCharCode(0x30A0 + Math.random() * 96)).join('')}
+        </motion.div>
+      ))}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(5,6,8,0) 60%, rgba(5,6,8,1) 100%)' }} />
+    </div>
+  );
+};
+
 const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { isOpen: boolean, onClose: () => void, media: any, type: 'post' | 'wave', isMobile: boolean, owner: any }) => {
   const displayUser = media?.user || owner;
   const [comments, setComments] = useState<any[]>([]);
