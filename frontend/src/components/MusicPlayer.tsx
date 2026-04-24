@@ -20,7 +20,7 @@ export const MusicPlayer = () => {
           y: 0, 
           opacity: 1,
           height: isExpanded ? '100%' : '80px',
-          bottom: isExpanded ? '0px' : '16px',
+          bottom: isExpanded ? '0px' : '90px',
           width: isExpanded ? '100%' : 'calc(100% - 32px)',
           borderRadius: isExpanded ? '0px' : '20px',
         }}
