@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -36,13 +36,13 @@ const Sidebar = () => {
   const location = useLocation();
   if (!user) return null;
   const navItems = [
-    { name: 'Новости', icon: Home, path: '/' },
-    { name: 'Сообщения', icon: MessageSquare, path: '/messages' },
-    { name: 'Друзья', icon: Users, path: '/friends' },
-    { name: 'Волны', icon: Radio, path: '/waves' },
-    { name: 'Музыка', icon: Music, path: '/music' },
-    { name: 'Мой профиль', icon: User, path: `/profile/${user.username}` },
-    { name: 'Приложение', icon: ArrowDownCircle, path: '/app' },
+    { name: 'РќРѕРІРѕСЃС‚Рё', icon: Home, path: '/' },
+    { name: 'РЎРѕРѕР±С‰РµРЅРёСЏ', icon: MessageSquare, path: '/messages' },
+    { name: 'Р”СЂСѓР·СЊСЏ', icon: Users, path: '/friends' },
+    { name: 'Р’РѕР»РЅС‹', icon: Radio, path: '/waves' },
+    { name: 'РњСѓР·С‹РєР°', icon: Music, path: '/music' },
+    { name: 'РњРѕР№ РїСЂРѕС„РёР»СЊ', icon: User, path: `/profile/${user.username}` },
+    { name: 'РџСЂРёР»РѕР¶РµРЅРёРµ', icon: ArrowDownCircle, path: '/app' },
   ];
   return (
     <div className="sidebar glass-panel">
@@ -59,7 +59,7 @@ const Sidebar = () => {
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                 <item.icon size={20} />
                 <span>{item.name}</span>
-                {item.name === 'Сообщения' && unreadCount > 0 && (
+                {item.name === 'РЎРѕРѕР±С‰РµРЅРёСЏ' && unreadCount > 0 && (
                   <motion.div 
                     initial={{ scale: 0 }} 
                     animate={{ scale: 1 }} 
@@ -89,11 +89,11 @@ const Sidebar = () => {
             style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--border-bright)' }} alt="" />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '0.82rem', fontWeight: '900', color: 'var(--primary)', textShadow: 'var(--glow)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</div>
-            <div style={{ fontSize: '0.68rem', color: 'var(--primary)', fontWeight: '700' }}>● Online Signal</div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--primary)', fontWeight: '700' }}>в—Џ Online Signal</div>
           </div>
         </div>
         <div className="nav-item" onClick={logout} style={{ color: 'rgba(255,60,60,0.7)', borderColor: 'transparent' }}>
-          <LogOut size={18} /><span>Выйти</span>
+          <LogOut size={18} /><span>Р’С‹Р№С‚Рё</span>
         </div>
       </div>
     </div>
@@ -125,7 +125,7 @@ const Header = () => {
               if (!prevReqsRef.current.includes(req.id)) {
                   LocalNotifications.schedule({
                       notifications: [{
-                          title: "Заявка в друзья", body: `${req.username} хочет добавить вас в друзья`, id: Math.floor(Math.random() * 100000), schedule: { at: new Date(Date.now() + 100) }
+                          title: "Р—Р°СЏРІРєР° РІ РґСЂСѓР·СЊСЏ", body: `${req.username} С…РѕС‡РµС‚ РґРѕР±Р°РІРёС‚СЊ РІР°СЃ РІ РґСЂСѓР·СЊСЏ`, id: Math.floor(Math.random() * 100000), schedule: { at: new Date(Date.now() + 100) }
                       }]
                   }).catch(console.error);
               }
@@ -135,10 +135,10 @@ const Header = () => {
       if (Capacitor.isNativePlatform() && prevNotifsRef.current.length > 0) {
           newNotifications.forEach((notif: any) => {
               if (!prevNotifsRef.current.includes(notif.id)) {
-                  let alertBody = notif.type === 'like' ? 'Оценил вашу Волну' : 'Оставил комментарий';
+                  let alertBody = notif.type === 'like' ? 'РћС†РµРЅРёР» РІР°С€Сѓ Р’РѕР»РЅСѓ' : 'РћСЃС‚Р°РІРёР» РєРѕРјРјРµРЅС‚Р°СЂРёР№';
                   LocalNotifications.schedule({
                       notifications: [{
-                          title: `Событие от @${notif.sender?.username || 'Друга'}`, body: alertBody, id: Math.floor(Math.random() * 100000), schedule: { at: new Date(Date.now() + 100) }
+                          title: `РЎРѕР±С‹С‚РёРµ РѕС‚ @${notif.sender?.username || 'Р”СЂСѓРіР°'}`, body: alertBody, id: Math.floor(Math.random() * 100000), schedule: { at: new Date(Date.now() + 100) }
                       }]
                   }).catch(console.error);
               }
@@ -203,7 +203,7 @@ const Header = () => {
         <SetiLogo size={32} />
         <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
           <Search size={15} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-          <input type="text" className="input-field" placeholder="Поиск в SETI..." style={{ paddingLeft: '40px', padding: '10px 16px 10px 40px', fontSize: '0.85rem' }} />
+          <input type="text" className="input-field" placeholder="РџРѕРёСЃРє РІ SETI..." style={{ paddingLeft: '40px', padding: '10px 16px 10px 40px', fontSize: '0.85rem' }} />
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginLeft: '16px' }}>
@@ -235,10 +235,10 @@ const Header = () => {
               
               {/* Friend Requests Section */}
               <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Users size={12} /> Заявки в друзья
+                <Users size={12} /> Р—Р°СЏРІРєРё РІ РґСЂСѓР·СЊСЏ
               </div>
               {requests.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '20px' }}>Нет новых заявок</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '20px' }}>РќРµС‚ РЅРѕРІС‹С… Р·Р°СЏРІРѕРє</p>
               ) : requests.map((r) => (
                 <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '10px' }}>
                   <img src={r.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + r.username} alt=""
@@ -255,10 +255,10 @@ const Header = () => {
 
               {/* Social Notifications Section */}
               <div style={{ fontSize: '0.7rem', fontWeight: '800', color: '#b400ff', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Zap size={12} /> Уведомления
+                <Zap size={12} /> РЈРІРµРґРѕРјР»РµРЅРёСЏ
               </div>
               {notifications.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Нет новых событий</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>РќРµС‚ РЅРѕРІС‹С… СЃРѕР±С‹С‚РёР№</p>
               ) : notifications.map((n) => (
                 <div 
                   key={n.id} 
@@ -283,7 +283,7 @@ const Header = () => {
                     style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(180,0,255,0.3)' }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.75rem', color: 'white' }}>
-                      <span style={{ fontWeight: '800' }}>@{n.sender?.username}</span> {n.type === 'like' ? 'оценил вашу Волну' : 'прокомментировал вашу Волну'}
+                      <span style={{ fontWeight: '800' }}>@{n.sender?.username}</span> {n.type === 'like' ? 'РѕС†РµРЅРёР» РІР°С€Сѓ Р’РѕР»РЅСѓ' : 'РїСЂРѕРєРѕРјРјРµРЅС‚РёСЂРѕРІР°Р» РІР°С€Сѓ Р’РѕР»РЅСѓ'}
                     </div>
                     {n.content && (
                       <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginTop: '4px', fontStyle: 'italic', borderLeft: '2px solid rgba(180,0,255,0.3)', paddingLeft: '8px' }}>
@@ -324,11 +324,11 @@ const MobileNav = () => {
   if (!user) return null;
 
   const navItems = [
-    { to: '/', icon: Home, label: 'Лента' },
-    { to: '/messages', icon: MessageSquare, label: 'Чаты' },
-    { to: '/waves', icon: Radio, label: 'Волны', isMiddle: true },
-    { to: '/friends', icon: Users, label: 'Друзья' },
-    { to: '#menu', icon: LayoutGrid, label: 'Меню', isMenuTrigger: true },
+    { to: '/', icon: Home, label: 'Р›РµРЅС‚Р°' },
+    { to: '/messages', icon: MessageSquare, label: 'Р§Р°С‚С‹' },
+    { to: '/waves', icon: Radio, label: 'Р’РѕР»РЅС‹', isMiddle: true },
+    { to: '/friends', icon: Users, label: 'Р”СЂСѓР·СЊСЏ' },
+    { to: '#menu', icon: LayoutGrid, label: 'РњРµРЅСЋ', isMenuTrigger: true },
   ];
 
   const handlePlusClick = (e: React.MouseEvent) => {
@@ -474,7 +474,9 @@ function AppInner() {
         </AnimatePresence>
       </div>
       <MusicPlayer />
-      <MobileNav />
+      <div className="mobile-only">
+        <MobileNav />
+      </div>
     </div>
   );
 }
