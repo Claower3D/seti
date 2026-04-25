@@ -4,16 +4,15 @@ import { Play, Pause, SkipBack, SkipForward, Minimize2, Repeat, Shuffle, X, Musi
 import { useMusic } from '../context/MusicContext';
 
 export const MusicPlayer = () => {
-  const { currentSong, isPlaying, togglePlay, currentTime, duration, seek, pauseSong } = useMusic();
+  const { currentSong, isPlaying, togglePlay, currentTime, duration, seek, pauseSong, error } = useMusic();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
-  // Auto-show player if a new song starts playing while hidden
   useEffect(() => {
-    if (currentSong && isPlaying) {
+    if (currentSong && (isPlaying || error)) {
       setIsVisible(true);
     }
-  }, [currentSong, isPlaying]);
+  }, [currentSong, isPlaying, error]);
 
   if (!currentSong) return null;
 
@@ -27,7 +26,6 @@ export const MusicPlayer = () => {
 
   return (
     <>
-      {/* Floating Restore Button (Visible only when player is hidden) */}
       <AnimatePresence>
         {!isVisible && (
           <motion.button
@@ -94,7 +92,20 @@ export const MusicPlayer = () => {
               flexDirection: 'column'
             }}
           >
-            {/* Compact View Content */}
+            {/* Error Banner */}
+            <AnimatePresence>
+              {error && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  style={{ background: 'rgba(255, 100, 100, 0.2)', color: '#ff6464', fontSize: '0.75rem', fontWeight: '800', textAlign: 'center', padding: '8px' }}
+                >
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {!isExpanded && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '0 20px', height: '100%', position: 'relative' }}>
                 <div 
@@ -129,14 +140,12 @@ export const MusicPlayer = () => {
                   </button>
                 </div>
                 
-                {/* Minimal progress line */}
                 <div style={{ position: 'absolute', bottom: '0', left: '0', right: '0', height: '2px', background: 'rgba(255,255,255,0.05)' }}>
                    <motion.div style={{ height: '100%', background: '#00f5ff', width: `${progress}%` }} />
                 </div>
               </div>
             )}
 
-            {/* Expanded View Content */}
             {isExpanded && (
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '40px 30px', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', alignItems: 'center' }}>

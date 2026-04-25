@@ -18,6 +18,16 @@ import (
 
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
+// Updated Piped instances for 2024-2025 stability
+var pipedMirrors = []string{
+	"https://pipedapi.kavin.rocks",
+	"https://pipedapi.tokhmi.pw",
+	"https://api.piped.victr.me",
+	"https://piped-api.garudalinux.org",
+	"https://pipedapi.re-glass.com",
+	"https://api-piped.mha.fi",
+}
+
 type ITunesResult struct {
 	Results []struct {
 		TrackName    string `json:"trackName"`
@@ -83,11 +93,11 @@ func SearchMusic(c *gin.Context) {
 		mu.Lock()
 		for i := 0; i < len(links) && i < len(titles); i++ {
 			artist := "Unknown Artist"
-			if i < len(artists) { artist = artists[i][1] }
+			if i < len(artists) { artist = strings.TrimSpace(artists[i][1]) }
 			streamURL := links[i][1]
 			if streamURL[0] == '/' { streamURL = "https://hitmo.me" + streamURL }
 			allSongs = append(allSongs, models.Song{
-				Title: titles[i][1], Artist: artist, URL: "/api/music/proxy/raw?url=" + url.QueryEscape(streamURL), ImageURL: "https://hitmo.me/static/img/no-cover.png", Source: "vk-style",
+				Title: strings.TrimSpace(titles[i][1]), Artist: artist, URL: "/api/music/proxy/raw?url=" + url.QueryEscape(streamURL), ImageURL: "https://hitmo.me/static/img/no-cover.png", Source: "vk-style",
 			})
 		}
 		mu.Unlock()
@@ -97,22 +107,28 @@ func SearchMusic(c *gin.Context) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		searchURL := fmt.Sprintf("https://api.piped.victr.me/search?q=%s&filter=music_songs", url.QueryEscape(query))
-		resp, err := http.Get(searchURL)
-		if err != nil { return }
-		defer resp.Body.Close()
-		var res struct { Items []struct { Title string; UploaderName string; Url string; Thumbnail string } }
-		if err := json.NewDecoder(resp.Body).Decode(&res); err == nil {
-			mu.Lock()
-			for _, item := range res.Items {
-				u, _ := url.Parse(item.Url)
-				id := u.Query().Get("v")
-				if id == "" { continue }
-				allSongs = append(allSongs, models.Song{
-					Title: item.Title, Artist: item.UploaderName, URL: fmt.Sprintf("/api/music/proxy/yt/%s", id), ImageURL: item.Thumbnail, Source: "youtube",
-				})
+		for _, mirror := range pipedMirrors {
+			searchURL := fmt.Sprintf("%s/search?q=%s&filter=music_songs", mirror, url.QueryEscape(query))
+			client := &http.Client{Timeout: 5 * time.Second}
+			resp, err := client.Get(searchURL)
+			if err != nil || resp.StatusCode != 200 { continue }
+			var res struct { Items []struct { Title string; UploaderName string; Url string; Thumbnail string } }
+			if err := json.NewDecoder(resp.Body).Decode(&res); err == nil && len(res.Items) > 0 {
+				mu.Lock()
+				for _, item := range res.Items {
+					u, _ := url.Parse(item.Url)
+					id := u.Query().Get("v")
+					if id == "" { id = strings.TrimPrefix(item.Url, "/watch?v=") }
+					if id == "" { continue }
+					allSongs = append(allSongs, models.Song{
+						Title: item.Title, Artist: item.UploaderName, URL: fmt.Sprintf("/api/music/proxy/yt/%s", id), ImageURL: item.Thumbnail, Source: "youtube",
+					})
+				}
+				mu.Unlock()
+				resp.Body.Close()
+				break
 			}
-			mu.Unlock()
+			resp.Body.Close()
 		}
 	}()
 
@@ -128,51 +144,52 @@ func ProxyStream(c *gin.Context) {
 		finalStreamURL = c.Query("url")
 	} else if typeStr == "yt" {
 		id := c.Param("id")
-		instances := []string{"https://api.piped.victr.me", "https://pipedapi.tokhmi.pw", "https://pipedapi.kavin.rocks"}
-		for _, inst := range instances {
-			client := &http.Client{Timeout: 6 * time.Second}
+		resolved := false
+		for _, inst := range pipedMirrors {
+			client := &http.Client{Timeout: 5 * time.Second}
 			resp, err := client.Get(fmt.Sprintf("%s/streams/%s", inst, id))
 			if err != nil || resp.StatusCode != 200 { continue }
 			var res struct { AudioStreams []struct { URL string `json:"url"` } `json:"audioStreams"` }
 			if err := json.NewDecoder(resp.Body).Decode(&res); err == nil && len(res.AudioStreams) > 0 {
 				finalStreamURL = res.AudioStreams[0].URL
 				resp.Body.Close()
+				resolved = true
 				break
 			}
 			resp.Body.Close()
 		}
+		if !resolved {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Could not resolve stream"})
+			return
+		}
 	}
 
 	if finalStreamURL == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Stream not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Empty URL"})
 		return
 	}
 
-	client := &http.Client{Timeout: 60 * time.Minute}
+	client := &http.Client{Timeout: 30 * time.Minute}
 	req, _ := http.NewRequest("GET", finalStreamURL, nil)
 	req.Header.Set("User-Agent", userAgent)
-	
-	// Crucial for bypass: Set referer to the source domain
 	if strings.Contains(finalStreamURL, "hitmo.me") {
 		req.Header.Set("Referer", "https://hitmo.me/")
 	}
-
 	if r := c.GetHeader("Range"); r != "" { req.Header.Set("Range", r) }
 
 	resp, err := client.Do(req)
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Stream failed"})
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Failed"})
 		return
 	}
 	defer resp.Body.Close()
 
-	// FORCED CLEAN HEADERS: Only send what's needed for playback
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-	c.Writer.Header().Set("Content-Type", "audio/mpeg") // Force audio type
-	
+	c.Writer.Header().Set("Accept-Ranges", "bytes")
+	ct := resp.Header.Get("Content-Type")
+	if ct == "" || ct == "application/octet-stream" { ct = "audio/mpeg" }
+	c.Writer.Header().Set("Content-Type", ct)
 	if h := resp.Header.Get("Content-Length"); h != "" { c.Writer.Header().Set("Content-Length", h) }
 	if h := resp.Header.Get("Content-Range"); h != "" { c.Writer.Header().Set("Content-Range", h) }
-	if h := resp.Header.Get("Accept-Ranges"); h != "" { c.Writer.Header().Set("Accept-Ranges", h) }
 
 	c.Writer.WriteHeader(resp.StatusCode)
 	_, _ = io.Copy(c.Writer, resp.Body)
