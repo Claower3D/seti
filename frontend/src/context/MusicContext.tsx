@@ -42,7 +42,7 @@ export const MusicProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null);
     };
     const handleEnded = () => setIsPlaying(false);
-    const handleError = (e: any) => {
+    const handleError = () => {
       console.error('Audio playback error:', audio.error);
       setError('Ошибка воспроизведения. Попробуйте другой трек.');
       setIsPlaying(false);
