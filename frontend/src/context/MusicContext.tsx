@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+﻿import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 
 interface Song {
   id?: number;
@@ -44,7 +44,7 @@ export const MusicProvider = ({ children }: { children: React.ReactNode }) => {
     const handleEnded = () => setIsPlaying(false);
     const handleError = () => {
       console.error('Audio playback error:', audio.error);
-      setError('Ошибка воспроизведения. Попробуйте другой трек.');
+      setError('РћС€РёР±РєР° РІРѕСЃРїСЂРѕРёР·РІРµРґРµРЅРёСЏ. РџРѕРїСЂРѕР±СѓР№С‚Рµ РґСЂСѓРіРѕР№ С‚СЂРµРє.');
       setIsPlaying(false);
     };
 
@@ -90,7 +90,7 @@ export const MusicProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err: any) {
       console.error('Playback failed', err);
       if (err.name !== 'AbortError') {
-        setError('Не удалось запустить воспроизведение');
+        setError('РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСѓСЃС‚РёС‚СЊ РІРѕСЃРїСЂРѕРёР·РІРµРґРµРЅРёРµ');
         setIsPlaying(false);
       }
     }
@@ -126,3 +126,4 @@ export const useMusic = () => {
   if (!context) throw new Error('useMusic must be used within a MusicProvider');
   return context;
 };
+
