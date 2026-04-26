@@ -40,7 +40,26 @@ app.whenReady().then(() => {
       filePath = path.join(__dirname, 'app', 'index.html');
     }
 
-    return net.fetch(url.pathToFileURL(filePath).toString());
+    const ext = path.extname(filePath);
+    let mimeType = 'text/plain; charset=utf-8';
+    if (ext === '.html') mimeType = 'text/html; charset=utf-8';
+    else if (ext === '.js' || ext === '.mjs') mimeType = 'application/javascript; charset=utf-8';
+    else if (ext === '.css') mimeType = 'text/css; charset=utf-8';
+    else if (ext === '.json') mimeType = 'application/json; charset=utf-8';
+    else if (ext === '.svg') mimeType = 'image/svg+xml';
+    else if (ext === '.png') mimeType = 'image/png';
+    else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+    else if (ext === '.woff2') mimeType = 'font/woff2';
+    else if (ext === '.woff') mimeType = 'font/woff';
+
+    try {
+      const data = fs.readFileSync(filePath);
+      return new Response(data, {
+        headers: { 'Content-Type': mimeType }
+      });
+    } catch (err) {
+      return new Response('Not Found', { status: 404 });
+    }
   });
 
   createWindow();
