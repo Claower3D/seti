@@ -31,7 +31,7 @@ const isTokenExpired = (token: string): boolean => {
     // exp is in seconds, Date.now() in ms
     return payload.exp * 1000 < Date.now();
   } catch {
-    return true; // invalid token format → treat as expired
+    return true; // invalid token format â†’ treat as expired
   }
 };
 
@@ -55,20 +55,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const init = async () => {
       const storedToken = localStorage.getItem('token');
 
-      // No token → not logged in
+      // No token â†’ not logged in
       if (!storedToken) {
         setLoading(false);
         return;
       }
 
-      // Token is expired → clear it
+      // Token is expired â†’ clear it
       if (isTokenExpired(storedToken)) {
         localStorage.removeItem('token');
         setLoading(false);
         return;
       }
 
-      // Token looks valid → verify with server
+      // Token looks valid â†’ verify with server
       try {
         const res = await api.get('/me', {
           headers: { Authorization: `Bearer ${storedToken}` }
