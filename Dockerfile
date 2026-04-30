@@ -7,7 +7,7 @@ COPY frontend/ ./
 RUN NODE_OPTIONS="--max-old-space-size=2048" npm run build
 
 # Build backend
-FROM golang:1.26-alpine AS backend-builder
+FROM golang:1.25-alpine AS backend-builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
@@ -16,7 +16,8 @@ RUN apk add --no-cache gcc musl-dev && CGO_ENABLED=1 go mod tidy && CGO_ENABLED=
 
 # Final image
 FROM alpine:latest
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates python3 py3-pip ffmpeg
+RUN pip3 install yt-dlp --break-system-packages
 RUN mkdir -p uploads
 COPY --from=backend-builder /app/main .
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
