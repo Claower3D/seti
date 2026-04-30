@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"social-network/internal/db"
 	"social-network/internal/models"
 	"strings"
@@ -17,6 +16,7 @@ import (
 )
 
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+const scClientID = "1Gbi6DBGBMULQh8MuhNvl1HzL9AiX2Pa"
 
 var (
 	streamCache   = map[string]cachedStream{}
@@ -28,38 +28,43 @@ type cachedStream struct {
 	expiresAt time.Time
 }
 
-func searchYouTube(query string) []models.Song {
-	apiKey := os.Getenv("YOUTUBE_API_KEY")
-	if apiKey == "" {
-		return nil
-	}
-
+func searchSoundCloud(query string) []models.Song {
 	searchURL := fmt.Sprintf(
-		"https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=15&q=%s&key=%s",
-		url.QueryEscape(query), apiKey,
+		"https://api-v2.soundcloud.com/search/tracks?q=%s&client_id=%s&limit=15&offset=0",
+		url.QueryEscape(query), scClientID,
 	)
 
-	resp, err := http.Get(searchURL)
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, _ := http.NewRequest("GET", searchURL, nil)
+	req.Header.Set("User-Agent", userAgent)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil
 	}
 	defer resp.Body.Close()
 
 	var result struct {
-		Items []struct {
-			ID struct {
-				VideoID string `json:"videoId"`
-			} `json:"id"`
-			Snippet struct {
-				Title        string `json:"title"`
-				ChannelTitle string `json:"channelTitle"`
-				Thumbnails   struct {
-					High struct {
-						URL string `json:"url"`
-					} `json:"high"`
-				} `json:"thumbnails"`
-			} `json:"snippet"`
-		} `json:"items"`
+		Collection []struct {
+			ID         int    `json:"id"`
+			Title      string `json:"title"`
+			Duration   int    `json:"duration"`
+			ArtworkURL string `json:"artwork_url"`
+			StreamURL  string `json:"stream_url"`
+			Permalink  string `json:"permalink_url"`
+			User       struct {
+				Username string `json:"username"`
+			} `json:"user"`
+			Media struct {
+				Transcodings []struct {
+					URL    string `json:"url"`
+					Format struct {
+						Protocol string `json:"protocol"`
+						MimeType string `json:"mime_type"`
+					} `json:"format"`
+				} `json:"transcodings"`
+			} `json:"media"`
+		} `json:"collection"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -67,22 +72,29 @@ func searchYouTube(query string) []models.Song {
 	}
 
 	var songs []models.Song
-	for _, item := range result.Items {
-		if item.ID.VideoID == "" {
+	for _, item := range result.Collection {
+		if item.ID == 0 {
 			continue
 		}
+		artwork := item.ArtworkURL
+		if artwork == "" {
+			artwork = "https://a-v2.sndcdn.com/assets/images/sc-icons/fluid-b4e7a64b8b.png"
+		} else {
+			artwork = strings.Replace(artwork, "large", "t500x500", 1)
+		}
 		songs = append(songs, models.Song{
-			Title:    item.Snippet.Title,
-			Artist:   item.Snippet.ChannelTitle,
-			URL:      "/api/music/proxy/yt/" + item.ID.VideoID,
-			ImageURL: item.Snippet.Thumbnails.High.URL,
-			Source:   "youtube",
+			Title:    item.Title,
+			Artist:   item.User.Username,
+			URL:      fmt.Sprintf("/api/music/proxy/sc/%d", item.ID),
+			ImageURL: artwork,
+			Source:   "soundcloud",
+			Duration: item.Duration / 1000,
 		})
 	}
 	return songs
 }
 
-func resolveYTStream(id string) (string, error) {
+func resolveSCStream(id string) (string, error) {
 	streamCacheMu.RLock()
 	if cached, ok := streamCache[id]; ok && time.Now().Before(cached.expiresAt) {
 		streamCacheMu.RUnlock()
@@ -90,48 +102,77 @@ func resolveYTStream(id string) (string, error) {
 	}
 	streamCacheMu.RUnlock()
 
-	// Список публичных Invidious инстансов
-	instances := []string{
-		"https://invidious.nerdvpn.de",
-		"https://invidious.privacydev.net",
-		"https://inv.nadeko.net",
-		"https://invidious.io.lol",
+	// Получаем информацию о треке
+	trackURL := fmt.Sprintf("https://api-v2.soundcloud.com/tracks/%s?client_id=%s", id, scClientID)
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, _ := http.NewRequest("GET", trackURL, nil)
+	req.Header.Set("User-Agent", userAgent)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("track fetch failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var track struct {
+		Media struct {
+			Transcodings []struct {
+				URL    string `json:"url"`
+				Format struct {
+					Protocol string `json:"protocol"`
+					MimeType string `json:"mime_type"`
+				} `json:"format"`
+			} `json:"transcodings"`
+		} `json:"media"`
 	}
 
-	for _, instance := range instances {
-		apiURL := fmt.Sprintf("%s/api/v1/videos/%s", instance, id)
-		client := &http.Client{Timeout: 10 * time.Second}
-		resp, err := client.Get(apiURL)
-		if err != nil {
-			continue
-		}
-		defer resp.Body.Close()
-
-		var data struct {
-			AdaptiveFormats []struct {
-				URL     string `json:"url"`
-				Type    string `json:"type"`
-				Bitrate string `json:"bitrate"`
-			} `json:"adaptiveFormats"`
-		}
-		if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-			continue
-		}
-
-		for _, f := range data.AdaptiveFormats {
-			if strings.Contains(f.Type, "audio") {
-				streamCacheMu.Lock()
-				streamCache[id] = cachedStream{
-					url:       f.URL,
-					expiresAt: time.Now().Add(2 * time.Hour),
-				}
-				streamCacheMu.Unlock()
-				return f.URL, nil
-			}
-		}
+	if err := json.NewDecoder(resp.Body).Decode(&track); err != nil {
+		return "", fmt.Errorf("decode failed: %w", err)
 	}
 
-	return "", fmt.Errorf("all instances failed")
+	// Ищем progressive (прямой mp3) стрим
+	var streamEndpoint string
+	for _, t := range track.Media.Transcodings {
+		if t.Format.Protocol == "progressive" {
+			streamEndpoint = t.URL
+			break
+		}
+	}
+	// Fallback на первый доступный
+	if streamEndpoint == "" && len(track.Media.Transcodings) > 0 {
+		streamEndpoint = track.Media.Transcodings[0].URL
+	}
+	if streamEndpoint == "" {
+		return "", fmt.Errorf("no transcodings found")
+	}
+
+	// Получаем финальный URL стрима
+	streamReq := fmt.Sprintf("%s?client_id=%s", streamEndpoint, scClientID)
+	resp2, err := client.Get(streamReq)
+	if err != nil {
+		return "", fmt.Errorf("stream resolve failed: %w", err)
+	}
+	defer resp2.Body.Close()
+
+	var streamData struct {
+		URL string `json:"url"`
+	}
+	if err := json.NewDecoder(resp2.Body).Decode(&streamData); err != nil {
+		return "", fmt.Errorf("stream decode failed: %w", err)
+	}
+
+	if streamData.URL == "" {
+		return "", fmt.Errorf("empty stream url")
+	}
+
+	streamCacheMu.Lock()
+	streamCache[id] = cachedStream{
+		url:       streamData.URL,
+		expiresAt: time.Now().Add(1 * time.Hour),
+	}
+	streamCacheMu.Unlock()
+
+	return streamData.URL, nil
 }
 
 func SearchMusic(c *gin.Context) {
@@ -145,11 +186,11 @@ func SearchMusic(c *gin.Context) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	// YouTube — основной источник
+	// SoundCloud — основной источник
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		songs := searchYouTube(query)
+		songs := searchSoundCloud(query)
 		mu.Lock()
 		allSongs = append(allSongs, songs...)
 		mu.Unlock()
@@ -204,16 +245,16 @@ func ProxyStream(c *gin.Context) {
 	switch typeStr {
 	case "raw":
 		finalStreamURL = c.Query("url")
-	case "yt":
+	case "sc":
 		id := c.Param("id")
 		if id == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing video ID"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing track ID"})
 			return
 		}
 		var err error
-		finalStreamURL, err = resolveYTStream(id)
+		finalStreamURL, err = resolveSCStream(id)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Could not resolve stream"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Could not resolve stream: " + err.Error()})
 			return
 		}
 	default:
