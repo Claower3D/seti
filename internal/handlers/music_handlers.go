@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"social-network/internal/db"
 	"social-network/internal/models"
 	"strings"
@@ -18,7 +17,6 @@ import (
 )
 
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-const ytUserAgent = "com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X)"
 
 var (
 	streamCache   = map[string]cachedStream{}
@@ -92,32 +90,48 @@ func resolveYTStream(id string) (string, error) {
 	}
 	streamCacheMu.RUnlock()
 
-	cmd := exec.Command("yt-dlp",
-		"https://www.youtube.com/watch?v="+id,
-		"-f", "bestaudio[ext=m4a]/bestaudio/best",
-		"--get-url",
-		"--no-warnings",
-		"-q",
-		"--extractor-args", "youtube:player_client=ios",
-		"--user-agent", ytUserAgent,
-	)
-	out, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("yt-dlp failed: %w", err)
-	}
-	streamURL := strings.TrimSpace(string(out))
-	if streamURL == "" {
-		return "", fmt.Errorf("empty stream url")
+	// Список публичных Invidious инстансов
+	instances := []string{
+		"https://invidious.nerdvpn.de",
+		"https://invidious.privacydev.net",
+		"https://inv.nadeko.net",
+		"https://invidious.io.lol",
 	}
 
-	streamCacheMu.Lock()
-	streamCache[id] = cachedStream{
-		url:       streamURL,
-		expiresAt: time.Now().Add(4 * time.Hour),
-	}
-	streamCacheMu.Unlock()
+	for _, instance := range instances {
+		apiURL := fmt.Sprintf("%s/api/v1/videos/%s", instance, id)
+		client := &http.Client{Timeout: 10 * time.Second}
+		resp, err := client.Get(apiURL)
+		if err != nil {
+			continue
+		}
+		defer resp.Body.Close()
 
-	return streamURL, nil
+		var data struct {
+			AdaptiveFormats []struct {
+				URL     string `json:"url"`
+				Type    string `json:"type"`
+				Bitrate string `json:"bitrate"`
+			} `json:"adaptiveFormats"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+			continue
+		}
+
+		for _, f := range data.AdaptiveFormats {
+			if strings.Contains(f.Type, "audio") {
+				streamCacheMu.Lock()
+				streamCache[id] = cachedStream{
+					url:       f.URL,
+					expiresAt: time.Now().Add(2 * time.Hour),
+				}
+				streamCacheMu.Unlock()
+				return f.URL, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("all instances failed")
 }
 
 func SearchMusic(c *gin.Context) {
