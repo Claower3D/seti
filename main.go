@@ -37,6 +37,10 @@ func main() {
 		api.POST("/register", handlers.Register)
 		api.POST("/login", handlers.Login)
 
+		// Music proxy — без авторизации (браузер запрашивает аудио напрямую)
+		api.GET("/music/proxy/:type", handlers.ProxyStream)
+		api.GET("/music/proxy/:type/:id", handlers.ProxyStream)
+
 		protected := api.Group("")
 		protected.Use(middleware.AuthMiddleware())
 		{
@@ -96,13 +100,11 @@ func main() {
 			protected.GET("/notifications", handlers.GetNotifications)
 			protected.POST("/notifications/:id/read", handlers.MarkNotificationRead)
 
-			// Music
+			// Music (защищённые маршруты)
 			protected.GET("/music/search", handlers.SearchMusic)
 			protected.GET("/music/my", handlers.GetMyMusic)
 			protected.POST("/music/my", handlers.AddToMyMusic)
 			protected.DELETE("/music/my/:id", handlers.RemoveFromMyMusic)
-			protected.GET("/music/proxy/:type", handlers.ProxyStream)
-			protected.GET("/music/proxy/:type/:id", handlers.ProxyStream)
 		}
 	}
 
