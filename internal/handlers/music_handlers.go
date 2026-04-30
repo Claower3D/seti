@@ -18,6 +18,7 @@ import (
 )
 
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+const ytUserAgent = "com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X)"
 
 var (
 	streamCache   = map[string]cachedStream{}
@@ -97,6 +98,8 @@ func resolveYTStream(id string) (string, error) {
 		"--get-url",
 		"--no-warnings",
 		"-q",
+		"--extractor-args", "youtube:player_client=ios",
+		"--user-agent", ytUserAgent,
 	)
 	out, err := cmd.Output()
 	if err != nil {
