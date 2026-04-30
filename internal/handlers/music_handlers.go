@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"social-network/internal/db"
 	"social-network/internal/models"
@@ -28,49 +29,55 @@ type cachedStream struct {
 	expiresAt time.Time
 }
 
-type ITunesResult struct {
-	Results []struct {
-		TrackName     string `json:"trackName"`
-		ArtistName    string `json:"artistName"`
-		PreviewUrl    string `json:"previewUrl"`
-		ArtworkUrl100 string `json:"artworkUrl100"`
-	} `json:"results"`
-}
-
 func searchYouTube(query string) []models.Song {
-	cmd := exec.Command("yt-dlp",
-		"ytsearch15:"+query,
-		"--dump-json",
-		"--flat-playlist",
-		"--no-warnings",
-		"-q",
+	apiKey := os.Getenv("YOUTUBE_API_KEY")
+	if apiKey == "" {
+		return nil
+	}
+
+	searchURL := fmt.Sprintf(
+		"https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=15&q=%s&key=%s",
+		url.QueryEscape(query), apiKey,
 	)
-	out, err := cmd.Output()
+
+	resp, err := http.Get(searchURL)
 	if err != nil {
 		return nil
 	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Items []struct {
+			ID struct {
+				VideoID string `json:"videoId"`
+			} `json:"id"`
+			Snippet struct {
+				Title        string `json:"title"`
+				ChannelTitle string `json:"channelTitle"`
+				Thumbnails   struct {
+					High struct {
+						URL string `json:"url"`
+					} `json:"high"`
+				} `json:"thumbnails"`
+			} `json:"snippet"`
+		} `json:"items"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil
+	}
+
 	var songs []models.Song
-	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-		if line == "" {
-			continue
-		}
-		var info struct {
-			ID        string `json:"id"`
-			Title     string `json:"title"`
-			Uploader  string `json:"uploader"`
-			Duration  int    `json:"duration"`
-			Thumbnail string `json:"thumbnail"`
-		}
-		if err := json.Unmarshal([]byte(line), &info); err != nil || info.ID == "" {
+	for _, item := range result.Items {
+		if item.ID.VideoID == "" {
 			continue
 		}
 		songs = append(songs, models.Song{
-			Title:    info.Title,
-			Artist:   info.Uploader,
-			URL:      "/api/music/proxy/yt/" + info.ID,
-			ImageURL: info.Thumbnail,
+			Title:    item.Snippet.Title,
+			Artist:   item.Snippet.ChannelTitle,
+			URL:      "/api/music/proxy/yt/" + item.ID.VideoID,
+			ImageURL: item.Snippet.Thumbnails.High.URL,
 			Source:   "youtube",
-			Duration: info.Duration,
 		})
 	}
 	return songs
@@ -121,7 +128,7 @@ func SearchMusic(c *gin.Context) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	// YouTube — основной источник, полные треки
+	// YouTube — основной источник
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
