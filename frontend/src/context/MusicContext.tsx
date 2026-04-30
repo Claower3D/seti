@@ -33,7 +33,6 @@ export const MusicProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const audio = new Audio();
-    audio.crossOrigin = "anonymous"; // Essential for some browsers and canvas visualizers
     audioRef.current = audio;
 
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
@@ -44,7 +43,7 @@ export const MusicProvider = ({ children }: { children: React.ReactNode }) => {
     const handleEnded = () => setIsPlaying(false);
     const handleError = () => {
       console.error('Audio playback error:', audio.error);
-      setError('РћС€РёР±РєР° РІРѕСЃРїСЂРѕРёР·РІРµРґРµРЅРёСЏ. РџРѕРїСЂРѕР±СѓР№С‚Рµ РґСЂСѓРіРѕР№ С‚СЂРµРє.');
+      setError('Ошибка воспроизведения. Попробуйте другой трек.');
       setIsPlaying(false);
     };
 
@@ -65,32 +64,31 @@ export const MusicProvider = ({ children }: { children: React.ReactNode }) => {
 
   const playSong = async (song: Song) => {
     if (!audioRef.current) return;
-
     setError(null);
+
     let targetUrl = song.url;
     if (targetUrl.startsWith('/api')) {
-      const baseUrl = import.meta.env.VITE_API_URL || '';
-      // Ensure the URL is absolute and doesn't have double slashes if baseUrl ends with /
-      const cleanBase = baseUrl.replace(/\/$/, '');
-      targetUrl = cleanBase + targetUrl;
+      targetUrl = window.location.origin + targetUrl;
     }
 
     try {
       if (currentSong?.url === song.url) {
         if (audioRef.current.paused) {
           await audioRef.current.play();
+          setIsPlaying(true);
         }
-      } else {
-        audioRef.current.src = targetUrl;
-        audioRef.current.load(); // Force reset
-        await audioRef.current.play();
-        setCurrentSong(song);
+        return;
       }
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      setCurrentSong(song);
+      audioRef.current.src = targetUrl;
+      audioRef.current.load();
+      await audioRef.current.play();
       setIsPlaying(true);
     } catch (err: any) {
-      console.error('Playback failed', err);
       if (err.name !== 'AbortError') {
-        setError('РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСѓСЃС‚РёС‚СЊ РІРѕСЃРїСЂРѕРёР·РІРµРґРµРЅРёРµ');
+        setError('Не удалось запустить воспроизведение');
         setIsPlaying(false);
       }
     }
@@ -126,4 +124,3 @@ export const useMusic = () => {
   if (!context) throw new Error('useMusic must be used within a MusicProvider');
   return context;
 };
-
