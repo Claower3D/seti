@@ -1,23 +1,22 @@
-# Binaries for programs and plugins
+﻿# Binaries
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
 bin/
+main
+main.exe
 
-# Dependency directories
+# Dependencies
 node_modules/
 vendor/
 
-# OS generated files
+# OS
 .DS_Store
-.DS_Store?
-ehthumbs.db
-Icon?
 Thumbs.db
 
-# Environments
+# Env
 .env
 .env.local
 
@@ -25,16 +24,18 @@ Thumbs.db
 *.db
 *.db-journal
 
-# Build directories
+# Build artifacts
 frontend/dist/
 dist/
+windows/app/
 
-# IDE files
+# Secrets
+internal/firebase-key.json
+
+# APK (храни на GitHub Releases, не в репо)
+frontend/public/SETI.apk
+
+# IDE
 .vscode/
 .idea/
 *.swp
-*.swo
-internal/firebase-key.json
-
-main
-main.exe
