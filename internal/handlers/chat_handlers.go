@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
 	"social-network/internal/db"
 	"social-network/internal/models"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -17,7 +17,7 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true 
+		return true
 	},
 }
 
@@ -46,7 +46,7 @@ func WebSocketHandler(c *gin.Context) {
 	}
 
 	client := &Client{ID: userID, Conn: conn}
-	
+
 	mu.Lock()
 	clients[userID] = client
 	mu.Unlock()
@@ -65,15 +65,15 @@ func WebSocketHandler(c *gin.Context) {
 		}
 
 		var msgData struct {
-			Action     string `json:"action"`
-			MessageID  uint   `json:"messageId"`
-			ReceiverID uint   `json:"receiverId"`
-			Content    string `json:"content"`
-			FileURL    string `json:"fileUrl"`
-			FileName   string `json:"fileName"`
-			FileType   string `json:"fileType"`
+			Action        string `json:"action"`
+			MessageID     uint   `json:"messageId"`
+			ReceiverID    uint   `json:"receiverId"`
+			Content       string `json:"content"`
+			FileURL       string `json:"fileUrl"`
+			FileName      string `json:"fileName"`
+			FileType      string `json:"fileType"`
 			ReplyStoryURL string `json:"replyStoryUrl"`
-			GroupID    uint   `json:"groupId"`
+			GroupID       uint   `json:"groupId"`
 		}
 
 		if err := json.Unmarshal(message, &msgData); err != nil {
@@ -85,9 +85,9 @@ func WebSocketHandler(c *gin.Context) {
 		}
 
 		// ─── WebRTC Signaling Relay ───
-		if msgData.Action == "call_offer" || msgData.Action == "call_answer" || 
-		   msgData.Action == "call_ice" || msgData.Action == "call_end" {
-			
+		if msgData.Action == "call_offer" || msgData.Action == "call_answer" ||
+			msgData.Action == "call_ice" || msgData.Action == "call_end" {
+
 			var signalingData map[string]interface{}
 			json.Unmarshal(message, &signalingData)
 			signalingData["senderId"] = userID
@@ -120,12 +120,12 @@ func WebSocketHandler(c *gin.Context) {
 			db.DB.Model(&models.Message{}).
 				Where("receiver_id = ? AND sender_id = ? AND is_read = ?", userID, msgData.ReceiverID, false).
 				Update("is_read", true)
-			
+
 			// Broadcast read receipt to the original sender
 			mu.Lock()
 			if sender, ok := clients[msgData.ReceiverID]; ok {
 				sender.Conn.WriteJSON(map[string]interface{}{
-					"action": "read_receipt",
+					"action":   "read_receipt",
 					"senderId": userID,
 				})
 			}
@@ -133,13 +133,13 @@ func WebSocketHandler(c *gin.Context) {
 			continue
 		} else {
 			chatMsg = models.Message{
-				SenderID:   userID,
-				ReceiverID: msgData.ReceiverID,
-				GroupID:    nil,
-				Content:    msgData.Content,
-				FileURL:    msgData.FileURL,
-				FileName:   msgData.FileName,
-				FileType:   msgData.FileType,
+				SenderID:      userID,
+				ReceiverID:    msgData.ReceiverID,
+				GroupID:       nil,
+				Content:       msgData.Content,
+				FileURL:       msgData.FileURL,
+				FileName:      msgData.FileName,
+				FileType:      msgData.FileType,
 				ReplyStoryURL: msgData.ReplyStoryURL,
 			}
 			if msgData.GroupID != 0 {
@@ -148,14 +148,14 @@ func WebSocketHandler(c *gin.Context) {
 				chatMsg.ReceiverID = 0 // In group chats, we use GroupID
 			}
 			db.DB.Create(&chatMsg)
-                        // Send push notification
-                        var receiver models.User
-                        db.DB.First(&receiver, msgData.ReceiverID)
-                        if receiver.FCMToken != "" {
-                                var sender models.User
-                                db.DB.First(&sender, userID)
-                                go SendPushNotification(receiver.FCMToken, sender.Username, msgData.Content)
-                        }
+			// Send push notification
+			var receiver models.User
+			db.DB.First(&receiver, msgData.ReceiverID)
+			if receiver.FCMToken != "" {
+				var sender models.User
+				db.DB.First(&sender, userID)
+				go SendPushNotification(receiver.FCMToken, sender.Username, msgData.Content)
+			}
 			// Preload sender info for notifications
 			db.DB.Preload("Sender").First(&chatMsg, chatMsg.ID)
 
@@ -169,7 +169,7 @@ func WebSocketHandler(c *gin.Context) {
 					Update("is_archived", false)
 			} else {
 				db.DB.Model(&models.Friendship{}).
-					Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)", 
+					Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)",
 						userID, chatMsg.ReceiverID, chatMsg.ReceiverID, userID).
 					Updates(map[string]interface{}{
 						"is_archived_by_sender":   false,
@@ -215,7 +215,7 @@ func GetMessages(c *gin.Context) {
 		Update("is_read", true)
 
 	messages := []models.Message{}
-	db.DB.Where("(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)", 
+	db.DB.Where("(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)",
 		userID, otherUserID, otherUserID, userID).
 		Order("created_at asc").
 		Find(&messages)
@@ -304,7 +304,7 @@ func ArchiveConversation(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to archive"})
 			return
 		}
-		
+
 		db.DB.Model(&models.Friendship{}).
 			Where("user_id = ? AND friend_id = ?", input.ID, userID).
 			Update("is_archived_by_receiver", input.Archived)
@@ -319,4 +319,12 @@ func ArchiveConversation(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Action successful"})
+}
+
+func SendWSNotification(userID uint, payload map[string]interface{}) {
+	mu.Lock()
+	defer mu.Unlock()
+	if client, ok := clients[userID]; ok {
+		client.Conn.WriteJSON(payload)
+	}
 }

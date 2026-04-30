@@ -47,9 +47,7 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
-	// Preload user for the response
 	db.DB.Preload("User").First(&post, post.ID)
-
 	c.JSON(http.StatusCreated, post)
 }
 
@@ -82,7 +80,6 @@ func UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	// Update fields
 	if input.Username != "" && input.Username != user.Username {
 		var count int64
 		db.DB.Model(&models.User{}).Where("username = ? AND id != ?", input.Username, userID).Count(&count)
@@ -140,20 +137,17 @@ func UpdateSecurity(c *gin.Context) {
 	var user models.User
 	db.DB.First(&user, userID)
 
-	// Verify current password
 	if !middleware.CheckPasswordHash(input.CurrentPassword, user.Password) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Текущий пароль указан неверно"})
 		return
 	}
 
-	// Hash and save new password
 	hashed, _ := middleware.HashPassword(input.NewPassword)
 	user.Password = hashed
 	db.DB.Save(&user)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Пароль успешно изменен"})
 }
-
 
 func GetUserProfile(c *gin.Context) {
 	username := c.Param("username")
@@ -165,7 +159,6 @@ func GetUserProfile(c *gin.Context) {
 		return
 	}
 
-	// Calculate counts
 	db.DB.Model(&models.Friendship{}).Where("status = 'accepted' AND (user_id = ? OR friend_id = ?)", user.ID, user.ID).Count(&user.FriendsCount)
 	db.DB.Model(&models.Friendship{}).Where("status = 'pending' AND friend_id = ?", user.ID).Count(&user.FollowersCount)
 	db.DB.Model(&models.Friendship{}).Where("status = 'pending' AND user_id = ?", user.ID).Count(&user.FollowingCount)
@@ -232,7 +225,6 @@ func GetUserFollowing(c *gin.Context) {
 	c.JSON(http.StatusOK, following)
 }
 
-
 func SearchUsers(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -250,13 +242,13 @@ func SearchUsers(c *gin.Context) {
 func DeletePost(c *gin.Context) {
 	postId := c.Param("id")
 	userID, _ := c.Get("userId")
-	
+
 	var post models.Post
 	if err := db.DB.Where("id = ? AND user_id = ?", postId, userID).First(&post).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found or unauthorized"})
 		return
 	}
-	
+
 	db.DB.Delete(&post)
 	c.JSON(http.StatusOK, gin.H{"message": "Post deleted"})
 }
@@ -268,19 +260,19 @@ type UpdatePostInput struct {
 func UpdatePost(c *gin.Context) {
 	postId := c.Param("id")
 	userID, _ := c.Get("userId")
-	
+
 	var input UpdatePostInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	var post models.Post
 	if err := db.DB.Where("id = ? AND user_id = ?", postId, userID).First(&post).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found or unauthorized"})
 		return
 	}
-	
+
 	post.Content = input.Content
 	db.DB.Save(&post)
 	c.JSON(http.StatusOK, post)
@@ -292,24 +284,26 @@ func LikePost(c *gin.Context) {
 
 	var like models.PostLike
 	if err := db.DB.Where("user_id = ? AND post_id = ?", userID, postID).First(&like).Error; err == nil {
-		// Unlike
 		db.DB.Delete(&like)
 		db.DB.Model(&models.Post{}).Where("id = ?", postID).UpdateColumn("likes_count", db.DB.Raw("likes_count - 1"))
 	} else {
-		// Like
 		var post models.Post
 		if err := db.DB.First(&post, postID).Error; err == nil {
 			like = models.PostLike{UserID: userID.(uint), PostID: post.ID}
 			db.DB.Create(&like)
 			db.DB.Model(&models.Post{}).Where("id = ?", postID).UpdateColumn("likes_count", db.DB.Raw("likes_count + 1"))
 
-			// Notify owner
 			if post.UserID != userID.(uint) {
-				db.DB.Create(&models.Notification{
+				notif := models.Notification{
 					ReceiverID: post.UserID,
 					SenderID:   userID.(uint),
 					Type:       "like",
 					PostID:     post.ID,
+				}
+				db.DB.Create(&notif)
+				go SendWSNotification(post.UserID, map[string]interface{}{
+					"action": "notification",
+					"type":   "like",
 				})
 			}
 		}
@@ -354,17 +348,19 @@ func CreatePostComment(c *gin.Context) {
 		return
 	}
 
-	// Update comments count (if we add the field to model later, for now we can just count)
-	
-	// Notify owner
 	var post models.Post
 	if err := db.DB.First(&post, postID).Error; err == nil && post.UserID != userID.(uint) {
-		db.DB.Create(&models.Notification{
+		notif := models.Notification{
 			ReceiverID: post.UserID,
 			SenderID:   userID.(uint),
 			Type:       "comment",
 			PostID:     post.ID,
 			Content:    input.Content,
+		}
+		db.DB.Create(&notif)
+		go SendWSNotification(post.UserID, map[string]interface{}{
+			"action": "notification",
+			"type":   "comment",
 		})
 	}
 
@@ -372,12 +368,10 @@ func CreatePostComment(c *gin.Context) {
 	c.JSON(http.StatusCreated, comment)
 }
 
-
 func GetStories(c *gin.Context) {
 	stories := []models.Story{}
 	userID, _ := c.Get("userId")
 
-	// Get friend IDs
 	var friendIDs []uint
 	db.DB.Raw(`
 		SELECT user_id FROM friendships WHERE friend_id = ? AND status = 'accepted'
@@ -385,10 +379,7 @@ func GetStories(c *gin.Context) {
 		SELECT friend_id FROM friendships WHERE user_id = ? AND status = 'accepted'
 	`, userID, userID).Scan(&friendIDs)
 
-	// Include current user
 	allowedIDs := append(friendIDs, userID.(uint))
-
-	// Only stories from last 24 hours
 	cutoff := time.Now().Add(-24 * time.Hour)
 
 	if err := db.DB.Preload("User").
@@ -445,4 +436,3 @@ func DeleteStory(c *gin.Context) {
 	db.DB.Delete(&story)
 	c.JSON(http.StatusOK, gin.H{"message": "Story deleted"})
 }
-
