@@ -11,7 +11,7 @@ import SetiLogo from './components/SetiLogo';
 import MobileMenuDrawer from './components/MobileMenuDrawer';
 import { MusicProvider } from './context/MusicContext';
 import { MusicPlayer } from './components/MusicPlayer';
-
+import { StartupScreen } from './components/StartupScreen';
 
 // Lazy load pages for performance (SETI Optimization)
 const FeedPage = React.lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
@@ -409,6 +409,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function AppInner() {
   const location = useLocation();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [hasCompletedStartup, setHasCompletedStartup] = useState(sessionStorage.getItem('startup_complete') === 'true');
   const isWavesPage = location.pathname === '/waves';
 
   useEffect(() => {
@@ -429,48 +430,79 @@ function AppInner() {
   }
 
   return (
-    <div className={`main-layout ${isWavesPage ? 'waves-layout' : ''}`}>
-
-      <Sidebar />
-      <div 
-        style={{ 
-          flex: 1, 
-          minWidth: 0
-        }} 
-        className="main-content"
-      >
-        <div className="desktop-only">
-          <Header />
-        </div>
-        {!isWavesPage && (
-          <div className="mobile-only">
-            <Header />
+    <AnimatePresence mode="wait">
+      {!hasCompletedStartup ? (
+        <motion.div
+          key="startup"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <StartupScreen onComplete={() => {
+            setHasCompletedStartup(true);
+            sessionStorage.setItem('startup_complete', 'true');
+          }} />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="app"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="main-layout"
+        >
+          <div className="hologram-container">
+            <div className="hologram-core" />
+            <div className="hologram-radar" />
+            <div className="hologram-ring" />
+            <div className="hologram-ring" />
+            <div className="hologram-ring" />
+            <div className="hologram-ring" />
+            <div className="hologram-ring" />
           </div>
-        )}
-        <AnimatePresence mode="wait">
-          <React.Suspense fallback={<LoadingScreen />}>
-            <Routes location={location} key={location.pathname}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
-              <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-              <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
-              <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
-              <Route path="/waves" element={<ProtectedRoute><WavesPage /></ProtectedRoute>} />
-              <Route path="/music" element={<ProtectedRoute><MusicPage /></ProtectedRoute>} />
-              <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-              <Route path="/app" element={<ProtectedRoute><AppDownloadPage /></ProtectedRoute>} />
-              <Route path="*" element={<ErrorPlaceholder type="404" />} />
-            </Routes>
-          </React.Suspense>
-        </AnimatePresence>
-      </div>
-      <MusicPlayer />
-      <div className="mobile-only">
-        <MobileNav />
-      </div>
-      <UpdateModal />
-    </div>
+
+          <Sidebar />
+          <div 
+            style={{ 
+              flex: 1, 
+              minWidth: 0
+            }} 
+            className={`main-content ${isWavesPage ? 'waves-layout' : ''}`}
+          >
+            <div className="desktop-only">
+              <Header />
+            </div>
+            {!isWavesPage && (
+              <div className="mobile-only">
+                <Header />
+              </div>
+            )}
+            <AnimatePresence mode="wait">
+              <React.Suspense fallback={<LoadingScreen />}>
+                <Routes location={location} key={location.pathname}>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+                  <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+                  <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
+                  <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
+                  <Route path="/waves" element={<ProtectedRoute><WavesPage /></ProtectedRoute>} />
+                  <Route path="/music" element={<ProtectedRoute><MusicPage /></ProtectedRoute>} />
+                  <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                  <Route path="/app" element={<ProtectedRoute><AppDownloadPage /></ProtectedRoute>} />
+                  <Route path="*" element={<ErrorPlaceholder type="404" />} />
+                </Routes>
+              </React.Suspense>
+            </AnimatePresence>
+          </div>
+          <MusicPlayer />
+          <div className="mobile-only">
+            <MobileNav />
+          </div>
+          <UpdateModal />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

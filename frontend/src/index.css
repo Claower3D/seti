@@ -745,3 +745,119 @@ body::after {
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--secondary), transparent 70%));
 }
 
+/* HOLOGRAM EFFECT */
+.hologram-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 0.15;
+  perspective: 1000px;
+  will-change: transform;
+}
+
+.hologram-core {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+  box-shadow: 0 0 calc(50px * var(--glow-opacity)) var(--primary);
+  animation: core-pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes core-pulse {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.5); opacity: 0.9; }
+}
+
+.hologram-radar {
+  position: absolute;
+  width: 90vw;
+  height: 90vw;
+  max-width: 1200px;
+  max-height: 1200px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 70%, color-mix(in srgb, var(--primary), transparent 60%) 100%);
+  animation: radar-sweep 15s linear infinite;
+  mask-image: radial-gradient(circle, transparent 30%, black 70%);
+  -webkit-mask-image: radial-gradient(circle, transparent 30%, black 70%);
+  opacity: 0.5;
+  will-change: transform;
+}
+
+@keyframes radar-sweep {
+  0% { transform: rotateX(60deg) rotateZ(0deg); }
+  100% { transform: rotateX(60deg) rotateZ(360deg); }
+}
+
+.hologram-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid var(--primary);
+  box-shadow: 0 0 15px color-mix(in srgb, var(--primary), transparent 60%), inset 0 0 15px color-mix(in srgb, var(--primary), transparent 60%);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Outer grid ring */
+.hologram-ring:nth-child(3) {
+  width: 80vw; height: 80vw; max-width: 1100px; max-height: 1100px;
+  border: 1px dashed var(--secondary);
+  animation: ring-spin-1 60s linear infinite;
+  opacity: 0.4;
+}
+
+/* Diagonal Ring 1 */
+.hologram-ring:nth-child(4) {
+  width: 60vw; height: 60vw; max-width: 850px; max-height: 850px;
+  border-left: 3px solid var(--primary);
+  border-right: 3px solid var(--primary);
+  animation: ring-spin-2 30s linear infinite;
+}
+
+/* Diagonal Ring 2 */
+.hologram-ring:nth-child(5) {
+  width: 60vw; height: 60vw; max-width: 850px; max-height: 850px;
+  border-top: 3px solid var(--secondary);
+  border-bottom: 3px solid var(--secondary);
+  animation: ring-spin-3 25s linear infinite reverse;
+}
+
+/* Inner tech ring */
+.hologram-ring:nth-child(6) {
+  width: 40vw; height: 40vw; max-width: 550px; max-height: 550px;
+  border: 2px dotted color-mix(in srgb, var(--primary), transparent 30%);
+  animation: ring-spin-4 15s linear infinite;
+}
+
+/* Innermost fast ring */
+.hologram-ring:nth-child(7) {
+  width: 25vw; height: 25vw; max-width: 350px; max-height: 350px;
+  border: 4px solid color-mix(in srgb, var(--secondary), transparent 80%);
+  border-left-color: var(--primary);
+  animation: ring-spin-5 8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes ring-spin-1 { 0% { transform: rotateX(65deg) rotateY(10deg) rotateZ(0deg); } 100% { transform: rotateX(65deg) rotateY(10deg) rotateZ(360deg); } }
+@keyframes ring-spin-2 { 0% { transform: rotateX(75deg) rotateY(45deg) rotateZ(0deg); } 100% { transform: rotateX(75deg) rotateY(45deg) rotateZ(360deg); } }
+@keyframes ring-spin-3 { 0% { transform: rotateX(45deg) rotateY(-45deg) rotateZ(0deg); } 100% { transform: rotateX(45deg) rotateY(-45deg) rotateZ(360deg); } }
+@keyframes ring-spin-4 { 0% { transform: rotateX(70deg) rotateY(0deg) rotateZ(0deg); } 100% { transform: rotateX(70deg) rotateY(0deg) rotateZ(360deg); } }
+@keyframes ring-spin-5 { 0% { transform: rotateX(30deg) rotateY(30deg) rotateZ(0deg); } 100% { transform: rotateX(30deg) rotateY(30deg) rotateZ(360deg); } }
+
+@media (max-width: 768px) {
+  .hologram-ring:nth-child(3) { width: 150vw; height: 150vw; }
+  .hologram-ring:nth-child(4) { width: 120vw; height: 120vw; }
+  .hologram-ring:nth-child(5) { width: 120vw; height: 120vw; }
+  .hologram-ring:nth-child(6) { width: 80vw; height: 80vw; }
+  .hologram-ring:nth-child(7) { width: 50vw; height: 50vw; }
+  .hologram-radar { width: 150vw; height: 150vw; }
+}
