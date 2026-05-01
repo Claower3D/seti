@@ -86,75 +86,69 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { i
 
   return (
     <AnimatePresence>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: window.innerWidth < 768 ? '0' : '40px' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '0' : '40px' }}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
-          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(20px)' }} />
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(15px)' }} />
         
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+        <motion.div initial={{ opacity: 0, scale: isMobile ? 1 : 0.9, y: isMobile ? 100 : 0 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: isMobile ? 1 : 0.9, y: isMobile ? 100 : 0 }}
           style={{ 
             position: 'relative', 
             width: '100%', 
             maxWidth: '1100px', 
-            height: window.innerWidth < 768 ? '100%' : '85vh',
-            background: 'rgba(5, 6, 8, 0.8)',
-            backdropFilter: 'blur(25px)',
+            height: isMobile ? '100%' : '85vh',
+            background: 'rgba(5, 6, 8, 0.95)',
+            backdropFilter: 'blur(20px)',
             display: 'flex',
-            flexDirection: window.innerWidth < 768 ? 'column' : 'row',
+            flexDirection: isMobile ? 'column' : 'row',
             overflow: 'hidden',
-            borderRadius: window.innerWidth < 768 ? '0' : '20px',
-            border: '1px solid var(--border-bright)',
-            boxShadow: '0 0 50px rgba(0,0,0,0.5)'
+            borderRadius: isMobile ? '0' : '24px',
+            border: isMobile ? 'none' : '1px solid var(--border-bright)',
+            boxShadow: '0 0 100px rgba(0,0,0,0.8)'
           }}
         >
           {/* Media Section */}
-          <div style={{ flex: 1.5, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+          <div style={{ flex: isMobile ? 'none' : 1.5, height: isMobile ? '40vh' : 'auto', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
             {type === 'wave' || media.mediaType === 'video' ? (
-              <video src={media.videoUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} controls autoPlay />
+              <video src={media.videoUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} controls autoPlay loop />
             ) : media.imageUrl ? (
               <img src={media.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             ) : (
-              <div style={{ padding: '40px', color: 'white', fontSize: '1.2rem', textAlign: 'center' }}>{media.content}</div>
+              <div style={{ padding: '40px', color: 'white', fontSize: '1.1rem', textAlign: 'center', fontWeight: '500' }}>{media.content}</div>
             )}
-            {window.innerWidth < 768 && (
-              <button onClick={onClose} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', borderRadius: '50%', padding: '8px', zIndex: 10 }}><X size={24} /></button>
-            )}
+            <button onClick={onClose} style={{ position: 'absolute', top: isMobile ? 'calc(env(safe-area-inset-top) + 16px)' : '20px', right: '20px', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', borderRadius: '50%', padding: '10px', zIndex: 10, display: 'flex' }}><X size={20} /></button>
           </div>
 
           {/* Social Section */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#050608', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#050608', borderLeft: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
             {/* Header */}
             <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <img src={displayUser?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (displayUser?.username || 'user')} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--border-bright)' }} />
-              <div style={{ fontWeight: '800', color: 'white' }}>@{displayUser?.username || 'username'}</div>
-              {!isMobile && <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>}
+              <img src={displayUser?.avatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '12px', border: '1px solid var(--primary)' }} />
+              <div style={{ fontWeight: '900', color: 'var(--primary)', fontSize: '0.9rem', letterSpacing: '0.5px' }}>{displayUser?.username}</div>
             </div>
 
             {/* Content / Comments */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px', scrollbarWidth: 'none' }}>
               {(type === 'post' && media.imageUrl) && (
                  <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ display: 'flex', gap: '12px' }}>
-                       <img src={displayUser?.avatar} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                       <img src={displayUser?.avatar} alt="" style={{ width: '32px', height: '32px', borderRadius: '10px' }} />
                        <div>
                           <span style={{ fontWeight: '800', color: 'white', marginRight: '8px' }}>{displayUser?.username}</span>
-                          <span style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>{media.content}</span>
+                          <span style={{ color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.5' }}>{media.content}</span>
                        </div>
                     </div>
                  </div>
               )}
 
               {loadingComments ? (
-                <div style={{ textAlign: 'center', padding: '20px' }}><div className="pulse" style={{ width: '4px', height: '4px', background: 'var(--primary)', margin: 'auto' }} /></div>
-              ) : comments.length === 0 ? (
-                <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '40px 0', fontSize: '0.9rem' }}>Нет комментариев</div>
+                <div style={{ textAlign: 'center', padding: '40px' }}><div className="pulse" style={{ width: '6px', height: '6px', background: 'var(--primary)', margin: 'auto' }} /></div>
               ) : (
                 comments.map(c => (
                   <div key={c.id} style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-                    <img src={c.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + c.user?.username} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                    <img src={c.user?.avatar} alt="" style={{ width: '32px', height: '32px', borderRadius: '10px' }} />
                     <div style={{ fontSize: '0.9rem' }}>
                       <span style={{ fontWeight: '800', color: 'white', marginRight: '8px' }}>{c.user?.username}</span>
                       <span style={{ color: '#cbd5e1' }}>{c.content}</span>
-                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>{new Date(c.createdAt).toLocaleDateString()}</div>
                     </div>
                   </div>
                 ))
@@ -162,29 +156,26 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { i
             </div>
 
             {/* Actions */}
-            <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
-                <button onClick={handleLike} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', color: liked ? '#ff3060' : 'white' }}>
-                  <Heart size={28} fill={liked ? '#ff3060' : 'none'} style={{ filter: liked ? 'drop-shadow(0 0 8px rgba(255,48,96,0.6))' : 'none' }} />
-                </button>
-                <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', color: 'white' }}>
-                  <MessageCircle size={28} />
-                </button>
+            <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+              <div style={{ display: 'flex', gap: '20px', marginBottom: '12px' }}>
+                <motion.button whileTap={{ scale: 0.9 }} onClick={handleLike} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', color: liked ? '#ff3060' : 'white' }}>
+                  <Heart size={26} fill={liked ? '#ff3060' : 'none'} />
+                </motion.button>
+                <MessageCircle size={26} color="white" />
               </div>
-              <div style={{ fontWeight: '800', color: 'white', marginBottom: '4px' }}>{likesCount} отметок «Нравится»</div>
-              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>{new Date(media.createdAt).toLocaleDateString('ru-RU', { month: 'long', day: 'numeric' })}</div>
+              <div style={{ fontWeight: '900', color: 'white', fontSize: '0.9rem' }}>{likesCount} <span style={{ fontWeight: '500', color: 'rgba(255,255,255,0.5)' }}>Лайков</span></div>
             </div>
 
             {/* Comment Input */}
-            <form onSubmit={handleComment} style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '12px' }}>
+            <form onSubmit={handleComment} style={{ padding: '12px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '12px', background: '#000' }}>
               <input 
                 type="text" 
-                placeholder="Добавьте комментарий..." 
+                placeholder="Написать..." 
                 value={newComment}
                 onChange={e => setNewComment(e.target.value)}
-                style={{ flex: 1, background: 'none', border: 'none', color: 'white', fontSize: '0.9rem', outline: 'none' }} 
+                style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '20px', padding: '10px 18px', color: 'white', fontSize: '0.9rem', outline: 'none' }} 
               />
-              <button type="submit" disabled={!newComment.trim()} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '900', cursor: 'pointer', opacity: newComment.trim() ? 1 : 0.3, textShadow: 'var(--glow)' }}>Опубликовать</button>
+              <button type="submit" disabled={!newComment.trim()} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '900', cursor: 'pointer', opacity: newComment.trim() ? 1 : 0.3 }}>OK</button>
             </form>
           </div>
         </motion.div>
@@ -252,65 +243,70 @@ const SocialListModal = ({ isOpen, onClose, username, type: initialType, profile
 
   return (
     <AnimatePresence>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '0' : '20px' }}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
-          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }} />
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)' }} />
         
-        <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        <motion.div initial={{ opacity: 0, y: isMobile ? '100%' : 20, scale: isMobile ? 1 : 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: isMobile ? '100%' : 20, scale: isMobile ? 1 : 0.9 }}
           className="glass-panel" 
           style={{ 
             position: 'relative', width: '100%', maxWidth: '440px', 
-            padding: '0', border: '1px solid var(--border-bright)', 
-            maxHeight: '80vh', display: 'flex', flexDirection: 'column', 
-            boxShadow: '0 20px 60px rgba(0,0,0,0.8), var(--glow)',
-            overflow: 'hidden'
+            height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '80vh',
+            padding: '0', border: isMobile ? 'none' : '1px solid var(--border-bright)', 
+            display: 'flex', flexDirection: 'column', 
+            boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+            overflow: 'hidden',
+            borderRadius: isMobile ? '0' : '24px'
           }}>
           
           {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingTop: isMobile ? 'calc(env(safe-area-inset-top) + 8px)' : '0' }}>
             {(['friends', 'followers', 'following'] as SocialType[]).map(t => (
               <button key={t} onClick={() => { setListType(t); setSearchQuery(''); }}
                 style={{ 
-                  flex: 1, padding: '16px', background: 'none', border: 'none', 
+                  flex: 1, padding: '16px 8px', background: 'none', border: 'none', 
                   color: listType === t ? 'var(--primary)' : 'rgba(255,255,255,0.4)',
-                  fontWeight: '800', fontSize: '0.8rem', cursor: 'pointer',
+                  fontWeight: '900', fontSize: '0.75rem', cursor: 'pointer',
                   borderBottom: listType === t ? '2px solid var(--primary)' : '2px solid transparent',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  letterSpacing: '0.5px'
                 }}>
                 {t === 'friends' ? 'ДРУЗЬЯ' : t === 'followers' ? 'ПОДПИСЧИКИ' : 'ПОДПИСКИ'}
               </button>
             ))}
-            <button onClick={onClose} style={{ padding: '0 16px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X size={20} /></button>
+            <button onClick={onClose} style={{ padding: '0 16px', background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={22} /></button>
           </div>
 
           {/* Search */}
-          <div style={{ padding: '12px 16px', position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: '28px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-            <input 
-              type="text" 
-              placeholder="Поиск по списку..." 
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '10px 14px 10px 38px', color: 'white', fontSize: '0.9rem', outline: 'none' }}
-            />
+          <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+              <input 
+                type="text" 
+                placeholder="Поиск..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px 14px 10px 38px', color: 'white', fontSize: '0.9rem', outline: 'none' }}
+              />
+            </div>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 16px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px', scrollbarWidth: 'none' }}>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '40px' }}><div className="pulse" style={{ width: '4px', height: '4px', background: 'var(--primary)', margin: 'auto' }} /></div>
+              <div style={{ textAlign: 'center', padding: '40px' }}><div className="pulse" style={{ width: '6px', height: '6px', background: 'var(--primary)', margin: 'auto' }} /></div>
             ) : filteredUsers.length === 0 ? (
-              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '40px 0', fontSize: '0.9rem' }}>
-                <Users size={40} style={{ opacity: 0.1, marginBottom: '10px' }} />
-                <p>{searchQuery ? 'Ничего не найдено' : 'Список пуст'}</p>
+              <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '60px 0' }}>
+                <Users size={48} style={{ opacity: 0.1, marginBottom: '16px' }} />
+                <p style={{ fontWeight: '700' }}>{searchQuery ? 'Ничего не найдено' : 'Пусто'}</p>
               </div>
             ) : (
               filteredUsers.map(u => (
-                <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', marginBottom: '8px', border: '1px solid rgba(255,255,255,0.02)' }}>
+                <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '16px', background: 'rgba(255,255,255,0.03)', marginBottom: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                   <Link to={`/profile/${u.username}`} onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, textDecoration: 'none' }}>
-                    <img src={u.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + u.username} alt="" style={{ width: '44px', height: '44px', borderRadius: '50%', border: '1px solid var(--border)' }} />
+                    <img src={u.avatar} alt="" style={{ width: '44px', height: '44px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }} />
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: '800', color: 'white', fontSize: '0.9rem' }}>@{u.username}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>{u.fullName || 'Без имени'}</span>
+                      <span style={{ fontWeight: '900', color: 'white', fontSize: '0.9rem' }}>@{u.username}</span>
+                      <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700' }}>{u.fullName || 'User'}</span>
                     </div>
                   </Link>
                   
@@ -319,20 +315,12 @@ const SocialListModal = ({ isOpen, onClose, username, type: initialType, profile
                       disabled={actionLoadingId === u.id}
                       onClick={() => handleAction(u.id, listType === 'following' || listType === 'friends' ? 'remove' : 'add')}
                       style={{ 
-                        background: listType === 'friends' ? 'rgba(255,60,60,0.1)' : 'rgba(255,255,255,0.05)', 
-                        border: listType === 'friends' ? '1px solid rgba(255,60,60,0.2)' : '1px solid rgba(255,255,255,0.1)',
-                        color: listType === 'friends' ? '#ff4d4d' : 'white',
-                        padding: '8px 12px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
+                        background: listType === 'friends' ? 'rgba(255,60,60,0.15)' : 'var(--primary)', 
+                        border: 'none',
+                        color: listType === 'friends' ? '#ff3060' : 'black',
+                        padding: '8px 16px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: '900', cursor: 'pointer'
                       }}>
-                      {actionLoadingId === u.id ? (
-                        <div className="pulse" style={{ width: '4px', height: '4px', background: 'currentColor' }} />
-                      ) : listType === 'friends' ? (
-                        <><UserRoundMinus size={14} /> Удалить</>
-                      ) : listType === 'following' ? (
-                        <><UserRoundMinus size={14} /> Отписаться</>
-                      ) : (
-                        <><UserRoundPlus size={14} /> В ответ</>
-                      )}
+                      {actionLoadingId === u.id ? '...' : (listType === 'friends' ? 'Удалить' : (listType === 'following' ? 'Отмена' : 'В ответ'))}
                     </button>
                   )}
                 </div>
@@ -595,19 +583,21 @@ export const ProfilePage = () => {
         </div>
       </div>
 
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'center', gap: isMobile ? '30px' : '60px' }}>
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'center', gap: isMobile ? '30px' : '60px', background: isMobile ? 'rgba(255,255,255,0.02)' : 'transparent', borderRadius: isMobile ? '12px' : '0' }}>
         {[
-          { id: 'posts', label: 'ПОСТЫ', icon: Grid },
-          { id: 'waves', label: 'ВОЛНЫ', icon: Film },
+          { id: 'posts', label: isMobile ? 'ПОСТЫ' : 'ПУБЛИКАЦИИ', icon: Grid },
+          { id: 'waves', label: isMobile ? 'ВОЛНЫ' : 'ВОЛНЫ (REELS)', icon: Film },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
             style={{ 
-              background: 'none', border: 'none', padding: '15px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px',
-              color: activeTab === tab.id ? 'var(--primary)' : 'rgba(255,255,255,0.5)',
-              borderTop: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
-              marginTop: '-1px', transition: 'all 0.2s'
+              background: 'none', border: 'none', padding: isMobile ? '12px 0' : '15px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '0.7rem' : '0.75rem', fontWeight: '900', letterSpacing: '1.5px',
+              color: activeTab === tab.id ? 'var(--primary)' : 'rgba(255,255,255,0.4)',
+              borderTop: !isMobile && activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
+              borderBottom: isMobile && activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
+              marginTop: '-1px', transition: 'all 0.2s',
+              textShadow: activeTab === tab.id ? 'var(--glow)' : 'none'
             }}>
-            <tab.icon size={14} /> {tab.label}
+            <tab.icon size={isMobile ? 16 : 14} /> {tab.label}
           </button>
         ))}
       </div>

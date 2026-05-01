@@ -215,6 +215,18 @@ export const MessagesPage = () => {
   const [isUpdatingGroup, setIsUpdatingGroup] = useState(false);
   const [viewArchived, setViewArchived] = useState(false);
 
+  // Keyboard/Viewport height fix for mobile
+  const [vh, setVh] = useState(window.innerHeight);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setVh(window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const archiveConversation = async (type: 'friend'|'group', id: number, archived: boolean) => {
     try {
       await api.post('/conversations/archive', { type, id, archived });
@@ -276,12 +288,6 @@ export const MessagesPage = () => {
       if (friend) setSelectedFriend(friend);
     }
   }, [friends, location.state]);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const fetchInitialData = async () => {
     try {
@@ -462,13 +468,30 @@ export const MessagesPage = () => {
     }
   };
 
+  const containerHeight = isMobile ? `${vh - 70}px` : 'calc(100vh - 140px)';
+
   return (
-    <div style={{ height: 'calc(100vh - 140px)', display: 'flex', gap: '16px' }}>
+    <div style={{ height: containerHeight, display: 'flex', gap: isMobile ? '0' : '16px', position: 'relative' }}>
 
       {showList && (
-        <div className="glass-panel" style={{ width: isMobile ? '100%' : '320px', flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)' }}>
-            <h2 style={{ marginBottom: isMobile ? '0' : '18px', fontSize: '1.4rem', fontWeight: '900' }} className="neon-text">Каналы связи</h2>
+        <div className="glass-panel" style={{ 
+          width: isMobile ? '100%' : '320px', 
+          flexShrink: 0, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          overflow: 'hidden',
+          borderRadius: isMobile ? '0' : '24px'
+        }}>
+          <div style={{ padding: isMobile ? '20px 24px' : '24px', borderBottom: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '0' : '18px' }}>
+              <h2 style={{ fontSize: isMobile ? '1.4rem' : '1.6rem', fontWeight: '900' }} className="neon-text">Каналы</h2>
+              {isMobile && (
+                 <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowCreateCluster(true)}
+                  style={{ background: 'color-mix(in srgb, var(--primary), transparent 90%)', border: '1px solid var(--primary)', color: 'var(--primary)', width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Plus size={20} />
+                </motion.button>
+              )}
+            </div>
             {!isMobile && (
               <div style={{ position: 'relative' }}>
                 <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
@@ -476,107 +499,95 @@ export const MessagesPage = () => {
               </div>
             )}
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '12px 8px' : '12px' }}>
             {/* Archive Toggle Banner */}
             {(() => {
               const archivedCount = friends.filter(f => f.isArchived).length + groups.filter(g => g.isArchived).length;
               if (archivedCount > 0 && !viewArchived) {
                 return (
                   <div onClick={() => setViewArchived(true)}
-                    style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', borderRadius: '16px', background: 'rgba(255,255,255,0.03)', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.05)', transition: 'all 0.2s' }}>
+                    style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', borderRadius: '18px', background: 'rgba(255,255,255,0.03)', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <Archive size={20} color="var(--primary)" />
-                    <div style={{ flex: 1, fontWeight: '700', fontSize: '0.9rem' }}>Архивные чаты</div>
-                    <div style={{ background: 'var(--primary)', color: 'black', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px', fontWeight: '900' }}>{archivedCount}</div>
+                    <div style={{ flex: 1, fontWeight: '800', fontSize: '0.95rem' }}>Архивные чаты</div>
+                    <div style={{ background: 'var(--primary)', color: 'black', fontSize: '0.75rem', padding: '2px 10px', borderRadius: '12px', fontWeight: '900' }}>{archivedCount}</div>
                   </div>
                 );
               }
               if (viewArchived) {
                 return (
                   <div onClick={() => setViewArchived(false)}
-                    style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', borderRadius: '16px', background: 'color-mix(in srgb, var(--primary), transparent 90%)', marginBottom: '16px', border: '1px solid var(--primary)', transition: 'all 0.2s' }}>
+                    style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', borderRadius: '18px', background: 'color-mix(in srgb, var(--primary), transparent 90%)', marginBottom: '16px', border: '1px solid var(--primary)' }}>
                     <Inbox size={20} color="var(--primary)" />
-                    <div style={{ flex: 1, fontWeight: '700', fontSize: '0.9rem', color: 'var(--primary)' }}>Вернуться в чаты</div>
+                    <div style={{ flex: 1, fontWeight: '800', fontSize: '0.95rem', color: 'var(--primary)' }}>Вернуться назад</div>
                   </div>
                 );
               }
               return null;
             })()}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px 12px', opacity: 0.8 }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--primary)' }}>Кластеры</span>
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowCreateCluster(true)}
-                style={{ background: 'color-mix(in srgb, var(--primary), transparent 90%)', border: '1px solid currentColor', color: 'var(--primary)', width: '24px', height: '24px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <Plus size={14} />
-              </motion.button>
-            </div>
+            {!isMobile && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px 12px', opacity: 0.8 }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--primary)' }}>Кластеры</span>
+                <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowCreateCluster(true)}
+                  style={{ background: 'color-mix(in srgb, var(--primary), transparent 90%)', border: '1px solid currentColor', color: 'var(--primary)', width: '24px', height: '24px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <Plus size={14} />
+                </motion.button>
+              </div>
+            )}
             
             {groups.filter(g => g.isArchived === viewArchived).map(group => (
                <SwipeableChatItem 
                  key={`g-${group.id}`}
                  onAction={() => archiveConversation('group', group.id, !viewArchived)}
-                 actionIcon={viewArchived ? <Inbox size={20} /> : <Archive size={20} />}
+                 actionIcon={viewArchived ? <Inbox size={24} /> : <Archive size={24} />}
                  type={viewArchived ? 'unarchive' : 'archive'}
                >
                  <div onClick={() => setSelectedGroup(group)}
-                  className="chat-item"
-                  style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
+                   style={{ padding: '14px 16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '18px',
                     background: selectedGroup?.id === group.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
-                    border: selectedGroup?.id === group.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
-                    transition: 'all 0.3s' }}>
-                   <div style={{ position: 'relative' }}>
-                     <div style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: selectedGroup?.id === group.id ? 'var(--glow)' : 'none' }}>
-                       <Users size={24} color="black" />
+                    border: selectedGroup?.id === group.id ? '1px solid color-mix(in srgb, var(--primary), transparent 75%)' : '1px solid transparent' }}>
+                   <div style={{ position: 'relative', flexShrink: 0 }}>
+                     <div style={{ width: '54px', height: '54px', borderRadius: '18px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: selectedGroup?.id === group.id ? 'var(--glow)' : 'none' }}>
+                       <Users size={26} color="black" />
                      </div>
                    </div>
                    <div style={{ flex: 1, minWidth: 0 }}>
-                     <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedGroup?.id === group.id ? 'var(--primary)' : 'white' }}>{group.name}</div>
-                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Групповой сигнал активен</div>
+                     <div style={{ fontWeight: '900', fontSize: '1.05rem', color: selectedGroup?.id === group.id ? 'var(--primary)' : 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
+                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>Групповой поток активен</div>
                    </div>
-                   
-                   <button className="archive-btn" onClick={(e) => { e.stopPropagation(); archiveConversation('group', group.id, !viewArchived); }}
-                     style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', padding: '6px', color: 'white', cursor: 'pointer', display: 'none' }}>
-                     {viewArchived ? <Inbox size={14} /> : <Archive size={14} />}
-                   </button>
                  </div>
                </SwipeableChatItem>
             ))}
 
-            <div style={{ height: '2px', background: 'rgba(255,255,255,0.05)', margin: '16px 8px 24px' }} />
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '12px 8px' }} />
             
             {friends.filter(f => f.isArchived === viewArchived).map(friend => (
               <SwipeableChatItem 
                 key={`f-${friend.id}`}
                 onAction={() => archiveConversation('friend', friend.id, !viewArchived)}
-                actionIcon={viewArchived ? <Inbox size={20} /> : <Archive size={20} />}
+                actionIcon={viewArchived ? <Inbox size={24} /> : <Archive size={24} />}
                 type={viewArchived ? 'unarchive' : 'archive'}
               >
                 <div onClick={() => setSelectedFriend(friend)}
-                  className="chat-item"
-                  style={{ padding: '16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '16px',
+                  style={{ padding: '14px 16px', display: 'flex', gap: '14px', cursor: 'pointer', alignItems: 'center', borderRadius: '18px',
                     background: selectedFriend?.id === friend.id ? 'color-mix(in srgb, var(--primary), transparent 92%)' : 'transparent',
-                    border: selectedFriend?.id === friend.id ? '1px solid color-mix(in srgb, var(--primary), transparent 80%)' : '1px solid transparent',
-                    transition: 'all 0.3s' }}>
-                  <div style={{ position: 'relative' }}>
+                    border: selectedFriend?.id === friend.id ? '1px solid color-mix(in srgb, var(--primary), transparent 75%)' : '1px solid transparent' }}>
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
                     <img src={friend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + friend.username} 
-                      alt="" style={{ width: '52px', height: '52px', borderRadius: '18px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', boxShadow: selectedFriend?.id === friend.id ? 'var(--glow)' : 'none' }} />
+                      alt="" style={{ width: '54px', height: '54px', borderRadius: '18px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', boxShadow: selectedFriend?.id === friend.id ? 'var(--glow)' : 'none' }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedFriend?.id === friend.id ? 'var(--primary)' : 'white' }}>{friend.username}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{friend.bio || 'Персональный канал'}</div>
+                    <div style={{ fontWeight: '900', fontSize: '1.05rem', color: selectedFriend?.id === friend.id ? 'var(--primary)' : 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{friend.username}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>{friend.bio || 'Персональный сигнал'}</div>
                   </div>
-
-                  <button className="archive-btn" onClick={(e) => { e.stopPropagation(); archiveConversation('friend', friend.id, !viewArchived); }}
-                    style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', padding: '6px', color: 'white', cursor: 'pointer', display: 'none' }}>
-                    {viewArchived ? <Inbox size={14} /> : <Archive size={14} />}
-                  </button>
                 </div>
               </SwipeableChatItem>
             ))}
 
-            {friends.filter(f => f.isArchived === viewArchived).length === 0 && groups.filter(g => g.isArchived === viewArchived).length === 0 && (
-              <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                {viewArchived ? <Archive size={48} style={{ marginBottom: '16px', opacity: 0.3 }} /> : <MessageSquare size={48} style={{ marginBottom: '16px', opacity: 0.3 }} />}
-                <p>{viewArchived ? 'Архив пуст' : 'Нет активных сессий'}</p>
+            {(friends.filter(f => f.isArchived === viewArchived).length === 0 && groups.filter(g => g.isArchived === viewArchived).length === 0) && (
+              <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                {viewArchived ? <Archive size={48} style={{ marginBottom: '16px', opacity: 0.2 }} /> : <MessageSquare size={48} style={{ marginBottom: '16px', opacity: 0.2 }} />}
+                <p style={{ fontWeight: '700', letterSpacing: '0.5px' }}>{viewArchived ? 'Архив пуст' : 'Пока нет сообщений'}</p>
               </div>
             )}
           </div>
@@ -584,71 +595,99 @@ export const MessagesPage = () => {
       )}
 
       {showChat && (
-        <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, border: '1px solid var(--border)' }}>
+        <div className="glass-panel" style={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          overflow: 'hidden', 
+          minWidth: 0, 
+          border: isMobile ? 'none' : '1px solid var(--border)',
+          borderRadius: isMobile ? '0' : '24px',
+          background: isMobile ? 'var(--bg)' : 'rgba(255,255,255,0.01)',
+          position: 'relative'
+        }}>
           {(selectedFriend || selectedGroup) ? (
             <>
               {/* Chat header */}
-              <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.02)' }}>
+              <div style={{ 
+                padding: isMobile ? '12px 16px' : '16px 24px', 
+                borderBottom: '1px solid var(--border-color)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px', 
+                background: 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(10px)',
+                zIndex: 100
+              }}>
                 {isMobile && (
-                  <button onClick={() => { setSelectedFriend(null); setSelectedGroup(null); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px', display: 'flex', borderRadius: '12px' }}>
-                    <ArrowLeft size={24} />
+                  <button onClick={() => { setSelectedFriend(null); setSelectedGroup(null); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', display: 'flex', borderRadius: '12px' }}>
+                    <ArrowLeft size={28} />
                   </button>
                 )}
                 
                 {selectedFriend ? (
                   <>
                     <img src={selectedFriend.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedFriend.username}
-                      alt="avatar" style={{ width: '44px', height: '44px', borderRadius: '14px', border: '2px solid var(--primary)' }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '900', fontSize: '1.1rem', color: 'var(--primary)', textShadow: 'var(--glow)' }}>{selectedFriend.username}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <div className="pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', boxShadow: 'var(--glow)' }}></div> Online Signal
+                      alt="avatar" style={{ width: isMobile ? '40px' : '48px', height: isMobile ? '40px' : '48px', borderRadius: '14px', border: '2px solid var(--primary)', boxShadow: 'var(--glow)' }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: '900', fontSize: isMobile ? '1.1rem' : '1.25rem', color: 'white', textShadow: 'var(--glow)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFriend.username}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.9, fontWeight: '800' }}>
+                        <div className="pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', boxShadow: 'var(--glow)' }}></div> ONLINE
                       </div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Users size={20} color="black" />
+                    <div style={{ width: isMobile ? '38px' : '48px', height: isMobile ? '38px' : '48px', borderRadius: '12px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Users size={isMobile ? 20 : 24} color="black" />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '900', fontSize: '1.1rem', color: 'var(--primary)', textShadow: 'var(--glow)' }}>{selectedGroup.name}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Shield size={12} /> Cluster Stream Active
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: '900', fontSize: isMobile ? '1rem' : '1.2rem', color: 'var(--primary)', textShadow: 'var(--glow)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedGroup.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px', opacity: 0.8 }}>
+                        <Shield size={12} /> CLUSTER STREAM
                       </div>
                     </div>
                   </>
                 )}
 
                 {/* UTILITY BUTTONS */}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowInfoDrawer(true)}
-                    title="Информация"
-                    style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                    <Info size={18} />
-                  </motion.button>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {!isMobile && (
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowInfoDrawer(true)}
+                      style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <Info size={18} />
+                    </motion.button>
+                  )}
 
                   {selectedFriend && (
                     <>
                       <motion.button whileTap={{ scale: 0.9 }} onClick={() => startCall(selectedFriend, false)}
-                        title="Аудиозвонок"
-                        style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'color-mix(in srgb, var(--primary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--primary), transparent 60%)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(0,242,255,0.15)' }}>
+                        style={{ width: isMobile ? '38px' : '42px', height: isMobile ? '38px' : '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--primary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--primary), transparent 60%)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                         <Phone size={18} />
                       </motion.button>
                       <motion.button whileTap={{ scale: 0.9 }} onClick={() => startCall(selectedFriend, true)}
-                        title="Видеозвонок"
-                        style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'color-mix(in srgb, var(--secondary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--secondary), transparent 60%)', color: 'var(--secondary, #7b2ff7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 10px rgba(123,47,247,0.15)' }}>
+                        style={{ width: isMobile ? '38px' : '42px', height: isMobile ? '38px' : '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--secondary), transparent 85%)', border: '1px solid color-mix(in srgb, var(--secondary), transparent 60%)', color: 'var(--secondary, #7b2ff7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                         <Video size={18} />
                       </motion.button>
                     </>
                   )}
+                  
+                  {isMobile && (
+                     <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowInfoDrawer(true)}
+                      style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Settings size={18} />
+                    </motion.button>
+                  )}
                 </div>
               </div>
 
-              <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ flex: 1, padding: isMobile ? '16px' : '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {messages.length === 0 && (
-                  <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '60px' }}>
-                    <p style={{ letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.8rem' }}>инициализация сеанса связи 👋</p>
+                  <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '80px', opacity: 0.5 }}>
+                    <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 3 }}>
+                       <MessageSquare size={48} style={{ margin: '0 auto 16px' }} />
+                    </motion.div>
+                    <p style={{ letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: '800' }}>СЕАНС СВЯЗИ УСТАНОВЛЕН</p>
                   </div>
                 )}
                   {messages.map((msg, i) => {
@@ -656,42 +695,44 @@ export const MessagesPage = () => {
                     const showSender = !isMe && selectedGroup && (i === 0 || messages[i-1].senderId !== msg.senderId);
                     
                     return (
-                      <motion.div initial={{ opacity: 0, x: isMe ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} key={i}
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={i}
                         style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start', marginBottom: showSender ? '8px' : '0' }}>
-                        <div className="msg-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', gap: '8px', flexDirection: isMe ? 'row-reverse' : 'row', maxWidth: isMobile ? '88%' : '70%', minWidth: 0 }}>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', gap: '8px', flexDirection: isMe ? 'row-reverse' : 'row', maxWidth: isMobile ? '90%' : '75%', minWidth: 0 }}>
                           {!isMe && selectedGroup && (
                             <img src={msg.sender?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + msg.sender?.username} 
-                              alt="" style={{ width: '28px', height: '28px', borderRadius: '8px', opacity: showSender ? 1 : 0 }} />
+                              alt="" style={{ width: '30px', height: '30px', borderRadius: '10px', opacity: showSender ? 1 : 0, flexShrink: 0 }} />
                           )}
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            {showSender && <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '800', marginLeft: '4px', marginBottom: '4px' }}>{msg.sender?.username}</span>}
-                            <div style={{ width: '100%', padding: '12px 18px', borderRadius: isMe ? '22px 22px 4px 22px' : '22px 22px 22px 4px',
-                              background: isMe ? 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 70%), color-mix(in srgb, var(--secondary), transparent 70%))' : 'rgba(255,255,255,0.08)',
-                              color: isMe ? '#ffffff' : '#e8f4f8', fontSize: '1rem', lineHeight: '1.5',
-                              overflowWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'normal', fontWeight: isMe ? '700' : '500',
-                              boxShadow: isMe ? 'var(--glow)' : '0 4px 20px rgba(0,0,0,0.3)',
-                              border: isMe ? '1px solid var(--border-bright)' : '1px solid rgba(255,255,255,0.12)' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                            {showSender && <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '900', marginLeft: '4px', marginBottom: '4px', letterSpacing: '0.5px' }}>{msg.sender?.username}</span>}
+                             <div style={{ 
+                               padding: isMobile ? '12px 16px' : '14px 22px', 
+                               borderRadius: isMe ? '24px 24px 6px 24px' : '24px 24px 24px 6px',
+                               background: isMe ? 'linear-gradient(135deg, color-mix(in srgb, var(--primary), transparent 70%), color-mix(in srgb, var(--secondary), transparent 70%))' : 'rgba(255,255,255,0.08)',
+                               color: 'white', 
+                               fontSize: isMobile ? '0.95rem' : '1.1rem', 
+                               lineHeight: '1.5',
+                               fontWeight: '600',
+                               boxShadow: isMe ? 'var(--glow)' : '0 10px 30px rgba(0,0,0,0.3)',
+                               border: '1px solid rgba(255,255,255,0.1)',
+                               wordBreak: 'break-word',
+                               position: 'relative',
+                               backdropFilter: isMe ? 'none' : 'blur(10px)'
+                             }}>
                               {msg.fileUrl ? (
                                 msg.fileType?.includes('audio') ? <VoicePlayer src={msg.fileUrl} />
-                                  : isVideo(msg.fileType, msg.fileUrl) ? <video src={msg.fileUrl} controls style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '10px', outline: 'none' }} />
-                                  : isImage(msg.fileType, msg.fileUrl) ? <img src={msg.fileUrl} alt={msg.fileName} onClick={() => setFullscreenMedia({url: msg.fileUrl, type: msg.fileType || guessTypeFromUrl(msg.fileUrl)})} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '10px', display: 'block', cursor: 'zoom-in' }} />
-                                  : <a href={msg.fileUrl} target="_blank" rel="noreferrer" style={{ color: isMe ? 'black' : 'var(--primary)', textDecoration: 'underline' }}>📎 {msg.fileName || msg.fileUrl.split('/').pop()}</a>
+                                  : isVideo(msg.fileType, msg.fileUrl) ? <video src={msg.fileUrl} controls style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '12px' }} />
+                                  : isImage(msg.fileType, msg.fileUrl) ? <img src={msg.fileUrl} alt={msg.fileName} onClick={() => setFullscreenMedia({url: msg.fileUrl, type: msg.fileType || guessTypeFromUrl(msg.fileUrl)})} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '12px', display: 'block', cursor: 'zoom-in' }} />
+                                  : <a href={msg.fileUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline', fontWeight: '800' }}>📎 {msg.fileName || 'Файл'}</a>
                               ) : msg.content}
-                              {isMe && !selectedGroup && (
-                                <div style={{ position: 'absolute', bottom: '8px', right: '12px', opacity: 0.8 }}>
-                                  <CheckCheck size={14} color={msg.isRead ? '#39ff14' : 'rgba(255,255,255,0.4)'} style={{ filter: msg.isRead ? 'drop-shadow(0 0 5px #39ff14)' : 'none' }} />
-                                </div>
-                              )}
+                              
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', marginTop: '4px', opacity: 0.5, fontSize: '0.65rem', fontWeight: '900' }}>
+                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {isMe && !selectedGroup && (
+                                  <CheckCheck size={12} color={msg.isRead ? 'var(--primary)' : 'white'} />
+                                )}
+                              </div>
                             </div>
                           </div>
-                          {isMe && !selectedGroup && (
-                            <div className="msg-actions" style={{ display: 'flex', gap: '4px', opacity: 0.6, flexShrink: 0 }}>
-                              {!msg.fileUrl && (
-                                <button onClick={() => handeEditClick(msg)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}><Edit2 size={14} /></button>
-                              )}
-                              <button onClick={() => handleDelete(msg.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', padding: '4px' }}><Trash2 size={14} /></button>
-                            </div>
-                          )}
                         </div>
                       </motion.div>
                     );
@@ -699,11 +740,19 @@ export const MessagesPage = () => {
                 <div ref={scrollRef} />
               </div>
 
-              <form onSubmit={sendMessage} style={{ padding: isMobile ? '12px 16px' : '20px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(0,0,0,0.2)' }}>
+              <form onSubmit={sendMessage} style={{ 
+                padding: isMobile ? '12px' : '20px 24px', 
+                borderTop: '1px solid var(--border-color)', 
+                display: 'flex', 
+                gap: '8px', 
+                alignItems: 'center', 
+                background: 'rgba(0,0,0,0.3)',
+                paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom) + 12px)' : '20px'
+              }}>
                 <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={sendFile} />
                 {!isRecording && (
                   <button type="button" onClick={() => fileRef.current?.click()}
-                    style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, background: 'color-mix(in srgb, var(--primary), transparent 92%)', border: '1px solid color-mix(in srgb, var(--primary), transparent 80%)', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    style={{ width: isMobile ? '42px' : '52px', height: isMobile ? '42px' : '52px', borderRadius: '50%', flexShrink: 0, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Paperclip size={20} />
                   </button>
                 )}
@@ -712,21 +761,17 @@ export const MessagesPage = () => {
                 ) : (
                   <>
                     <input ref={inputRef} type="text" className="input-field"
-                      placeholder={editingMsgId ? "Ред..." : (isMobile ? "Текст..." : "Введите сообщение в SETI...")}
+                      placeholder={editingMsgId ? "Редактирование..." : "Сообщение..."}
                       value={input} onChange={(e) => setInput(e.target.value)}
-                      style={{ borderRadius: '20px', padding: isMobile ? '10px 16px' : '14px 24px', flex: 1, background: editingMsgId ? 'color-mix(in srgb, var(--primary), transparent 95%)' : 'rgba(255,255,255,0.03)', border: editingMsgId ? '1px solid color-mix(in srgb, var(--primary), transparent 60%)' : 'none', minWidth: 0 }} />
-                    {editingMsgId && (
-                      <button type="button" onClick={() => { setEditingMsgId(null); setInput(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px' }}>
-                        <X size={20} />
-                      </button>
-                    )}
+                      style={{ borderRadius: '24px', padding: isMobile ? '10px 18px' : '14px 24px', flex: 1, background: 'rgba(255,255,255,0.05)', border: editingMsgId ? '1px solid var(--primary)' : 'none', minWidth: 0, height: isMobile ? '42px' : '52px' }} />
+                    
                     {input.trim() || editingMsgId ? (
-                      <button type="submit" className="btn-primary" style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, padding: 0, justifyContent: 'center' }}>
+                      <button type="submit" className="btn-primary" style={{ width: isMobile ? '42px' : '52px', height: isMobile ? '42px' : '52px', borderRadius: '50%', flexShrink: 0, padding: 0, justifyContent: 'center' }}>
                         <Send size={20} />
                       </button>
                     ) : (
                       <button type="button" onClick={() => setIsRecording(true)}
-                        style={{ width: isMobile ? '44px' : '52px', height: isMobile ? '44px' : '52px', borderRadius: '50%', flexShrink: 0, background: 'color-mix(in srgb, var(--primary), transparent 92%)', border: '1px solid var(--border-bright)', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--glow)' }}>
+                        style={{ width: isMobile ? '42px' : '52px', height: isMobile ? '42px' : '52px', borderRadius: '50%', flexShrink: 0, background: 'var(--primary)', border: 'none', cursor: 'pointer', color: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--glow)' }}>
                         <Mic size={20} />
                       </button>
                     )}
@@ -735,16 +780,18 @@ export const MessagesPage = () => {
               </form>
             </>
           ) : (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-              <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }} transition={{ repeat: Infinity, duration: 4 }}>
-                <MessageSquare size={80} className="neon-text" style={{ marginBottom: '24px' }} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', padding: '20px' }}>
+              <motion.div animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ repeat: Infinity, duration: 5 }}>
+                <MessageSquare size={100} style={{ marginBottom: '32px', color: 'var(--primary)', filter: 'drop-shadow(0 0 20px var(--primary))' }} />
               </motion.div>
-              <h3 style={{ marginBottom: '8px', fontWeight: '900', fontSize: '1.4rem' }} className="neon-text">Точка доступа SETI</h3>
-              <p style={{ fontSize: '1rem', letterSpacing: '0.5px' }}>Выберите частоту друга для передачи данных</p>
+              <h3 style={{ marginBottom: '12px', fontWeight: '900', fontSize: '1.6rem', color: 'white', textAlign: 'center' }}>ВЫБЕРИТЕ КАНАЛ СВЯЗИ</h3>
+              <p style={{ fontSize: '1rem', letterSpacing: '1px', opacity: 0.6, textAlign: 'center' }}>инициализируйте поток для обмена данными</p>
             </div>
           )}
         </div>
       )}
+
+      {/* Media Fullscreen & Other Modals remain similar but with mobile-optimized padding/scaling */}
 
       <AnimatePresence>
         {fullscreenMedia && (

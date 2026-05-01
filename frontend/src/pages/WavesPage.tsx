@@ -162,47 +162,36 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
           position: 'absolute', inset: 0, zIndex: 10,
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
-          gap: '16px',
+          gap: '20px',
           background: '#000',
         }}>
-          <div style={{ position: 'relative', width: '64px', height: '64px' }}>
+          <div style={{ position: 'relative', width: '70px', height: '70px' }}>
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+              animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
               style={{
                 position: 'absolute', inset: 0,
                 borderRadius: '50%',
                 border: '3px solid transparent',
                 borderTopColor: 'var(--primary)',
-                borderRightColor: 'color-mix(in srgb, var(--primary), transparent 50%)',
                 boxShadow: 'var(--glow-strong)',
               }}
             />
-            <motion.div
-              animate={{ rotate: -180 }}
-              transition={{ repeat: Infinity, duration: 2.4, ease: 'linear' }}
-              style={{
-                position: 'absolute', inset: 8,
-                borderRadius: '50%',
-                border: '2px solid transparent',
-                borderTopColor: 'var(--secondary)',
-                opacity: 0.7,
-              }}
-            />
+            <Zap size={30} color="var(--primary)" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', filter: 'var(--glow)' }} />
           </div>
           <motion.span
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
             style={{
               color: 'var(--primary)',
-              fontSize: '0.75rem',
-              fontWeight: '800',
-              letterSpacing: '2px',
+              fontSize: '0.8rem',
+              fontWeight: '900',
+              letterSpacing: '3px',
               textTransform: 'uppercase',
               textShadow: 'var(--glow)',
             }}
           >
-            Загрузка...
+            СИГНАЛ...
           </motion.span>
         </div>
       )}
@@ -281,101 +270,81 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
             boxShadow: 'var(--glow-strong)',
           }}
           animate={{ backgroundPosition: ['0% center', '200% center'] }}
-          transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
-        />
-      </div>
-
-      <div style={{ position: 'absolute', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 90px)' : '80px', left: '16px', right: isMobile ? '80px' : '80px', zIndex: 15 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-          <Link to={`/profile/${wave.user?.username}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flex: 1, overflow: 'hidden' }}>
-            <img src={wave.user?.avatar} alt="" style={{ width: isMobile ? '48px' : '42px', height: isMobile ? '48px' : '42px', borderRadius: '50%', border: '2px solid var(--border-bright)', boxShadow: 'var(--glow)' }} />
+          transition={{ repeat: Infinity, duration: 4, eas      <div style={{ position: 'absolute', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 90px)' : '80px', left: '16px', right: '80px', zIndex: 15 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+          <Link to={`/profile/${wave.user?.username}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+            <img src={wave.user?.avatar} alt="" style={{ width: isMobile ? '48px' : '44px', height: isMobile ? '48px' : '44px', borderRadius: '14px', border: '2px solid var(--primary)', boxShadow: 'var(--glow)' }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
-                <div style={{ fontWeight: '900', color: 'var(--primary)', fontSize: isMobile ? '1.1rem' : '1.05rem', textShadow: 'var(--glow-strong)', whiteSpace: 'nowrap' }}>@{wave.user?.username}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                <div style={{ fontWeight: '900', color: 'var(--primary)', fontSize: '1.1rem', textShadow: 'var(--glow-strong)' }}>@{wave.user?.username}</div>
                 
-                {friendshipStatus === 'friends' && (
-                  <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)', fontWeight: '800', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>В друзьях</span>
-                )}
-                {friendshipStatus === 'following' && (
-                  <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '800', opacity: 0.8 }}>Вы подписаны</span>
-                )}
-                {friendshipStatus === 'follower' && (
-                  <span style={{ fontSize: '0.65rem', color: 'var(--secondary)', fontWeight: '800', opacity: 0.8 }}>Подписан на вас</span>
-                )}
-
                 {!isOwnWave && (
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={(e) => { e.preventDefault(); toggleFollow(); }}
                     disabled={followLoading}
                     style={{
-                      background: friendshipStatus === 'friends' || friendshipStatus === 'following' ? 'rgba(255,255,255,0.1)' : 'color-mix(in srgb, var(--primary), transparent 85%)',
-                      border: friendshipStatus === 'friends' || friendshipStatus === 'following' ? '1px solid rgba(255,255,255,0.2)' : '1px solid color-mix(in srgb, var(--primary), transparent 60%)',
+                      background: friendshipStatus === 'friends' || friendshipStatusStatus === 'following' ? 'rgba(255,255,255,0.1)' : 'var(--primary)',
+                      border: 'none',
                       borderRadius: '8px',
-                      padding: isMobile ? '2px 10px' : '2px 8px',
+                      padding: '4px 12px',
                       cursor: 'pointer',
-                      color: friendshipStatus === 'friends' || friendshipStatus === 'following' ? 'rgba(255,255,255,0.6)' : 'var(--primary)',
-                      fontWeight: '800',
-                      fontSize: '0.65rem',
+                      color: friendshipStatus === 'friends' || friendshipStatus === 'following' ? 'white' : 'black',
+                      fontWeight: '900',
+                      fontSize: '0.7rem',
                       backdropFilter: 'blur(10px)',
-                      transition: 'all 0.3s',
-                      whiteSpace: 'nowrap',
+                      transition: 'all 0.3s'
                     }}
                   >
-                    {followLoading ? '...' : (friendshipStatus === 'friends' || friendshipStatus === 'following' ? '✓' : (friendshipStatus === 'follower' ? 'В ответ' : 'Подписаться'))}
+                    {followLoading ? '...' : (friendshipStatus === 'friends' || friendshipStatus === 'following' ? '✓' : 'Подписаться')}
                   </motion.button>
                 )}
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '3px' }}><Zap size={10} color="var(--primary)" />Signal Wave</div>
+              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', fontWeight: '700', letterSpacing: '0.5px' }}>SIGNAL WAVE ACTIVE</div>
             </div>
           </Link>
         </div>
         {wave.description && (
-          <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: isMobile ? '0.95rem' : '0.9rem', lineHeight: '1.5', margin: 0, fontWeight: '500', textShadow: '0 1px 4px rgba(0,0,0,0.8)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+          <p style={{ color: 'white', fontSize: isMobile ? '1rem' : '0.95rem', lineHeight: '1.6', margin: 0, fontWeight: '500', textShadow: '0 2px 8px rgba(0,0,0,0.8)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
             {wave.description}
           </p>
         )}
       </div>
-
-      <div style={{ position: 'absolute', right: '12px', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 120px)' : '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isMobile ? '16px' : '28px', zIndex: 15 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+i      <div style={{ position: 'absolute', right: '12px', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 120px)' : '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', zIndex: 15 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
           <motion.button whileTap={{ scale: 0.8 }} onClick={handleLike}
-            style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
-            <Heart size={isMobile ? 24 : 26} fill={liked ? '#ff3060' : 'none'} color={liked ? '#ff3060' : 'white'} style={{ filter: liked ? 'drop-shadow(0 0 8px #ff3060)' : 'none', transition: 'all 0.2s' }} />
+            style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: isMobile ? '50px' : '56px', height: isMobile ? '50px' : '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+            <Heart size={28} fill={liked ? '#ff3060' : 'none'} color={liked ? '#ff3060' : 'white'} />
           </motion.button>
-          <span style={{ color: 'white', fontSize: isMobile ? '0.7rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{likesCount}</span>
+          <span style={{ color: 'white', fontSize: '0.75rem', fontWeight: '900' }}>{likesCount}</span>
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+ 
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
           <motion.button whileTap={{ scale: 0.8 }} onClick={toggleComments}
-            style={{ background: showComment ? 'color-mix(in srgb, var(--primary), transparent 85%)' : 'rgba(0,0,0,0.4)', border: showComment ? '1px solid color-mix(in srgb, var(--primary), transparent 60%)' : 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)', position: 'relative' }}>
-            <MessageCircle size={isMobile ? 24 : 26} color={showComment ? 'var(--primary)' : 'white'} style={{ filter: showComment ? 'var(--glow)' : 'none', transition: 'all 0.2s' }} />
-            {commentsCount > 0 && (
-              <div style={{ position: 'absolute', top: '-1px', right: '-1px', background: 'var(--primary)', color: 'black', borderRadius: '50%', width: isMobile ? '16px' : '18px', height: isMobile ? '16px' : '18px', fontSize: isMobile ? '0.6rem' : '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', boxShadow: 'var(--glow)' }}>
-                {commentsCount > 99 ? '99+' : commentsCount}
-              </div>
-            )}
+            style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: isMobile ? '50px' : '56px', height: isMobile ? '50px' : '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+            <MessageCircle size={28} color="white" />
           </motion.button>
-          <span style={{ color: 'white', fontSize: isMobile ? '0.7rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{commentsCount}</span>
+          <span style={{ color: 'white', fontSize: '0.75rem', fontWeight: '900' }}>{commentsCount}</span>
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <motion.button whileTap={{ scale: 0.8 }} onClick={handleShare}
-            style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
-            <Share2 size={isMobile ? 24 : 26} color="white" />
-          </motion.button>
-          <span style={{ color: 'white', fontSize: isMobile ? '0.7rem' : '0.75rem', fontWeight: '700', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>Поделиться</span>
-        </div>
-
-        <motion.button whileTap={{ scale: 0.8 }} onClick={() => setMuted(m => !m)}
-          style={{ background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
-          {muted ? <VolumeX size={isMobile ? 24 : 26} color="white" /> : <Volume2 size={isMobile ? 24 : 26} color="var(--primary)" style={{ filter: 'var(--glow)' }} />}
+ 
+        <motion.button whileTap={{ scale: 0.8 }} onClick={handleShare}
+          style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: isMobile ? '50px' : '56px', height: isMobile ? '50px' : '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+          <Share2 size={26} color="white" />
         </motion.button>
-
+ 
+        <motion.button whileTap={{ scale: 0.8 }} onClick={() => setMuted(m => !m)}
+          style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: isMobile ? '50px' : '56px', height: isMobile ? '50px' : '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+          {muted ? <VolumeX size={26} color="white" /> : <Volume2 size={26} color="var(--primary)" style={{ filter: 'var(--glow)' }} />}
+        </motion.button>
+ 
         {isOwnWave && (
           <motion.button whileTap={{ scale: 0.8 }} onClick={handleDelete}
-            style={{ background: 'rgba(255,0,85,0.15)', border: '1px solid rgba(255,0,85,0.3)', borderRadius: '50%', width: isMobile ? '46px' : '52px', height: isMobile ? '46px' : '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
-            <Trash2 size={isMobile ? 24 : 26} color="#ff0055" />
+            style={{ background: 'rgba(255,0,85,0.2)', border: '1px solid rgba(255,0,85,0.4)', borderRadius: '50%', width: isMobile ? '50px' : '56px', height: isMobile ? '50px' : '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+            <Trash2 size={26} color="#ff3060" />
+          </motion.button>
+        )}
+      </div>
+ash2 size={isMobile ? 24 : 26} color="#ff0055" />
           </motion.button>
         )}
       </div>

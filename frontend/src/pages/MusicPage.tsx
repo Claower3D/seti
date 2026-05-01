@@ -111,88 +111,82 @@ export const MusicPage = () => {
         flexDirection: isMobile ? 'column' : 'row',
         justifyContent: 'space-between', 
         alignItems: isMobile ? 'flex-start' : 'center', 
-        gap: '24px',
-        marginBottom: '40px',
-        padding: '20px 0'
+        gap: isMobile ? '16px' : '24px',
+        marginBottom: isMobile ? '24px' : '40px',
+        padding: isMobile ? '10px 0' : '20px 0'
       }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-             <Headphones size={20} color="#00f5ff" />
-             <span style={{ fontSize: '0.7rem', fontWeight: '900', color: '#00f5ff', letterSpacing: '4px', textTransform: 'uppercase' }}>Discovery</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+             <Headphones size={16} color="var(--primary)" />
+             <span style={{ fontSize: '0.65rem', fontWeight: '900', color: 'var(--primary)', letterSpacing: '3px', textTransform: 'uppercase' }}>Discovery</span>
           </div>
-          <h1 style={{ fontSize: '2.4rem', fontWeight: '900', color: 'white', margin: 0, letterSpacing: '-1px' }}>Музыка</h1>
+          <h1 style={{ fontSize: isMobile ? '1.8rem' : '2.4rem', fontWeight: '900', color: 'white', margin: 0, letterSpacing: '-1px' }}>Музыка</h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '6px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'flex', gap: '6px', background: 'rgba(255,255,255,0.03)', padding: '5px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)', width: isMobile ? '100%' : 'auto' }}>
           {[
-            { id: 'my', label: 'Моя коллекция', icon: Disc },
-            { id: 'search', label: 'Поиск мировых треков', icon: Search }
+            { id: 'my', label: 'Моя', icon: Disc },
+            { id: 'search', label: 'Поиск', icon: Search }
           ].map(t => (
             <button 
               key={t.id}
               onClick={() => setTab(t.id as any)}
               style={{
-                display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '10px 20px', borderRadius: '14px', border: 'none',
+                flex: isMobile ? 1 : 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                padding: '8px 16px', borderRadius: '10px', border: 'none',
                 background: tab === t.id ? 'white' : 'transparent',
-                color: tab === t.id ? 'black' : 'rgba(255,255,255,0.5)',
-                fontWeight: '800', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                color: tab === t.id ? 'black' : 'rgba(255,255,255,0.4)',
+                fontWeight: '900', fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s'
               }}
             >
-              <t.icon size={16} />
-              {(!isMobile || tab === t.id) && t.label}
+              <t.icon size={14} />
+              {t.label}
             </button>
           ))}
         </div>
       </div>
 
       {/* Search Input Bar */}
-      <form onSubmit={handleSearch} style={{ position: 'relative', marginBottom: '48px' }}>
-        <Search size={20} style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: '#00f5ff', opacity: 0.5 }} />
+      <form onSubmit={handleSearch} style={{ position: 'relative', marginBottom: isMobile ? '32px' : '48px' }}>
+        <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.4 }} />
         <input 
           type="text" 
           value={query} 
           onChange={e => setQuery(e.target.value)}
-          placeholder="Найти любую музыку или исполнителя..." 
+          placeholder="Найти трек или артиста..." 
           style={{ 
             width: '100%', 
-            padding: '20px 24px 20px 60px', 
+            padding: isMobile ? '14px 14px 14px 44px' : '18px 24px 18px 52px', 
             background: 'rgba(255,255,255,0.03)', 
             border: '1px solid rgba(255,255,255,0.08)', 
-            borderRadius: '24px', 
+            borderRadius: '16px', 
             color: 'white', 
-            fontSize: '1.1rem', 
+            fontSize: '1rem', 
             outline: 'none',
-            transition: '0.3s',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+            transition: '0.2s'
           }}
-          onFocus={(e) => e.currentTarget.style.borderColor = 'rgba(0, 245, 255, 0.4)'}
-          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
         />
         <motion.button 
           whileTap={{ scale: 0.95 }}
           type="submit"
           style={{ 
             position: 'absolute', 
-            right: '10px', 
+            right: '8px', 
             top: '50%', 
-            translateY: '-50%',
-            background: '#00f5ff', 
+            transform: 'translateY(-50%)',
+            background: 'var(--primary)', 
             color: 'black', 
             border: 'none', 
-            minWidth: '100px',
-            height: '42px',
-            borderRadius: '16px', 
+            padding: '8px 16px',
+            borderRadius: '10px', 
             fontWeight: '900', 
-            fontSize: '0.85rem', 
+            fontSize: '0.75rem', 
             cursor: 'pointer', 
-            boxShadow: '0 0 20px rgba(0,245,255,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
+            boxShadow: 'var(--glow)'
           }}
         >
-          {loading ? 'Ищем...' : 'Поиск'}
+          {loading ? '...' : 'ПОИСК'}
         </motion.button>
       </form>
 
