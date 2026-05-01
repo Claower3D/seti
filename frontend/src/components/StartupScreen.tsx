@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Terminal, LogIn, Activity, Cpu, ShieldAlert, Globe } from 'lucide-react';
+import { Terminal, Activity } from 'lucide-react';
 import SetiLogo from './SetiLogo';
 
 const SCRIPT = [
@@ -229,7 +229,7 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             style={{
-              position: 'fixed', inset: 0, zHydrated: 1000000,
+              position: 'fixed', inset: 0,
               background: 'rgba(3, 14, 18, 0.96)', backdropFilter: 'blur(10px)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               zIndex: 1000000, padding: '20px'

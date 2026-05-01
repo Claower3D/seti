@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Lock, User, LogIn, Smartphone, Globe, Download, Phone, CheckCircle, AlertCircle } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
+import { Lock, User, LogIn, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import SetiLogo from '../components/SetiLogo';
 
 // KZ number validation
@@ -131,7 +130,6 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAppPrompt, setShowAppPrompt] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
