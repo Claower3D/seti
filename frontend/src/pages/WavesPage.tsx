@@ -310,7 +310,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
           </p>
         )}
       </div>
-i      <div style={{ position: 'absolute', right: '12px', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 120px)' : '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', zIndex: 15 }}>
+      <div style={{ position: 'absolute', right: '12px', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 120px)' : '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', zIndex: 15 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
           <motion.button whileTap={{ scale: 0.8 }} onClick={handleLike}
             style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: isMobile ? '50px' : '56px', height: isMobile ? '50px' : '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
@@ -341,10 +341,6 @@ i      <div style={{ position: 'absolute', right: '12px', bottom: isMobile ? 'ca
           <motion.button whileTap={{ scale: 0.8 }} onClick={handleDelete}
             style={{ background: 'rgba(255,0,85,0.2)', border: '1px solid rgba(255,0,85,0.4)', borderRadius: '50%', width: isMobile ? '50px' : '56px', height: isMobile ? '50px' : '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
             <Trash2 size={26} color="#ff3060" />
-          </motion.button>
-        )}
-      </div>
-ash2 size={isMobile ? 24 : 26} color="#ff0055" />
           </motion.button>
         )}
       </div>
