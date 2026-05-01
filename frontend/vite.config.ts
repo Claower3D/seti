@@ -22,18 +22,27 @@ export default defineConfig({
     }
   },
   build: {
-    target: 'esnext',
+    target: 'es2022',
     minify: 'esbuild',
     sourcemap: false,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'vendor-react';
-            if (id.includes('framer-motion')) return 'vendor-framer';
-            if (id.includes('lucide-react')) return 'vendor-icons';
-            return 'vendor-others';
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+            return 'react-core'
+          }
+          if (id.includes('node_modules/react-router')) {
+            return 'react-router'
+          }
+          if (id.includes('node_modules/framer-motion')) {
+            return 'framer'
+          }
+          if (id.includes('node_modules/lucide-react')) {
+            return 'icons'
+          }
+          if (id.includes('node_modules/@capacitor')) {
+            return 'capacitor'
           }
         }
       }
