@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Terminal, Activity } from 'lucide-react';
+import { Terminal, Activity, Zap, Cpu, Satellite, ShieldCheck } from 'lucide-react';
 import SetiLogo from './SetiLogo';
 
 const SCRIPT = [
@@ -72,23 +72,26 @@ const Waveform = () => {
       const elapsed = Date.now() - start.current;
       const anomaly = elapsed > 3300;
 
-      ctx.strokeStyle = '#00e5cc';
-      ctx.lineWidth = 1.5;
-      ctx.shadowColor = '#00e5cc';
-      ctx.shadowBlur = 3;
+      // Use theme color
+      const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#00f5ff';
+      
+      ctx.strokeStyle = primary;
+      ctx.lineWidth = 2;
+      ctx.shadowColor = primary;
+      ctx.shadowBlur = anomaly ? 15 : 5;
       ctx.beginPath();
       for (let x = 0; x < W; x++) {
         const p = x / W;
-        const s1 = Math.sin(p * 10 + wt * 4.5) * 0.5;
-        const s2 = Math.sin(p * 3.5 + wt * 2.1) * 0.18;
-        const s3 = Math.sin(p * 1.5 + wt * 3.3) * 0.1;
-        const noise = (Math.random() - 0.5) * 0.06;
-        const spike = anomaly ? Math.sin(p * 20 + wt * 8) * 0.28 * Math.abs(Math.sin(wt * 0.6)) : 0;
-        const y = H / 2 + (s1 + s2 + s3 + noise + spike) * H * 0.38;
+        const s1 = Math.sin(p * 12 + wt * 4) * 0.5;
+        const s2 = Math.sin(p * 5 + wt * 2) * 0.2;
+        const s3 = Math.sin(p * 2 + wt * 3) * 0.1;
+        const noise = (Math.random() - 0.5) * (anomaly ? 0.2 : 0.04);
+        const spike = anomaly ? Math.sin(p * 50 + wt * 10) * 0.3 * Math.sin(wt) : 0;
+        const y = H / 2 + (s1 + s2 + s3 + noise + spike) * H * 0.4;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
-      wt += 0.1;
+      wt += 0.08;
       animationId = requestAnimationFrame(render);
     };
 
@@ -96,7 +99,7 @@ const Waveform = () => {
     return () => cancelAnimationFrame(animationId);
   }, []);
 
-  return <canvas ref={canvasRef} width={800} height={100} style={{ width: '100%', height: '50px', opacity: 0.8 }} />;
+  return <canvas ref={canvasRef} width={800} height={100} style={{ width: '100%', height: '60px' }} />;
 };
 
 export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
@@ -107,14 +110,12 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [authStatus, setAuthStatus] = useState<'none' | 'pending' | 'success'>('none');
 
   useEffect(() => {
-    // Terminal Script
     SCRIPT.forEach(s => {
       setTimeout(() => {
-        setLogs(prev => [...prev, s].slice(-13));
+        setLogs(prev => [...prev, s].slice(-12));
       }, s.t);
     });
 
-    // Progress bar
     PROG_STEPS.forEach(s => {
       setTimeout(() => {
         setProgress(s.pct);
@@ -122,174 +123,218 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
       }, s.t);
     });
 
-    // Final overlay
-    setTimeout(() => {
-      setIsDone(true);
-    }, 5100);
+    setTimeout(() => setIsDone(true), 5100);
   }, []);
 
   const handleLogin = () => {
     setAuthStatus('pending');
     setTimeout(() => {
       setAuthStatus('success');
-      setTimeout(onComplete, 800);
-    }, 1800);
+      setTimeout(onComplete, 1000);
+    }, 2000);
   };
 
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: '#030e12', zIndex: 999999,
+      background: 'var(--bg)', zIndex: 999999,
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      fontFamily: "'Space Grotesk', 'Courier New', monospace",
-      color: '#00e5cc', padding: '40px 20px', overflow: 'hidden'
+      fontFamily: "'Space Grotesk', sans-serif",
+      color: 'var(--primary)', padding: '20px', overflow: 'hidden'
     }}>
-      {/* Grid and Scan Beam */}
+      {/* Animated Hologram Grid Overlay */}
       <div style={{
         position: 'absolute', inset: 0,
-        backgroundImage: 'linear-gradient(rgba(0,200,180,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(0,200,180,0.03) 1px,transparent 1px)',
-        backgroundSize: '40px 40px', pointerEvents: 'none'
+        backgroundImage: 'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',
+        backgroundSize: '50px 50px', pointerEvents: 'none', opacity: 0.3
       }} />
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(circle at center, transparent 30%, var(--bg) 100%)',
+        pointerEvents: 'none', zIndex: 1
+      }} />
+
+      {/* Moving Scan Beam */}
       <motion.div
-        animate={{ top: ['0%', '100%'] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-        style={{ position: 'absolute', left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg,transparent,rgba(0,229,204,0.3),transparent)', zIndex: 1 }}
+        animate={{ top: ['-10%', '110%'] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+        style={{ 
+          position: 'absolute', left: 0, right: 0, height: '2px', 
+          background: 'linear-gradient(90deg, transparent, var(--primary), transparent)', 
+          boxShadow: '0 0 20px var(--primary)', zIndex: 2, opacity: 0.5 
+        }}
       />
 
-      {/* Header */}
-      <div style={{
-        width: '80px', height: '80px',
-        border: '2px solid #00e5cc', borderRadius: '16px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        marginBottom: '20px', boxShadow: '0 0 20px rgba(0,229,204,0.2)', flexShrink: 0
-      }}>
-        <SetiLogo size={50} />
-      </div>
-
-      <div style={{ fontSize: '14px', letterSpacing: '6px', fontWeight: '900', textTransform: 'uppercase', marginBottom: '4px' }}>ЗАГРУЗКА ИНТЕРФЕЙСА SETI</div>
-      <div style={{ fontSize: '10px', letterSpacing: '2px', color: '#005f58', marginBottom: '24px' }}>PROTOC_V.2.0.47 / SYSTEM_STABLE</div>
-
-      {/* Waveform Section */}
-      <div style={{
-        width: '100%', maxWidth: '520px',
-        border: '1px solid rgba(0,229,204,0.15)', background: 'rgba(0,229,204,0.03)',
-        borderRadius: '6px', padding: '10px 15px', marginBottom: '15px', flexShrink: 0
-      }}>
-        <div style={{ fontSize: '9px', letterSpacing: '2px', color: '#005f58', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Activity size={10} /> SIGNAL_WAVEFORM — 1420.405 MHz
-        </div>
-        <Waveform />
-      </div>
-
-      {/* Terminal Section */}
-      <div className="glass-panel" style={{
-        width: '100%', maxWidth: '520px', padding: '15px',
-        border: '1px solid rgba(0,229,204,0.15)', background: 'rgba(0,5,5,0.8)',
-        flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative',
-        display: 'flex', flexDirection: 'column'
-      }}>
-        <div style={{ fontSize: '9px', letterSpacing: '2px', color: '#005f58', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Terminal size={12} /> ANALYSIS_SCRIPT — RUNNING
-        </div>
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', height: '100%' }}>
         
-        <div style={{ flex: 1, overflow: 'hidden', fontSize: '12px', lineHeight: '1.8', fontFamily: 'monospace' }}>
-          {logs.map((log, i) => (
-            <div key={i} style={{ 
-              whiteSpace: 'nowrap', 
-              color: log.cls === 'green' ? '#00e5cc' : log.cls === 'white' ? '#008c7a' : log.cls === 'dim' ? '#005f58' : log.cls === 'warn' ? '#e5a000' : log.cls === 'err' ? '#ff4466' : '#00e5cc' 
-            }}>
-              {log.text}
+        {/* Header Section */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px', marginTop: '20px' }}>
+          <motion.div 
+            animate={{ rotateY: 360 }} 
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            style={{ width: '80px', height: '80px', flexShrink: 0 }}
+          >
+            <SetiLogo size={80} />
+          </motion.div>
+          <div>
+            <h1 className="neon-text" style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '4px', textTransform: 'uppercase', margin: 0 }}>SETI ANALYZER</h1>
+            <div style={{ fontSize: '0.7rem', letterSpacing: '2px', color: 'var(--secondary)', opacity: 0.8 }}>SYSTEM_INIT // PROTOCOL_V.2.0.47</div>
+          </div>
+          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>LOCATION</div>
+            <div style={{ fontSize: '0.8rem', fontWeight: '700' }}>SECTOR-7G</div>
+          </div>
+        </div>
+
+        {/* Top Info Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '15px' }}>
+          {[
+            { icon: <Zap size={14} />, label: 'ENERGY', val: '98.4%' },
+            { icon: <Cpu size={14} />, label: 'LOAD', val: '12.1%' },
+            { icon: <Satellite size={14} />, label: 'SIGNAL', val: 'STABLE' }
+          ].map((item, i) => (
+            <div key={i} className="glass-panel" style={{ padding: '10px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--border)' }}>
+              <div style={{ color: 'var(--secondary)' }}>{item.icon}</div>
+              <div>
+                <div style={{ fontSize: '0.5rem', opacity: 0.5 }}>{item.label}</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: '700' }}>{item.val}</div>
+              </div>
             </div>
           ))}
-          <div style={{ marginTop: '2px' }}>
-            <span style={{ color: '#00e5cc' }}>&gt;</span> <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.7, repeat: Infinity }} style={{ display: 'inline-block', width: '8px', height: '14px', background: '#00e5cc', verticalAlign: 'middle' }} />
+        </div>
+
+        {/* Waveform Visualization */}
+        <div className="glass-panel" style={{ padding: '15px', marginBottom: '15px', border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Activity size={12} /> SIGNAL WAVEFORM
+            </div>
+            <div style={{ fontSize: '0.6rem', opacity: 0.6 }}>1420.405 MHz</div>
+          </div>
+          <Waveform />
+        </div>
+
+        {/* Terminal Section */}
+        <div className="glass-panel" style={{ 
+          flex: 1, padding: '20px', overflow: 'hidden', minHeight: 0,
+          border: '1px solid var(--border)', background: 'rgba(0,0,0,0.5)',
+          display: 'flex', flexDirection: 'column'
+        }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--secondary)', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Terminal size={14} /> EXECUTING_ANALYZER_KERNEL...
+          </div>
+          <div style={{ flex: 1, overflow: 'hidden', fontFamily: 'monospace', fontSize: '0.85rem', lineHeight: '1.8' }}>
+            {logs.map((log, i) => (
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                key={i} 
+                style={{ 
+                  color: log.cls === 'green' ? 'var(--primary)' : 
+                         log.cls === 'white' ? 'var(--text)' : 
+                         log.cls === 'dim' ? 'var(--text-secondary)' : 
+                         log.cls === 'warn' ? '#ffcc00' : 
+                         log.cls === 'err' ? 'var(--accent)' : 'var(--primary)',
+                  textShadow: log.cls === 'green' ? 'var(--glow)' : 'none'
+                }}
+              >
+                {log.text}
+              </motion.div>
+            ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+              <span style={{ color: 'var(--primary)' }}>&gt;</span>
+              <motion.div animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} style={{ width: '8px', height: '15px', background: 'var(--primary)', boxShadow: 'var(--glow)' }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Footer */}
+        <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '700', marginBottom: '8px' }}>
+            <span style={{ letterSpacing: '1px' }}>{statusText}</span>
+            <span style={{ color: 'var(--secondary)' }}>{progress}%</span>
+          </div>
+          <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+            <motion.div 
+              animate={{ width: `${progress}%` }} 
+              style={{ 
+                height: '100%', 
+                background: 'linear-gradient(90deg, var(--secondary), var(--primary))', 
+                boxShadow: '0 0 15px var(--primary)' 
+              }} 
+            />
           </div>
         </div>
       </div>
 
-      {/* Progress Section */}
-      <div style={{ width: '100%', maxWidth: '520px', marginTop: '20px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#005f58', letterSpacing: '1px', marginBottom: '6px' }}>
-          <span>{statusText}</span>
-          <span>{progress}%</span>
-        </div>
-        <div style={{ height: '3px', background: 'rgba(0,229,204,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
-          <motion.div 
-            animate={{ width: `${progress}%` }}
-            transition={{ type: 'tween', ease: 'linear' }}
-            style={{ height: '100%', background: 'linear-gradient(90deg, #003d38, #00e5cc)', boxShadow: '0 0 10px rgba(0,229,204,0.5)' }} 
-          />
-        </div>
-      </div>
-
-      {/* Done Overlay */}
+      {/* Final Analysis Report Overlay */}
       <AnimatePresence>
         {isDone && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             style={{
-              position: 'fixed', inset: 0,
-              background: 'rgba(3, 14, 18, 0.96)', backdropFilter: 'blur(10px)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              zIndex: 1000000, padding: '20px'
+              position: 'fixed', inset: 0, zIndex: 1000000,
+              background: 'rgba(5, 5, 16, 0.98)',
+              backdropFilter: 'blur(15px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
             }}
           >
+            <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(var(--primary) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+            
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.9, y: 30 }}
               animate={{ scale: 1, y: 0 }}
-              style={{ textAlign: 'center' }}
+              style={{ width: '100%', maxWidth: '440px', position: 'relative', zIndex: 10, textAlign: 'center' }}
             >
-              <div style={{ fontSize: '18px', letterSpacing: '8px', fontWeight: '900', color: '#00e5cc', textTransform: 'uppercase', marginBottom: '24px' }}>
-                ■ АНАЛИЗ ЗАВЕРШЁН
-              </div>
-              
-              <div style={{ fontSize: '12px', lineHeight: '2.2', color: '#00a896', marginBottom: '40px', fontFamily: 'monospace' }}>
-                FREQ SCANNED: <span style={{ color: '#00e5cc' }}>1420.405 MHz</span><br />
-                PACKETS PROCESSED: <span style={{ color: '#00e5cc' }}>84 291</span><br />
-                SIGNAL PATTERNS: <span style={{ color: '#00e5cc' }}>17</span><br />
-                ANOMALIES DETECTED: <span style={{ color: '#ff4466' }}>2</span><br />
-                ENTROPY: <span style={{ color: '#00e5cc' }}>6.82 bits — ВЫШЕ НОРМЫ</span><br />
-                SOURCE: <span style={{ color: '#00e5cc' }}>RA 19h25m12s / Dec +31°</span>
-              </div>
+              <div className="glass-panel" style={{ padding: '40px', border: '1px solid var(--border-bright)', boxShadow: 'var(--glow-strong)' }}>
+                <motion.div 
+                  animate={{ scale: [1, 1.05, 1] }} 
+                  transition={{ repeat: Infinity, duration: 3 }}
+                  style={{ marginBottom: '30px' }}
+                >
+                  <SetiLogo size={100} />
+                </motion.div>
 
-              <button 
-                onClick={authStatus === 'none' ? handleLogin : undefined}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #00a896',
-                  color: '#00e5cc',
-                  fontFamily: 'monospace',
-                  fontSize: '12px',
-                  letterSpacing: '0.4em',
-                  padding: '16px 48px',
-                  cursor: authStatus === 'none' ? 'pointer' : 'default',
-                  textTransform: 'uppercase',
-                  borderRadius: '4px',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  transition: 'all 0.3s'
-                }}
-              >
-                {authStatus === 'none' && '▶ ВОЙТИ В СИСТЕМУ'}
-                {authStatus === 'pending' && 'АВТОРИЗАЦИЯ...'}
-                {authStatus === 'success' && '✓ ДОСТУП РАЗРЕШЁН'}
+                <h2 className="neon-text" style={{ fontSize: '1.6rem', fontWeight: '900', letterSpacing: '8px', marginBottom: '10px' }}>ANALYSIS COMPLETE</h2>
+                <div style={{ fontSize: '0.65rem', letterSpacing: '4px', color: 'var(--secondary)', marginBottom: '30px', opacity: 0.8 }}>SIGNAL_INTEGRITY_VERIFIED_✓</div>
                 
-                {authStatus === 'none' && (
-                  <motion.div
-                    animate={{ left: ['-100%', '100%'] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                    style={{ position: 'absolute', top: 0, height: '100%', width: '100%', background: 'linear-gradient(90deg, transparent, rgba(0,229,204,0.2), transparent)' }}
-                  />
-                )}
-              </button>
+                <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '30px', fontSize: '0.85rem', fontFamily: 'monospace', lineHeight: '2' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>SCANNED:</span> <span style={{ color: 'var(--primary)' }}>1420.405 MHz</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>PACKETS:</span> <span style={{ color: 'var(--primary)' }}>84,291</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>PATTERNS:</span> <span style={{ color: 'var(--primary)' }}>17 IDENTIFIED</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>ANOMALIES:</span> <span style={{ color: 'var(--accent)' }}>2 DETECTED</span></div>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '10px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>SOURCE:</span> <span style={{ color: 'var(--secondary)' }}>GALAXY_CENTER</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>STATUS:</span> <span style={{ color: '#00ff88' }}>ACCESS_GRANTED</span></div>
+                </div>
+
+                <button 
+                  onClick={authStatus === 'none' ? handleLogin : undefined}
+                  className="btn-primary"
+                  style={{ width: '100%', height: '56px', fontSize: '1rem', letterSpacing: '4px', position: 'relative' }}
+                >
+                  {authStatus === 'none' && <><ShieldCheck size={18} /> ENTER_SYSTEM</>}
+                  {authStatus === 'pending' && 'AUTHORIZING...'}
+                  {authStatus === 'success' && '✓ ACCESS_GRANTED'}
+                  
+                  {authStatus === 'none' && (
+                    <motion.div 
+                      animate={{ left: ['-100%', '100%'] }} 
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      style={{ position: 'absolute', top: 0, bottom: 0, width: '40%', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)' }} 
+                    />
+                  )}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div style={{ position: 'absolute', bottom: '20px', fontSize: '8px', color: 'rgba(0,229,204,0.15)', letterSpacing: '4px', textTransform: 'uppercase' }}>
-        SETI SIGNAL ANALYSIS PROTOCOL ACTIVE // ENCRYPTION AES-256
+      {/* Subtle Bottom Watermark */}
+      <div style={{ position: 'absolute', bottom: '20px', fontSize: '0.5rem', letterSpacing: '4px', opacity: 0.2, fontWeight: '700' }}>
+        SECURE_CONNECTION_STABLISHED_//_SETI_HOLOGRAPHIC_INTERFACE
       </div>
     </div>
   );
