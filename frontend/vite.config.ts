@@ -11,9 +11,6 @@ try {
 
 export default defineConfig({
   plugins: [react()],
-  esbuild: {
-    drop: ['console', 'debugger'],
-  },
   define: {
     __COMMIT_HASH__: JSON.stringify(commitHash),
   },
