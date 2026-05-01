@@ -270,7 +270,11 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
             boxShadow: 'var(--glow-strong)',
           }}
           animate={{ backgroundPosition: ['0% center', '200% center'] }}
-          transition={{ repeat: Infinity, duration: 4, eas      <div style={{ position: 'absolute', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 90px)' : '80px', left: '16px', right: '80px', zIndex: 15 }}>
+          transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
+        />
+      </div>
+
+      <div style={{ position: 'absolute', bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 24px) + 90px)' : '80px', left: '16px', right: '80px', zIndex: 15 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
           <Link to={`/profile/${wave.user?.username}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
             <img src={wave.user?.avatar} alt="" style={{ width: isMobile ? '48px' : '44px', height: isMobile ? '48px' : '44px', borderRadius: '14px', border: '2px solid var(--primary)', boxShadow: 'var(--glow)' }} />
@@ -284,7 +288,7 @@ const WavePlayer = ({ wave, isActive, currentUser, isMobile, onDelete }: { wave:
                     onClick={(e) => { e.preventDefault(); toggleFollow(); }}
                     disabled={followLoading}
                     style={{
-                      background: friendshipStatus === 'friends' || friendshipStatusStatus === 'following' ? 'rgba(255,255,255,0.1)' : 'var(--primary)',
+                      background: friendshipStatus === 'friends' || friendshipStatus === 'following' ? 'rgba(255,255,255,0.1)' : 'var(--primary)',
                       border: 'none',
                       borderRadius: '8px',
                       padding: '4px 12px',
