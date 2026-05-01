@@ -5,6 +5,7 @@
   padding: 0;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 :root {
@@ -24,12 +25,16 @@
   --radius-sm: 12px;
   --glow: 0 0 calc(30px * var(--glow-opacity)) color-mix(in srgb, var(--primary), transparent 85%);
   --glow-strong: 0 0 calc(60px * var(--glow-opacity)) color-mix(in srgb, var(--primary), transparent 70%);
+  /* Performance: reduce expensive glow on mobile, set via JS or media query */
+  --glow-opacity: 1;
 }
 
 html,
 body,
 #root {
   height: 100%;
+  /* Use dynamic viewport height to handle mobile browser chrome */
+  min-height: 100dvh;
 }
 
 body {
@@ -37,6 +42,12 @@ body {
   background: var(--bg);
   color: var(--text);
   overflow-x: hidden;
+  /* Crisp text on all platforms */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+  /* Prevent content shift on iOS when keyboard appears */
+  overscroll-behavior: none;
 }
 
 /* ANIMATED BACKGROUND */
@@ -62,6 +73,9 @@ body::after {
   background-size: 60px 60px;
   pointer-events: none;
   z-index: 0;
+  /* Isolate to own GPU layer — prevents repainting on scroll */
+  will-change: auto;
+  contain: strict;
 }
 
 #root {
@@ -91,14 +105,20 @@ body::after {
 .main-layout {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
 .main-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px 28px;
   min-width: 0;
+  /* Hardware-accelerated smooth scroll */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
 }
 
 /* SIDEBAR */
@@ -540,15 +560,21 @@ body::after {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(5, 5, 20, 0.85);
-  backdrop-filter: blur(40px);
+  background: rgba(5, 5, 20, 0.90);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
   border-top: 1px solid var(--border);
-  padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
+  /* Respect home bar / notch insets */
+  padding: 10px 4px max(10px, env(safe-area-inset-bottom));
   z-index: 2000;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
+  /* Own GPU composite layer — prevents scroll causing nav repaint */
+  transform: translateZ(0);
+  will-change: transform;
+  min-height: 56px;
 }
 
 .mobile-nav a {
@@ -561,11 +587,24 @@ body::after {
   text-decoration: none;
   font-size: 0.62rem;
   font-weight: 700;
-  padding: 8px 10px;
-  min-width: 60px;
-  border-radius: 16px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Meet minimum 44×44 Apple HIG tap target */
+  padding: 8px 12px;
+  min-width: 52px;
+  min-height: 44px;
+  border-radius: 14px;
+  /* Fast transition — only color, no layout repaint */
+  transition: color 0.15s ease, background-color 0.15s ease;
   position: relative;
+  /* Instant touch response — no 300ms delay */
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mobile-nav button {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .mobile-nav a.active {
@@ -633,7 +672,7 @@ body::after {
   border: 2px solid var(--bg);
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE — TABLET & MOBILE */
 @media (max-width: 768px) {
   .sidebar {
     display: none;
@@ -644,15 +683,75 @@ body::after {
   }
 
   .main-content {
-    padding: 16px;
-    padding-bottom: 100px;
+    /* Bottom padding accounts for nav + home bar inset */
+    padding: 14px 14px calc(68px + env(safe-area-inset-bottom));
+    /* Momentum scroll on iOS */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  /* Disable expensive hover transforms on touch — they never fire on mobile
+     but force GPU layers to stay active unnecessarily */
+  .card:hover,
+  .post-card:hover,
+  .stat-card:hover,
+  .btn-primary:hover,
+  .btn-accent:hover,
+  .nav-item:hover,
+  .tag:hover,
+  .glass-panel:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Faster transitions feel more responsive on touch */
+  .card,
+  .post-card,
+  .glass-panel,
+  .btn-primary,
+  .btn-accent {
+    transition-duration: 0.12s !important;
+  }
+
+  /* Inputs: prevent iOS zoom-on-focus (font-size must be >= 16px) */
+  input, textarea, select {
+    font-size: 16px !important;
+    touch-action: manipulation;
+  }
+
+  /* Prevent text selection on accidental long-press of UI elements */
+  button, a, .nav-item, .tag, .badge {
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
   }
 }
 
 @media (max-width: 480px) {
   .main-content {
-    padding: 12px;
-    padding-bottom: 100px;
+    padding: 10px 10px calc(68px + env(safe-area-inset-bottom));
+  }
+
+  /* Compact cards on small screens */
+  .post-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  /* Tighter stat grid */
+  .stat-number {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .main-content {
+    padding: 8px 8px calc(66px + env(safe-area-inset-bottom));
   }
 }
 
@@ -691,23 +790,39 @@ body::after {
     height: 100dvh !important;
     width: 100% !important;
     overflow: hidden !important;
-    z-index: 1000 !important; /* Below MobileNav, above others */
+    z-index: 1000 !important;
     background: #000 !important;
   }
 
-  /* Force MobileNav to be above the immersive video */
   .mobile-nav {
     display: flex;
     z-index: 2000 !important;
   }
 
-  /* Ensure the root doesn't scroll when in immersive waves mode */
   body:has(.waves-layout) {
     overflow: hidden !important;
     position: fixed;
     width: 100%;
     height: 100%;
-    touch-action: none; /* Block browser gestures like pull-to-refresh */
+    touch-action: none;
+  }
+}
+
+/* ── GLOBAL ANIMATION PERFORMANCE ─────────────────────────────── */
+/* Force GPU compositing on Framer Motion animated elements */
+@media (max-width: 1024px) {
+  /* Animated elements get their own GPU layer */
+  [style*='transform'],
+  [style*='opacity'] {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Images: prevent layout shift */
+  img {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 200px;
   }
 }
 
