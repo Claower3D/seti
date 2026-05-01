@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Terminal, Activity, Zap, Cpu, Satellite, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Terminal, Activity, Zap, Cpu, Satellite, ShieldCheck } from 'lucide-react';
 import SetiLogo from './SetiLogo';
 
 const SCRIPT = [

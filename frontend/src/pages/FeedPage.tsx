@@ -236,16 +236,6 @@ export const FeedPage = () => {
     } catch { alert('Ошибка загрузки истории'); } finally { setIsUploadingStory(false); }
   };
 
-  const handleDeleteStory = async (storyId: number) => {
-    try {
-      await api.delete(`/stories/${storyId}`);
-      setStories(prev => prev.filter(s => s.id !== storyId));
-      // Move to next or close
-      const newStories = stories.filter(s => s.id !== storyId);
-      if (newStories.length === 0) { setActiveStoryIdx(null); }
-      else if (activeStoryIdx !== null && activeStoryIdx >= newStories.length) { setActiveStoryIdx(newStories.length - 1); }
-    } catch { alert('Ошибка при удалении истории'); }
-  };
 
   return (
     <div style={{ display: 'flex', gap: isMobile ? '0' : '24px', alignItems: 'flex-start', flexDirection: 'column' }}>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Plus, Search, Send, ArrowLeft, LogIn, X, Image as ImageIcon, Heart, MessageCircle, Settings, Upload } from 'lucide-react';
+import { Users, Plus, Search, ArrowLeft, X, Image as ImageIcon, Heart, MessageCircle, Settings, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';

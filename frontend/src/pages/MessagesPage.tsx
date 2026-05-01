@@ -5,7 +5,7 @@ import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useCall } from '../context/CallContext';
-import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, Edit2, Trash2, X, Play, Pause, CheckCheck, Trash, Phone, Video, Plus, Users, Shield, Info, Settings, FileText, LogOut, Archive, Inbox } from 'lucide-react';
+import { Send, Search, ArrowLeft, MessageSquare, Paperclip, Mic, X, Play, Pause, CheckCheck, Trash, Phone, Video, Plus, Users, Shield, Info, Settings, FileText, LogOut, Archive, Inbox } from 'lucide-react';
 // ... rest of the imports and components ...
 // (Note: I will only replace the specific block but I need to make sure Shield is in imports)
 
@@ -356,17 +356,6 @@ export const MessagesPage = () => {
     } catch { alert('Ошибка отправки голосового сообщения'); }
   };
 
-  const handleDelete = (msgId: number) => {
-    if (!ws || (!selectedFriend && !selectedGroup)) return;
-    if (confirm('Удалить сообщение?')) {
-      const payload: any = { action: 'delete', messageId: msgId };
-      if (selectedFriend) payload.receiverId = selectedFriend.id;
-      if (selectedGroup) payload.groupId = selectedGroup.id;
-      ws.send(JSON.stringify(payload));
-    }
-  };
-
-  const handeEditClick = (msg: any) => { setEditingMsgId(msg.id); setInput(msg.content); inputRef.current?.focus(); };
 
   const sendFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0] || (!selectedFriend && !selectedGroup) || !ws) return;

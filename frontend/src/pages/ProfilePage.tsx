@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, X, Grid, Film, Zap, Settings, UserPlus, UserMinus, UserCheck, Search, Users, UserRoundPlus, UserRoundMinus } from 'lucide-react';
+import { Heart, MessageCircle, X, Grid, Film, Zap, Settings, UserPlus, UserMinus, UserCheck, Search, Users } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
 
 
@@ -186,7 +186,7 @@ const MediaViewerModal = ({ isOpen, onClose, media, type, isMobile, owner }: { i
 
 type SocialType = 'friends' | 'followers' | 'following';
 
-const SocialListModal = ({ isOpen, onClose, username, type: initialType, profileId, onAction }: { isOpen: boolean, onClose: () => void, username: string, type: SocialType, profileId: number, onAction?: () => void }) => {
+const SocialListModal = ({ isOpen, onClose, username, type: initialType, profileId, isMobile, onAction }: { isOpen: boolean, onClose: () => void, username: string, type: SocialType, profileId: number, isMobile: boolean, onAction?: () => void }) => {
   const { user: currentUser } = useAuth();
   const [listType, setListType] = useState<SocialType>(initialType);
   const [users, setUsers] = useState<any[]>([]);
@@ -707,6 +707,7 @@ export const ProfilePage = () => {
         username={username!}
         type={socialModalType}
         profileId={profileUser.id}
+        isMobile={isMobile}
         onAction={() => {
            // Refetch counts if needed, but the modal refreshes itself internally.
            // However we might want to refresh the ProfilePage stats too.

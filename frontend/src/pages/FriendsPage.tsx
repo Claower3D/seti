@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
 import { motion } from 'framer-motion';
-import { UserPlus, MessageSquare, Search, Check } from 'lucide-react';
+import { UserPlus, MessageSquare, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const FriendsPage = () => {
