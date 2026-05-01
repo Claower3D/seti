@@ -761,6 +761,7 @@ body::after {
   overflow: hidden;
   opacity: 0.15;
   perspective: 1000px;
+  will-change: transform;
 }
 
 .hologram-core {
@@ -790,6 +791,7 @@ body::after {
   mask-image: radial-gradient(circle, transparent 30%, black 70%);
   -webkit-mask-image: radial-gradient(circle, transparent 30%, black 70%);
   opacity: 0.5;
+  will-change: transform;
 }
 
 @keyframes radar-sweep {
@@ -803,6 +805,7 @@ body::after {
   border: 1px solid var(--primary);
   box-shadow: 0 0 15px color-mix(in srgb, var(--primary), transparent 60%), inset 0 0 15px color-mix(in srgb, var(--primary), transparent 60%);
   transform-style: preserve-3d;
+  will-change: transform;
 }
 
 /* Outer grid ring */
