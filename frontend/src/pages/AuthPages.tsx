@@ -5,6 +5,7 @@ import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { Lock, User, LogIn, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import SetiLogo from '../components/SetiLogo';
+import { Capacitor } from '@capacitor/core';
 
 // KZ number validation
 // Kazakhstan mobile: +7 6xx xxxxxxx or +7 7xx xxxxxxx
@@ -147,6 +148,35 @@ export const LoginPage = () => {
       setIsSubmitting(false);
     }
   };
+
+  const [showAppPrompt, setShowAppPrompt] = useState(Capacitor.isNativePlatform() === false && !sessionStorage.getItem('hide_app_prompt'));
+
+  if (showAppPrompt) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#050510', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          className="glass-panel"
+          style={{ width: '100%', maxWidth: '400px', padding: '40px 30px', textAlign: 'center', border: '1px solid var(--border)' }}>
+          <SetiLogo size={80} style={{ marginBottom: '24px' }} />
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '12px', color: 'white' }}>Установите Приложение</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', fontSize: '0.95rem', lineHeight: '1.6' }}>
+            Для лучшего опыта и работы уведомлений рекомендуем использовать наше мобильное приложение.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <a href="/app" style={{ textDecoration: 'none' }}>
+              <button className="btn-primary" style={{ width: '100%', height: '52px', fontSize: '1rem' }}>
+                Скачать APK
+              </button>
+            </a>
+            <button onClick={() => { setShowAppPrompt(false); sessionStorage.setItem('hide_app_prompt', 'true'); }}
+              style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)', width: '100%', height: '52px', borderRadius: '12px', fontSize: '0.9rem', cursor: 'pointer' }}>
+              Продолжить в браузере
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
