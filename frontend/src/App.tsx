@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -11,6 +11,7 @@ import SetiLogo from './components/SetiLogo';
 import MobileMenuDrawer from './components/MobileMenuDrawer';
 import { MusicProvider } from './context/MusicContext';
 import { MusicPlayer } from './components/MusicPlayer';
+import { StartupScreen } from './components/StartupScreen';
 
 // Lazy load pages for performance (SETI Optimization)
 const FeedPage = React.lazy(() => import('./pages/FeedPage').then(m => ({ default: m.FeedPage })));
@@ -408,6 +409,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function AppInner() {
   const location = useLocation();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [hasCompletedStartup, setHasCompletedStartup] = useState(sessionStorage.getItem('startup_complete') === 'true');
   const isWavesPage = location.pathname === '/waves';
 
   useEffect(() => {
@@ -425,6 +427,13 @@ function AppInner() {
 
   if (isOffline) {
     return <div style={{ height: '100vh', background: '#050510', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ErrorPlaceholder type="offline" /></div>;
+  }
+
+  if (!hasCompletedStartup) {
+    return <StartupScreen onComplete={() => {
+      setHasCompletedStartup(true);
+      sessionStorage.setItem('startup_complete', 'true');
+    }} />;
   }
 
   return (

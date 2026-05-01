@@ -135,12 +135,6 @@ export const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  React.useEffect(() => {
-    if (window.innerWidth <= 768 && !Capacitor.isNativePlatform()) {
-      setShowAppPrompt(true);
-    }
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -155,35 +149,6 @@ export const LoginPage = () => {
       setIsSubmitting(false);
     }
   };
-
-  if (showAppPrompt) {
-    return (
-      <div style={{ minHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-        <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="glass-panel"
-          style={{ width: '100%', maxWidth: '440px', padding: '3rem 2rem', border: '1px solid rgba(0,242,255,0.4)', boxShadow: '0 0 50px rgba(0,242,255,0.1)', textAlign: 'center' }}>
-          <div className="pulse" style={{ background: 'color-mix(in srgb, var(--primary), transparent 85%)', border: '1px solid var(--primary)', padding: '20px', borderRadius: '50%', display: 'inline-block', marginBottom: '24px' }}>
-            <Smartphone size={56} style={{ color: 'var(--primary)' }} />
-          </div>
-          <h1 className="neon-text" style={{ fontSize: '2.2rem', marginBottom: '16px' }}>SETI Mobile</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '32px', lineHeight: '1.5' }}>
-            Обнаружено мобильное устройство. Установите официальное Android-приложение.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <a href="https://github.com/Claower3D/seti/releases/latest/download/SETI.apk" download style={{ textDecoration: 'none' }}>
-              <button style={{ background: 'var(--primary)', color: 'black', width: '100%', padding: '16px', borderRadius: '12px', border: 'none', fontWeight: '900', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: 'var(--glow)' }}>
-                <Download size={22} /> Скачать Приложение
-              </button>
-            </a>
-            <button onClick={() => setShowAppPrompt(false)}
-              style={{ background: 'rgba(255,255,255,0.05)', color: 'white', width: '100%', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-              <Globe size={20} style={{ opacity: 0.7 }} /> Продолжить в браузере
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div style={{ minHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
