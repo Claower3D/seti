@@ -106,32 +106,42 @@ body::after {
   display: flex;
   height: 100vh;
   height: 100dvh;
+  width: 100%;
   overflow: hidden;
+  position: relative;
+  background: var(--bg);
 }
 
 .main-content {
   flex: 1;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 24px 28px;
   min-width: 0;
+  position: relative;
+  z-index: 2;
   /* Hardware-accelerated smooth scroll */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   scroll-behavior: smooth;
+  will-change: scroll-position;
 }
 
 /* SIDEBAR */
 .sidebar {
-  width: 240px;
+  width: 280px;
   flex-shrink: 0;
-  height: 100vh;
-  padding: 28px 16px;
+  height: 100%;
+  padding: 32px 20px;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, rgba(0, 245, 255, 0.04) 0%, rgba(180, 0, 255, 0.03) 100%);
+  background: rgba(8, 8, 24, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid var(--border);
   position: relative;
+  z-index: 10;
   overflow: hidden;
 }
 
@@ -560,21 +570,18 @@ body::after {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(5, 5, 20, 0.90);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  background: rgba(5, 5, 20, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-top: 1px solid var(--border);
-  /* Respect home bar / notch insets */
-  padding: 10px 4px max(10px, env(safe-area-inset-bottom));
+  padding: 8px 10px calc(12px + env(safe-area-inset-bottom));
   z-index: 2000;
   display: flex;
   justify-content: space-around;
   align-items: center;
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
-  /* Own GPU composite layer — prevents scroll causing nav repaint */
   transform: translateZ(0);
   will-change: transform;
-  min-height: 56px;
 }
 
 .mobile-nav a {
@@ -583,50 +590,38 @@ body::after {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.3);
   text-decoration: none;
   font-size: 0.62rem;
   font-weight: 700;
-  /* Meet minimum 44×44 Apple HIG tap target */
-  padding: 8px 12px;
-  min-width: 52px;
-  min-height: 44px;
+  padding: 8px 10px;
+  min-width: 56px;
   border-radius: 14px;
-  /* Fast transition — only color, no layout repaint */
-  transition: color 0.15s ease, background-color 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  /* Instant touch response — no 300ms delay */
   touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.mobile-nav button {
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
 .mobile-nav a.active {
   color: var(--primary);
-  background: color-mix(in srgb, var(--primary), transparent 95%);
+  background: color-mix(in srgb, var(--primary), transparent 93%);
 }
 
-.mobile-nav a.active::after {
+.mobile-nav a.active::before {
   content: '';
   position: absolute;
-  top: 0;
+  top: -8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 20px;
-  height: 2px;
+  width: 32px;
+  height: 3px;
   background: var(--primary);
   border-radius: 0 0 4px 4px;
-  box-shadow: 0 0 10px var(--primary);
+  box-shadow: 0 0 12px var(--primary);
 }
 
 .mobile-nav a.active svg {
-  filter: var(--glow);
+  filter: drop-shadow(0 0 5px var(--primary));
 }
 
 /* POST CARD */
@@ -749,39 +744,42 @@ body::after {
   }
 }
 
-@media (max-width: 390px) {
-  .main-content {
-    padding: 8px 8px calc(66px + env(safe-area-inset-bottom));
+/* ADAPTATION SYSTEM */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 80px;
+    padding: 32px 10px;
   }
-}
-
-
-.feed-container { width: 100%; max-width: 100%; }
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* DESKTOP/MOBILE HELPERS */
-.desktop-only {
-  display: block;
-}
-.mobile-only {
-  display: none;
+  .sidebar span {
+    display: none;
+  }
+  .sidebar .nav-item {
+    justify-content: center;
+    padding: 14px;
+  }
 }
 
 @media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .mobile-nav {
+    display: flex;
+  }
+
+  .main-content {
+    padding: 16px 16px calc(80px + env(safe-area-inset-bottom));
+  }
+
   .desktop-only {
     display: none;
   }
+
   .mobile-only {
     display: block;
   }
-  
+
   .waves-layout {
     position: fixed !important;
     inset: 0 !important;
@@ -794,17 +792,20 @@ body::after {
     background: #000 !important;
   }
 
-  .mobile-nav {
-    display: flex;
-    z-index: 2000 !important;
+  /* Disable hover effects on mobile for performance and consistency */
+  .card:hover, .post-card:hover, .nav-item:hover, .btn-primary:hover {
+    transform: none !important;
   }
+}
 
-  body:has(.waves-layout) {
-    overflow: hidden !important;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    touch-action: none;
+@media (max-width: 480px) {
+  .main-content {
+    padding: 12px 12px calc(76px + env(safe-area-inset-bottom));
+  }
+  
+  .card, .post-card {
+    padding: 16px;
+    border-radius: 16px;
   }
 }
 
@@ -969,10 +970,13 @@ body::after {
 @keyframes ring-spin-5 { 0% { transform: rotateX(30deg) rotateY(30deg) rotateZ(0deg); } 100% { transform: rotateX(30deg) rotateY(30deg) rotateZ(360deg); } }
 
 @media (max-width: 768px) {
-  .hologram-ring:nth-child(3) { width: 150vw; height: 150vw; }
-  .hologram-ring:nth-child(4) { width: 120vw; height: 120vw; }
-  .hologram-ring:nth-child(5) { width: 120vw; height: 120vw; }
-  .hologram-ring:nth-child(6) { width: 80vw; height: 80vw; }
-  .hologram-ring:nth-child(7) { width: 50vw; height: 50vw; }
-  .hologram-radar { width: 150vw; height: 150vw; }
+  .hologram-container {
+    opacity: 0.1;
+  }
+  .hologram-ring:nth-child(3) { width: 140vw; height: 140vw; opacity: 0.2; }
+  .hologram-ring:nth-child(4) { width: 110vw; height: 110vw; opacity: 0.2; }
+  .hologram-ring:nth-child(5) { width: 110vw; height: 110vw; opacity: 0.2; }
+  .hologram-ring:nth-child(6) { width: 70vw; height: 70vw; opacity: 0.2; }
+  .hologram-ring:nth-child(7) { width: 40vw; height: 40vw; opacity: 0.3; }
+  .hologram-radar { width: 140vw; height: 140vw; opacity: 0.3; }
 }

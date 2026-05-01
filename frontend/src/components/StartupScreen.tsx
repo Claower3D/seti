@@ -225,17 +225,27 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
         </div>
 
         {/* Top Info Cards - Responsive Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: isMobile ? '6px' : '10px', marginBottom: isMobile ? '10px' : '15px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: isMobile ? '8px' : '12px', marginBottom: isMobile ? '12px' : '20px' }}>
           {[
             { icon: <Zap size={isMobile ? 12 : 14} />, label: 'NRG', val: '98%' },
             { icon: <Cpu size={isMobile ? 12 : 14} />, label: 'CPU', val: '12%' },
             { icon: <Satellite size={isMobile ? 12 : 14} />, label: 'SIG', val: 'LOCK' }
           ].map((item, i) => (
-            <div key={i} className="glass-panel" style={{ padding: isMobile ? '6px 4px' : '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? '4px' : '8px', border: '1px solid var(--border)', borderRadius: '10px' }}>
-              <div style={{ color: 'var(--secondary)', flexShrink: 0 }}>{item.icon}</div>
-              <div style={{ overflow: 'hidden', textAlign: 'center' }}>
-                <div style={{ fontSize: '0.4rem', opacity: 0.5, fontWeight: '700' }}>{item.label}</div>
-                <div style={{ fontSize: isMobile ? '0.6rem' : '0.8rem', fontWeight: '900' }}>{item.val}</div>
+            <div key={i} className="glass-panel" style={{ 
+              padding: isMobile ? '8px' : '12px', 
+              display: 'flex', 
+              flexDirection: 'column',
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '4px',
+              border: '1px solid var(--border)', 
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.02)'
+            }}>
+              <div style={{ color: 'var(--primary)', opacity: 0.8 }}>{item.icon}</div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '0.5rem', opacity: 0.5, fontWeight: '700', letterSpacing: '1px' }}>{item.label}</div>
+                <div style={{ fontSize: isMobile ? '0.7rem' : '0.85rem', fontWeight: '900' }}>{item.val}</div>
               </div>
             </div>
           ))}
