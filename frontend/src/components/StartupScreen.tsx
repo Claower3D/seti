@@ -53,7 +53,7 @@ const PROG_STEPS = [
   { t: 4900, pct: 100, txt: 'ЗАВЕРШЕНО' },
 ];
 
-const Waveform = () => {
+const Waveform = ({ isMobile }: { isMobile: boolean }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const start = useRef(Date.now());
 
@@ -72,22 +72,21 @@ const Waveform = () => {
       const elapsed = Date.now() - start.current;
       const anomaly = elapsed > 3300;
 
-      // Use theme color
       const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#00f5ff';
       
       ctx.strokeStyle = primary;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = isMobile ? 1.5 : 2;
       ctx.shadowColor = primary;
       ctx.shadowBlur = anomaly ? 15 : 5;
       ctx.beginPath();
       for (let x = 0; x < W; x++) {
         const p = x / W;
-        const s1 = Math.sin(p * 12 + wt * 4) * 0.5;
+        const s1 = Math.sin(p * (isMobile ? 8 : 12) + wt * 4) * 0.5;
         const s2 = Math.sin(p * 5 + wt * 2) * 0.2;
         const s3 = Math.sin(p * 2 + wt * 3) * 0.1;
         const noise = (Math.random() - 0.5) * (anomaly ? 0.2 : 0.04);
         const spike = anomaly ? Math.sin(p * 50 + wt * 10) * 0.3 * Math.sin(wt) : 0;
-        const y = H / 2 + (s1 + s2 + s3 + noise + spike) * H * 0.4;
+        const y = H / 2 + (s1 + s2 + s3 + noise + spike) * H * 0.35;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
@@ -97,9 +96,9 @@ const Waveform = () => {
 
     render();
     return () => cancelAnimationFrame(animationId);
-  }, []);
+  }, [isMobile]);
 
-  return <canvas ref={canvasRef} width={800} height={100} style={{ width: '100%', height: '60px' }} />;
+  return <canvas ref={canvasRef} width={800} height={isMobile ? 120 : 100} style={{ width: '100%', height: isMobile ? '50px' : '60px' }} />;
 };
 
 export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
@@ -108,11 +107,18 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [statusText, setStatusText] = useState('ИНИЦИАЛИЗАЦИЯ...');
   const [isDone, setIsDone] = useState(false);
   const [authStatus, setAuthStatus] = useState<'none' | 'pending' | 'success'>('none');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     SCRIPT.forEach(s => {
       setTimeout(() => {
-        setLogs(prev => [...prev, s].slice(-12));
+        setLogs(prev => [...prev, s].slice(isMobile ? -8 : -12));
       }, s.t);
     });
 
@@ -124,7 +130,7 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
     });
 
     setTimeout(() => setIsDone(true), 5100);
-  }, []);
+  }, [isMobile]);
 
   const handleLogin = () => {
     setAuthStatus('pending');
@@ -140,13 +146,13 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
       background: 'var(--bg)', zIndex: 999999,
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       fontFamily: "'Space Grotesk', sans-serif",
-      color: 'var(--primary)', padding: '20px', overflow: 'hidden'
+      color: 'var(--primary)', padding: isMobile ? '12px' : '20px', overflow: 'hidden'
     }}>
       {/* Animated Hologram Grid Overlay */}
       <div style={{
         position: 'absolute', inset: 0,
         backgroundImage: 'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',
-        backgroundSize: '50px 50px', pointerEvents: 'none', opacity: 0.3
+        backgroundSize: isMobile ? '30px 30px' : '50px 50px', pointerEvents: 'none', opacity: 0.2
       }} />
       <div style={{
         position: 'absolute', inset: 0,
@@ -161,72 +167,74 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
         style={{ 
           position: 'absolute', left: 0, right: 0, height: '2px', 
           background: 'linear-gradient(90deg, transparent, var(--primary), transparent)', 
-          boxShadow: '0 0 20px var(--primary)', zIndex: 2, opacity: 0.5 
+          boxShadow: '0 0 20px var(--primary)', zIndex: 2, opacity: 0.4 
         }}
       />
 
       <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', height: '100%' }}>
         
         {/* Header Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px', marginTop: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '20px', marginBottom: isMobile ? '15px' : '30px', marginTop: isMobile ? '10px' : '20px' }}>
           <motion.div 
             animate={{ rotateY: 360 }} 
             transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-            style={{ width: '80px', height: '80px', flexShrink: 0 }}
+            style={{ width: isMobile ? '50px' : '80px', height: isMobile ? '50px' : '80px', flexShrink: 0 }}
           >
-            <SetiLogo size={80} />
+            <SetiLogo size={isMobile ? 50 : 80} />
           </motion.div>
-          <div>
-            <h1 className="neon-text" style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '4px', textTransform: 'uppercase', margin: 0 }}>SETI ANALYZER</h1>
-            <div style={{ fontSize: '0.7rem', letterSpacing: '2px', color: 'var(--secondary)', opacity: 0.8 }}>SYSTEM_INIT // PROTOCOL_V.2.0.47</div>
+          <div style={{ flex: 1 }}>
+            <h1 className="neon-text" style={{ fontSize: isMobile ? '1.1rem' : '1.4rem', fontWeight: '900', letterSpacing: isMobile ? '2px' : '4px', textTransform: 'uppercase', margin: 0 }}>SETI ANALYZER</h1>
+            <div style={{ fontSize: '0.6rem', letterSpacing: '1px', color: 'var(--secondary)', opacity: 0.8 }}>SYSTEM_INIT // V.2.0.47</div>
           </div>
-          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>LOCATION</div>
-            <div style={{ fontSize: '0.8rem', fontWeight: '700' }}>SECTOR-7G</div>
-          </div>
+          {!isMobile && (
+            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+              <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>LOCATION</div>
+              <div style={{ fontSize: '0.8rem', fontWeight: '700' }}>SECTOR-7G</div>
+            </div>
+          )}
         </div>
 
         {/* Top Info Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '15px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: isMobile ? '6px' : '10px', marginBottom: isMobile ? '10px' : '15px' }}>
           {[
-            { icon: <Zap size={14} />, label: 'ENERGY', val: '98.4%' },
-            { icon: <Cpu size={14} />, label: 'LOAD', val: '12.1%' },
-            { icon: <Satellite size={14} />, label: 'SIGNAL', val: 'STABLE' }
+            { icon: <Zap size={isMobile ? 12 : 14} />, label: 'ENERGY', val: '98%' },
+            { icon: <Cpu size={isMobile ? 12 : 14} />, label: 'LOAD', val: '12%' },
+            { icon: <Satellite size={isMobile ? 12 : 14} />, label: 'SIGNAL', val: 'STABLE' }
           ].map((item, i) => (
-            <div key={i} className="glass-panel" style={{ padding: '10px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--border)' }}>
-              <div style={{ color: 'var(--secondary)' }}>{item.icon}</div>
-              <div>
-                <div style={{ fontSize: '0.5rem', opacity: 0.5 }}>{item.label}</div>
-                <div style={{ fontSize: '0.8rem', fontWeight: '700' }}>{item.val}</div>
+            <div key={i} className="glass-panel" style={{ padding: isMobile ? '6px 8px' : '10px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '8px', border: '1px solid var(--border)' }}>
+              <div style={{ color: 'var(--secondary)', flexShrink: 0 }}>{item.icon}</div>
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontSize: '0.45rem', opacity: 0.5, textTransform: 'uppercase' }}>{item.label}</div>
+                <div style={{ fontSize: isMobile ? '0.65rem' : '0.8rem', fontWeight: '700' }}>{item.val}</div>
               </div>
             </div>
           ))}
         </div>
 
         {/* Waveform Visualization */}
-        <div className="glass-panel" style={{ padding: '15px', marginBottom: '15px', border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: '700', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Activity size={12} /> SIGNAL WAVEFORM
+        <div className="glass-panel" style={{ padding: isMobile ? '10px' : '15px', marginBottom: isMobile ? '10px' : '15px', border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '6px' : '10px' }}>
+            <div style={{ fontSize: isMobile ? '0.6rem' : '0.7rem', fontWeight: '700', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Activity size={10} /> SIGNAL WAVEFORM
             </div>
-            <div style={{ fontSize: '0.6rem', opacity: 0.6 }}>1420.405 MHz</div>
+            <div style={{ fontSize: '0.55rem', opacity: 0.6 }}>1420.405 MHz</div>
           </div>
-          <Waveform />
+          <Waveform isMobile={isMobile} />
         </div>
 
         {/* Terminal Section */}
         <div className="glass-panel" style={{ 
-          flex: 1, padding: '20px', overflow: 'hidden', minHeight: 0,
+          flex: 1, padding: isMobile ? '12px' : '20px', overflow: 'hidden', minHeight: 0,
           border: '1px solid var(--border)', background: 'rgba(0,0,0,0.5)',
           display: 'flex', flexDirection: 'column'
         }}>
-          <div style={{ fontSize: '0.7rem', color: 'var(--secondary)', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Terminal size={14} /> EXECUTING_ANALYZER_KERNEL...
+          <div style={{ fontSize: '0.65rem', color: 'var(--secondary)', marginBottom: isMobile ? '8px' : '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Terminal size={12} /> KERNEL_EXECUTING...
           </div>
-          <div style={{ flex: 1, overflow: 'hidden', fontFamily: 'monospace', fontSize: '0.85rem', lineHeight: '1.8' }}>
+          <div style={{ flex: 1, overflow: 'hidden', fontFamily: 'monospace', fontSize: isMobile ? '0.75rem' : '0.85rem', lineHeight: '1.6' }}>
             {logs.map((log, i) => (
               <motion.div 
-                initial={{ opacity: 0, x: -10 }} 
+                initial={{ opacity: 0, x: -5 }} 
                 animate={{ opacity: 1, x: 0 }} 
                 key={i} 
                 style={{ 
@@ -235,7 +243,8 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
                          log.cls === 'dim' ? 'var(--text-secondary)' : 
                          log.cls === 'warn' ? '#ffcc00' : 
                          log.cls === 'err' ? 'var(--accent)' : 'var(--primary)',
-                  textShadow: log.cls === 'green' ? 'var(--glow)' : 'none'
+                  textShadow: log.cls === 'green' ? 'var(--glow)' : 'none',
+                  whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden'
                 }}
               >
                 {log.text}
@@ -243,24 +252,24 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
             ))}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
               <span style={{ color: 'var(--primary)' }}>&gt;</span>
-              <motion.div animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} style={{ width: '8px', height: '15px', background: 'var(--primary)', boxShadow: 'var(--glow)' }} />
+              <motion.div animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} style={{ width: '6px', height: '12px', background: 'var(--primary)', boxShadow: 'var(--glow)' }} />
             </div>
           </div>
         </div>
 
         {/* Progress Footer */}
-        <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '700', marginBottom: '8px' }}>
+        <div style={{ marginTop: isMobile ? '15px' : '20px', marginBottom: isMobile ? '10px' : '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: isMobile ? '0.65rem' : '0.75rem', fontWeight: '700', marginBottom: '6px' }}>
             <span style={{ letterSpacing: '1px' }}>{statusText}</span>
             <span style={{ color: 'var(--secondary)' }}>{progress}%</span>
           </div>
-          <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+          <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
             <motion.div 
               animate={{ width: `${progress}%` }} 
               style={{ 
                 height: '100%', 
                 background: 'linear-gradient(90deg, var(--secondary), var(--primary))', 
-                boxShadow: '0 0 15px var(--primary)' 
+                boxShadow: '0 0 10px var(--primary)' 
               }} 
             />
           </div>
@@ -277,44 +286,44 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
               position: 'fixed', inset: 0, zIndex: 1000000,
               background: 'rgba(5, 5, 16, 0.98)',
               backdropFilter: 'blur(15px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
             }}
           >
             <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(var(--primary) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
             
             <motion.div
-              initial={{ scale: 0.9, y: 30 }}
+              initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              style={{ width: '100%', maxWidth: '440px', position: 'relative', zIndex: 10, textAlign: 'center' }}
+              style={{ width: '100%', maxWidth: '400px', position: 'relative', zIndex: 10, textAlign: 'center' }}
             >
-              <div className="glass-panel" style={{ padding: '40px', border: '1px solid var(--border-bright)', boxShadow: 'var(--glow-strong)' }}>
+              <div className="glass-panel" style={{ padding: isMobile ? '25px 20px' : '40px', border: '1px solid var(--border-bright)', boxShadow: 'var(--glow-strong)' }}>
                 <motion.div 
                   animate={{ scale: [1, 1.05, 1] }} 
                   transition={{ repeat: Infinity, duration: 3 }}
-                  style={{ marginBottom: '30px' }}
+                  style={{ marginBottom: isMobile ? '20px' : '30px' }}
                 >
-                  <SetiLogo size={100} />
+                  <SetiLogo size={isMobile ? 70 : 100} />
                 </motion.div>
 
-                <h2 className="neon-text" style={{ fontSize: '1.6rem', fontWeight: '900', letterSpacing: '8px', marginBottom: '10px' }}>ANALYSIS COMPLETE</h2>
-                <div style={{ fontSize: '0.65rem', letterSpacing: '4px', color: 'var(--secondary)', marginBottom: '30px', opacity: 0.8 }}>SIGNAL_INTEGRITY_VERIFIED_✓</div>
+                <h2 className="neon-text" style={{ fontSize: isMobile ? '1.2rem' : '1.6rem', fontWeight: '900', letterSpacing: isMobile ? '4px' : '8px', marginBottom: '10px' }}>ANALYSIS COMPLETE</h2>
+                <div style={{ fontSize: '0.6rem', letterSpacing: '3px', color: 'var(--secondary)', marginBottom: isMobile ? '20px' : '30px', opacity: 0.8 }}>INTEGRITY_VERIFIED_✓</div>
                 
-                <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '30px', fontSize: '0.85rem', fontFamily: 'monospace', lineHeight: '2' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>SCANNED:</span> <span style={{ color: 'var(--primary)' }}>1420.405 MHz</span></div>
+                <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.02)', padding: isMobile ? '15px' : '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: isMobile ? '25px' : '30px', fontSize: isMobile ? '0.75rem' : '0.85rem', fontFamily: 'monospace', lineHeight: '1.8' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>SCANNED:</span> <span style={{ color: 'var(--primary)' }}>1420.4 MHz</span></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>PACKETS:</span> <span style={{ color: 'var(--primary)' }}>84,291</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>PATTERNS:</span> <span style={{ color: 'var(--primary)' }}>17 IDENTIFIED</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>PATTERNS:</span> <span style={{ color: 'var(--primary)' }}>17 ID'd</span></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>ANOMALIES:</span> <span style={{ color: 'var(--accent)' }}>2 DETECTED</span></div>
-                  <div style={{ height: '1px', background: 'var(--border)', margin: '10px 0' }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>SOURCE:</span> <span style={{ color: 'var(--secondary)' }}>GALAXY_CENTER</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>STATUS:</span> <span style={{ color: '#00ff88' }}>ACCESS_GRANTED</span></div>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>SOURCE:</span> <span style={{ color: 'var(--secondary)' }}>GC-SECTOR</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>STATUS:</span> <span style={{ color: '#00ff88' }}>GRANTED</span></div>
                 </div>
 
                 <button 
                   onClick={authStatus === 'none' ? handleLogin : undefined}
                   className="btn-primary"
-                  style={{ width: '100%', height: '56px', fontSize: '1rem', letterSpacing: '4px', position: 'relative' }}
+                  style={{ width: '100%', height: isMobile ? '48px' : '56px', fontSize: isMobile ? '0.8rem' : '1rem', letterSpacing: '3px', position: 'relative' }}
                 >
-                  {authStatus === 'none' && <><ShieldCheck size={18} /> ENTER_SYSTEM</>}
+                  {authStatus === 'none' && <><ShieldCheck size={isMobile ? 16 : 18} /> ENTER_SYSTEM</>}
                   {authStatus === 'pending' && 'AUTHORIZING...'}
                   {authStatus === 'success' && '✓ ACCESS_GRANTED'}
                   
@@ -333,9 +342,11 @@ export const StartupScreen = ({ onComplete }: { onComplete: () => void }) => {
       </AnimatePresence>
 
       {/* Subtle Bottom Watermark */}
-      <div style={{ position: 'absolute', bottom: '20px', fontSize: '0.5rem', letterSpacing: '4px', opacity: 0.2, fontWeight: '700' }}>
-        SECURE_CONNECTION_STABLISHED_//_SETI_HOLOGRAPHIC_INTERFACE
-      </div>
+      {!isMobile && (
+        <div style={{ position: 'absolute', bottom: '20px', fontSize: '0.5rem', letterSpacing: '4px', opacity: 0.2, fontWeight: '700' }}>
+          SECURE_CONNECTION_STABLISHED_//_SETI_HOLOGRAPHIC_INTERFACE
+        </div>
+      )}
     </div>
   );
 };
