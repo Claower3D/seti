@@ -40,6 +40,7 @@ const Sidebar = () => {
     { name: 'Новости', icon: Home, path: '/' },
     { name: 'Сообщения', icon: MessageSquare, path: '/messages' },
     { name: 'Друзья', icon: Users, path: '/friends' },
+    { name: 'Группы', icon: LayoutGrid, path: '/groups' },
     { name: 'Волны', icon: Radio, path: '/waves' },
     { name: 'Музыка', icon: Music, path: '/music' },
     { name: 'Мой профиль', icon: User, path: `/profile/${user.username}` },
