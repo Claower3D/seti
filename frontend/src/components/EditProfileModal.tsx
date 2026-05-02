@@ -309,6 +309,25 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                     </div>
                   </div>
 
+                  <div>
+                    <FieldLabel>СВОЙ ЦВЕТ (HEX)</FieldLabel>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <div style={{ position: 'relative', flex: 1 }}>
+                        <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: neonColor, fontWeight: '800' }}>#</span>
+                        <input type="text" value={neonColor.replace('#', '')} 
+                          onChange={e => { 
+                            const val = '#' + e.target.value.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
+                            setNeonColor(val); 
+                            updateUser({ ...currentUser, neonColor: val, neonBrightness }); 
+                          }}
+                          style={{ ...inputStyle, paddingLeft: '32px' }} placeholder="00f5ff" />
+                      </div>
+                      <input type="color" value={neonColor.startsWith('#') && neonColor.length === 7 ? neonColor : '#00f5ff'} 
+                        onChange={e => { setNeonColor(e.target.value); updateUser({ ...currentUser, neonColor: e.target.value, neonBrightness }); }}
+                        style={{ width: '48px', height: '48px', padding: '4px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', cursor: 'pointer' }} />
+                    </div>
+                  </div>
+
 
                   <div>
                     <FieldLabel>ЯРКОСТЬ НЕОНА</FieldLabel>
