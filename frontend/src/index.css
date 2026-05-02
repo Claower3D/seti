@@ -667,6 +667,15 @@ body::after {
   border: 2px solid var(--bg);
 }
 
+/* VISIBILITY HELPER */
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
 /* RESPONSIVE — TABLET & MOBILE */
 @media (max-width: 768px) {
   .sidebar {
