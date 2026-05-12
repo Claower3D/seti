@@ -20,6 +20,7 @@ RUN apk --no-cache add ca-certificates python3 py3-pip ffmpeg
 RUN pip3 install yt-dlp --break-system-packages
 RUN mkdir -p /data/uploads
 ENV DATA_DIR=/data
+VOLUME ["/data"]
 COPY --from=backend-builder /app/main .
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 EXPOSE 8080
