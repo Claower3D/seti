@@ -18,7 +18,11 @@ func main() {
 	handlers.InitFCM()
 
 	r := gin.Default()
-	r.Static("/uploads", "./uploads")
+	dataDir := os.Getenv("DATA_DIR")
+	if dataDir == "" {
+		dataDir = "."
+	}
+	r.Static("/uploads", dataDir+"/uploads")
 
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "https://seti-production.up.railway.app")

@@ -18,7 +18,8 @@ RUN apk add --no-cache gcc musl-dev && CGO_ENABLED=1 go mod tidy && CGO_ENABLED=
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates python3 py3-pip ffmpeg
 RUN pip3 install yt-dlp --break-system-packages
-RUN mkdir -p uploads
+RUN mkdir -p /data/uploads
+ENV DATA_DIR=/data
 COPY --from=backend-builder /app/main .
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 EXPOSE 8080

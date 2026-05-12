@@ -57,10 +57,22 @@ func UploadFile(c *gin.Context) {
 		return
 	}
 
-	// FALLBACK: Local storage (will be lost on Railway updates)
+	// FALLBACK: Local storage (will be lost on Railway updates if DATA_DIR is not mounted)
 	ext := filepath.Ext(file.Filename)
 	newName := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
-	savePath := "./uploads/" + newName
+	
+	dataDir := os.Getenv("DATA_DIR")
+	if dataDir == "" {
+		dataDir = "."
+	}
+	
+	uploadDir := filepath.Join(dataDir, "uploads")
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
+		return
+	}
+	
+	savePath := filepath.Join(uploadDir, newName)
 
 	if err := c.SaveUploadedFile(file, savePath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file locally"})

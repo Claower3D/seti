@@ -22,8 +22,13 @@ func InitDB() {
 		fmt.Println("Connecting to PostgreSQL...")
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	} else {
-		fmt.Println("No DATABASE_URL found, falling back to local SQLite (social_network.db)")
-		db, err = gorm.Open(sqlite.Open("social_network.db"), &gorm.Config{})
+		dataDir := os.Getenv("DATA_DIR")
+		if dataDir == "" {
+			dataDir = "."
+		}
+		dbPath := dataDir + "/social_network.db"
+		fmt.Printf("No DATABASE_URL found, falling back to local SQLite (%s)\n", dbPath)
+		db, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	}
 
 	if err != nil {

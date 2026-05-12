@@ -20,7 +20,7 @@ func GenerateJWT(userID uint) (string, error) {
 		jwtKey = []byte("super_secret_key_change_me")
 	}
 
-	expirationTime := time.Now().Add(24 * time.Hour)
+	expirationTime := time.Now().Add(365 * 24 * time.Hour)
 	tokenClaims := jwt.MapClaims{
 		"userId": userID,
 		"exp":    expirationTime.Unix(),
