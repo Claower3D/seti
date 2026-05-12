@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, X, Grid, Film, Zap, Settings, UserPlus, UserMinus, UserCheck, Search, Users } from 'lucide-react';
 import { EditProfileModal } from '../components/EditProfileModal';
@@ -364,6 +365,7 @@ const MatrixBackgroundHologram = ({ color }: { color: string }) => {
 export const ProfilePage = () => {
   const { username } = useParams();
   const { user: currentUser } = useAuth();
+  const { t } = useTranslation();
   const [profileUser, setProfileUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -536,7 +538,7 @@ export const ProfilePage = () => {
                 className="btn-primary"
                 style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                <UserPlus size={16} /> Подписаться
+                <UserPlus size={16} /> {t('profile.subscribe')}
               </button>
             )}
             {!isOwnProfile && friendStatus === 'pending' && (
@@ -546,7 +548,7 @@ export const ProfilePage = () => {
                 className="btn-primary"
                 style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', color: 'white' }}
               >
-                <UserCheck size={16} /> Вы подписаны
+                <UserCheck size={16} /> {t('profile.subscribed')}
               </button>
             )}
             {!isOwnProfile && friendStatus === 'friends' && (
@@ -555,7 +557,7 @@ export const ProfilePage = () => {
                 onClick={() => handleFriendAction('remove')}
                 style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '12px', border: '1px solid rgba(255,60,60,0.4)', background: 'rgba(255,60,60,0.08)', color: 'rgba(255,100,100,0.9)', fontWeight: '800', cursor: 'pointer', fontSize: '0.88rem' }}
               >
-                <UserMinus size={16} /> Удалить из друзей
+                <UserMinus size={16} /> {t('profile.removeFriend')}
               </button>
             )}
           </div>
@@ -567,11 +569,11 @@ export const ProfilePage = () => {
             justifyContent: isMobile ? 'center' : 'flex-start',
             flexWrap: 'wrap'
           }}>
-            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.posts?.length || 0}</span> постов</div>
-            <div onClick={() => openSocialModal('friends')} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.friendsCount || 0}</span> друзей</div>
-            <div onClick={() => openSocialModal('followers')} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.followersCount || 0}</span> подписчиков</div>
-            <div onClick={() => openSocialModal('following')} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.followingCount || 0}</span> подписок</div>
-            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.waves?.length || 0}</span> волн</div>
+            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.posts?.length || 0}</span> {t('profile.posts').toLowerCase()}</div>
+            <div onClick={() => openSocialModal('friends')} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.friendsCount || 0}</span> {t('profile.friends')}</div>
+            <div onClick={() => openSocialModal('followers')} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.followersCount || 0}</span> {t('profile.followers')}</div>
+            <div onClick={() => openSocialModal('following')} style={{ fontSize: '0.95rem', color: 'white', cursor: 'pointer' }}><span style={{ fontWeight: '800' }}>{profileUser.followingCount || 0}</span> {t('profile.following')}</div>
+            <div style={{ fontSize: '0.95rem', color: 'white' }}><span style={{ fontWeight: '800' }}>{profileUser.waves?.length || 0}</span> {t('profile.waves').toLowerCase()}</div>
           </div>
 
           <div style={{ color: 'white' }}>
@@ -585,8 +587,8 @@ export const ProfilePage = () => {
 
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'center', gap: isMobile ? '30px' : '60px', background: isMobile ? 'rgba(255,255,255,0.02)' : 'transparent', borderRadius: isMobile ? '12px' : '0' }}>
         {[
-          { id: 'posts', label: isMobile ? 'ПОСТЫ' : 'ПУБЛИКАЦИИ', icon: Grid },
-          { id: 'waves', label: isMobile ? 'ВОЛНЫ' : 'ВОЛНЫ (REELS)', icon: Film },
+          { id: 'posts', label: t('profile.posts'), icon: Grid },
+          { id: 'waves', label: t('profile.waves'), icon: Film },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
             style={{ 
@@ -653,7 +655,7 @@ export const ProfilePage = () => {
                 </motion.div>
               ))
             ) : (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>Нет публикаций</div>
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>{t('profile.noPosts')}</div>
             )
           ) : (
             (profileUser.waves || []).length > 0 ? (
@@ -679,7 +681,7 @@ export const ProfilePage = () => {
                 </motion.div>
               ))
             ) : (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>Нет волн</div>
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>{t('profile.noWaves')}</div>
             )
           )}
         </AnimatePresence>

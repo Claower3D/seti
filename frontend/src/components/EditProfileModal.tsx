@@ -3,6 +3,7 @@ import api from '../api/client';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, User as UserIcon, Camera, Shield, Palette, Sun, MapPin, Globe, Calendar, Heart, AtSign, Info, Phone } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 
 interface EditProfileModalProps {
@@ -30,10 +31,11 @@ const FieldLabel = ({ children }: { children: React.ReactNode }) => (
 );
 
 export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: EditProfileModalProps) => {
-  const navigate    = useNavigate();
+  const navigate = useNavigate();
   const { updateUser, logout } = useAuth();
+  const { t, i18n } = useTranslation();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'info' | 'design' | 'security'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'info' | 'design' | 'security' | 'language'>('general');
 
   // General
   const [username, setUsername]   = useState(currentUser?.username    || '');
@@ -136,10 +138,11 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
   const isMobile = window.innerWidth < 768;
 
   const tabs = [
-    { id: 'general',  label: 'Профиль',      icon: UserIcon },
-    { id: 'info',     label: 'Обо мне',       icon: Info     },
-    { id: 'design',   label: 'Дизайн',        icon: Palette  },
-    { id: 'security', label: 'Безопасность',  icon: Shield   },
+    { id: 'general',  label: t('settings.profile'),      icon: UserIcon },
+    { id: 'info',     label: t('settings.about'),        icon: Info     },
+    { id: 'design',   label: t('settings.design'),       icon: Palette  },
+    { id: 'security', label: t('settings.security'),     icon: Shield   },
+    { id: 'language', label: t('settings.language'),     icon: Globe    },
   ];
 
   const inputStyle: React.CSSProperties = {
@@ -189,7 +192,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
             }}>
               {!isMobile && (
                 <div style={{ marginBottom: '24px', fontWeight: '900', color: neonColor, fontSize: '1rem', letterSpacing: '2px', textShadow: `0 0 10px ${neonColor}` }}>
-                  SETI SETTINGS
+                  {t('settings.title')}
                 </div>
               )}
               <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: '6px' }}>
@@ -239,33 +242,33 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                     </div>
                     <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
                     <div>
-                      <div style={{ fontWeight: '800', color: 'white', fontSize: '0.95rem' }}>Фото профиля</div>
+                      <div style={{ fontWeight: '800', color: 'white', fontSize: '0.95rem' }}>{t('settings.profilePhoto')}</div>
                       <button type="button" onClick={() => fileInputRef.current?.click()} style={{ marginTop: '10px', background: `${neonColor}18`, border: `1px solid ${neonColor}44`, color: neonColor, borderRadius: '10px', padding: '6px 14px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}>
-                        Изменить фото
+                        {t('settings.changePhoto')}
                       </button>
                     </div>
                   </div>
                   <div>
-                    <FieldLabel><AtSign size={12} style={{ display: 'inline', marginRight: '6px' }} />Никнейм</FieldLabel>
+                    <FieldLabel><AtSign size={12} style={{ display: 'inline', marginRight: '6px' }} />{t('settings.nickname')}</FieldLabel>
                     <div style={{ position: 'relative' }}>
                       <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: neonColor, fontWeight: '800' }}>@</span>
                       <input type="text" value={username} onChange={e => setUsername(e.target.value)} style={{ ...inputStyle, paddingLeft: '32px' }} />
                     </div>
                   </div>
                   <div>
-                    <FieldLabel><Phone size={12} style={{ display: 'inline', marginRight: '6px' }} />Номер телефона</FieldLabel>
+                    <FieldLabel><Phone size={12} style={{ display: 'inline', marginRight: '6px' }} />{t('settings.phone')}</FieldLabel>
                     <input type="text" value={phone} onChange={e => setPhone(e.target.value)} style={inputStyle} placeholder="+7 (XXX) XXX-XX-XX" />
                   </div>
                   <div>
-                    <FieldLabel><UserIcon size={12} style={{ display: 'inline', marginRight: '6px' }} />Имя и Фамилия</FieldLabel>
+                    <FieldLabel><UserIcon size={12} style={{ display: 'inline', marginRight: '6px' }} />{t('settings.fullName')}</FieldLabel>
                     <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} style={inputStyle} />
                   </div>
                   <div>
-                    <FieldLabel>О себе</FieldLabel>
+                    <FieldLabel>{t('settings.bio')}</FieldLabel>
                     <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} style={{ ...inputStyle, resize: 'none' }} />
                   </div>
                   <button type="submit" disabled={isSubmitting} style={saveBtnStyle}>
-                    <Save size={18} /> {isSubmitting ? 'Сохранение...' : 'Сохранить изменения'}
+                    <Save size={18} /> {isSubmitting ? t('settings.saving') : t('settings.saveChanges')}
                   </button>
                 </form>
               )}
@@ -273,23 +276,23 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
               {activeTab === 'info' && (
                 <form onSubmit={handleGeneralSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                   <div>
-                    <FieldLabel><Calendar size={12} style={{ display: 'inline', marginRight: '6px' }} />Дата рождения</FieldLabel>
+                    <FieldLabel><Calendar size={12} style={{ display: 'inline', marginRight: '6px' }} />{t('settings.birthDate')}</FieldLabel>
                     <input type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} style={{ ...inputStyle, colorScheme: 'dark' }} />
                   </div>
                   <div>
-                    <FieldLabel><MapPin size={12} style={{ display: 'inline', marginRight: '6px' }} />Город</FieldLabel>
+                    <FieldLabel><MapPin size={12} style={{ display: 'inline', marginRight: '6px' }} />{t('settings.city')}</FieldLabel>
                     <input type="text" value={city} onChange={e => setCity(e.target.value)} style={inputStyle} />
                   </div>
                   <div>
-                    <FieldLabel><Globe size={12} style={{ display: 'inline', marginRight: '6px' }} />Сайт</FieldLabel>
+                    <FieldLabel><Globe size={12} style={{ display: 'inline', marginRight: '6px' }} />{t('settings.website')}</FieldLabel>
                     <input type="url" value={website} onChange={e => setWebsite(e.target.value)} style={inputStyle} />
                   </div>
                   <div>
-                    <FieldLabel><Heart size={12} style={{ display: 'inline', marginRight: '6px' }} />Хобби</FieldLabel>
+                    <FieldLabel><Heart size={12} style={{ display: 'inline', marginRight: '6px' }} />{t('settings.hobbies')}</FieldLabel>
                     <textarea value={hobbies} onChange={e => setHobbies(e.target.value)} rows={4} style={{ ...inputStyle, resize: 'none' }} />
                   </div>
                   <button type="submit" disabled={isSubmitting} style={saveBtnStyle}>
-                    <Save size={18} /> Сохранить информацию
+                    <Save size={18} /> {t('settings.saveInfo')}
                   </button>
                 </form>
               )}
@@ -297,7 +300,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
               {activeTab === 'design' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   <div>
-                    <FieldLabel>NEON PRESETS</FieldLabel>
+                    <FieldLabel>{t('settings.neonPresets')}</FieldLabel>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                       {NEON_PRESETS.map(preset => (
                         <button key={preset.name} onClick={() => { setNeonColor(preset.color); updateUser({ ...currentUser, neonColor: preset.color, neonBrightness }); }}
@@ -310,7 +313,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                   </div>
 
                   <div>
-                    <FieldLabel>СВОЙ ЦВЕТ (HEX)</FieldLabel>
+                    <FieldLabel>{t('settings.customColor')}</FieldLabel>
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <div style={{ position: 'relative', flex: 1 }}>
                         <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: neonColor, fontWeight: '800' }}>#</span>
@@ -330,7 +333,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
 
 
                   <div>
-                    <FieldLabel>ЯРКОСТЬ НЕОНА</FieldLabel>
+                    <FieldLabel>{t('settings.neonBrightness')}</FieldLabel>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.03)', padding: '14px 18px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
                       <Sun size={18} color={neonColor} />
                       <input type="range" min="0" max="1.5" step="0.05" value={neonBrightness}
@@ -341,7 +344,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
                   </div>
 
                   <button onClick={() => handleGeneralSubmit()} disabled={isSubmitting} style={saveBtnStyle}>
-                    <Save size={18} /> Применить дизайн
+                    <Save size={18} /> {t('settings.applyDesign')}
                   </button>
                 </div>
               )}
@@ -349,29 +352,61 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
               {activeTab === 'security' && (
                 <form onSubmit={handleSecuritySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                   <div>
-                    <FieldLabel>Текущий пароль</FieldLabel>
+                    <FieldLabel>{t('settings.currentPassword')}</FieldLabel>
                     <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} style={inputStyle} required />
                   </div>
                   <div>
-                    <FieldLabel>Новый пароль</FieldLabel>
+                    <FieldLabel>{t('settings.newPassword')}</FieldLabel>
                     <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={inputStyle} required />
                   </div>
                   <div>
-                    <FieldLabel>Подтвердите пароль</FieldLabel>
+                    <FieldLabel>{t('settings.confirmPassword')}</FieldLabel>
                     <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={inputStyle} required />
                   </div>
                   <button type="submit" disabled={isSubmitting} style={saveBtnStyle}>
-                    <Shield size={18} /> Обновить пароль
+                    <Shield size={18} /> {t('settings.updatePassword')}
                   </button>
                   <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '10px' }}>
                     <button type="button" onClick={() => { onClose(); logout(); }} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800' }}>
-                      Выйти
+                      {t('settings.logout')}
                     </button>
                     <button type="button" onClick={handleDeleteAccount} style={{ flex: 1, background: 'rgba(255,48,96,0.1)', color: '#ff3060', border: '1px solid rgba(255,48,96,0.2)', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800' }}>
-                      Удалить аккаунт
+                      {t('settings.deleteAccount')}
                     </button>
                   </div>
                 </form>
+              )}
+
+              {activeTab === 'language' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                  <FieldLabel>{t('settings.selectLanguage')}</FieldLabel>
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {[
+                      { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+                      { code: 'en', name: 'English', flag: '🇬🇧' },
+                      { code: 'kk', name: 'Қазақша', flag: '🇰🇿' }
+                    ].map(lang => (
+                      <button 
+                        key={lang.code}
+                        onClick={() => {
+                          i18n.changeLanguage(lang.code);
+                          localStorage.setItem('appLanguage', lang.code);
+                        }}
+                        style={{ 
+                          display: 'flex', alignItems: 'center', gap: '16px',
+                          padding: '16px', borderRadius: '14px', 
+                          background: i18n.language === lang.code ? `${neonColor}18` : 'rgba(255,255,255,0.03)', 
+                          border: `2px solid ${i18n.language === lang.code ? neonColor : 'rgba(255,255,255,0.05)'}`, 
+                          cursor: 'pointer', transition: 'all 0.2s',
+                          color: 'white', fontSize: '1rem', fontWeight: '800'
+                        }}
+                      >
+                        <span style={{ fontSize: '1.4rem' }}>{lang.flag}</span>
+                        {lang.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </motion.div>

@@ -30,20 +30,22 @@ import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Home, MessageSquare, Users, User, LogOut, Bell, Search, Check, X, Radio, ArrowDownCircle, Plus, LayoutGrid, Music } from 'lucide-react';
 import api from './api/client';
+import { useTranslation } from 'react-i18next';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const { unreadCount } = useNotifications();
   const location = useLocation();
+  const { t } = useTranslation();
   if (!user) return null;
   const navItems = [
-    { name: 'Новости', icon: Home, path: '/' },
-    { name: 'Сообщения', icon: MessageSquare, path: '/messages' },
-    { name: 'Друзья', icon: Users, path: '/friends' },
-    { name: 'Группы', icon: LayoutGrid, path: '/groups' },
-    { name: 'Волны', icon: Radio, path: '/waves' },
-    { name: 'Музыка', icon: Music, path: '/music' },
-    { name: 'Мой профиль', icon: User, path: `/profile/${user.username}` },
+    { name: t('nav.feed'), icon: Home, path: '/' },
+    { name: t('nav.messages'), icon: MessageSquare, path: '/messages' },
+    { name: t('nav.friends'), icon: Users, path: '/friends' },
+    { name: t('nav.groups'), icon: LayoutGrid, path: '/groups' },
+    { name: t('nav.waves'), icon: Radio, path: '/waves' },
+    { name: t('nav.music'), icon: Music, path: '/music' },
+    { name: t('settings.profile'), icon: User, path: `/profile/${user.username}` },
     { name: 'Приложение', icon: ArrowDownCircle, path: '/app' },
   ];
   return (
@@ -70,7 +72,7 @@ const Sidebar = () => {
               <div className={`nav-item ${isActive ? 'active' : ''}`}>
                 <item.icon size={20} />
                 <span>{item.name}</span>
-                {item.name === 'Сообщения' && unreadCount > 0 && (
+                {item.name === t('nav.messages') && unreadCount > 0 && (
                   <motion.div 
                     initial={{ scale: 0 }} 
                     animate={{ scale: 1 }} 
@@ -107,7 +109,7 @@ const Sidebar = () => {
         </Link>
         <button onClick={logout} className="nav-item" style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer' }}>
           <LogOut size={18} />
-          <span>Выйти</span>
+          <span>{t('settings.logout')}</span>
         </button>
       </div>
     </div>
@@ -326,6 +328,7 @@ const MobileNav = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   // Close menu on navigation
   useEffect(() => {
@@ -336,11 +339,11 @@ const MobileNav = () => {
   if (!user) return null;
 
   const navItems = [
-    { to: '/', icon: Home, label: 'Лента' },
-    { to: '/messages', icon: MessageSquare, label: 'Чаты' },
-    { to: '/waves', icon: Radio, label: 'Волны', isMiddle: true },
-    { to: '/friends', icon: Users, label: 'Друзья' },
-    { to: '#menu', icon: LayoutGrid, label: 'Меню', isMenuTrigger: true },
+    { to: '/', icon: Home, label: t('nav.feed') },
+    { to: '/messages', icon: MessageSquare, label: t('nav.messages') },
+    { to: '/waves', icon: Radio, label: t('nav.waves'), isMiddle: true },
+    { to: '/friends', icon: Users, label: t('nav.friends') },
+    { to: '#menu', icon: LayoutGrid, label: 'Menu', isMenuTrigger: true },
   ];
 
   const handlePlusClick = (e: React.MouseEvent) => {
