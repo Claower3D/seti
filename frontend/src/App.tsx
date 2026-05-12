@@ -422,8 +422,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 function AppInner() {
   const location = useLocation();
+  const { user } = useAuth();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [hasCompletedStartup, setHasCompletedStartup] = useState(sessionStorage.getItem('startup_complete') === 'true');
+  const isCustomTheme = !user || !user.theme || user.theme === 'custom';
+  // Skip startup screen for light/dark themes — it's cyberpunk-only
+  const [hasCompletedStartup, setHasCompletedStartup] = useState(
+    !isCustomTheme || sessionStorage.getItem('startup_complete') === 'true'
+  );
   const isWavesPage = location.pathname === '/waves';
 
   useEffect(() => {
@@ -465,15 +470,18 @@ function AppInner() {
           transition={{ duration: 0.8 }}
           className="main-layout"
         >
-          <div className="hologram-container">
-            <div className="hologram-core" />
-            <div className="hologram-radar" />
-            <div className="hologram-ring" />
-            <div className="hologram-ring" />
-            <div className="hologram-ring" />
-            <div className="hologram-ring" />
-            <div className="hologram-ring" />
-          </div>
+          {/* Hologram only for custom (cyberpunk) theme */}
+          {isCustomTheme && (
+            <div className="hologram-container">
+              <div className="hologram-core" />
+              <div className="hologram-radar" />
+              <div className="hologram-ring" />
+              <div className="hologram-ring" />
+              <div className="hologram-ring" />
+              <div className="hologram-ring" />
+              <div className="hologram-ring" />
+            </div>
+          )}
 
           <Sidebar />
           <div 
