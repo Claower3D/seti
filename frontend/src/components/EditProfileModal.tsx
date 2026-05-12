@@ -53,6 +53,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
   // Design
   const [neonColor,      setNeonColor]      = useState(currentUser?.neonColor      || '#00f5ff');
   const [neonBrightness, setNeonBrightness] = useState(currentUser?.neonBrightness || 1.0);
+  const [theme,          setTheme]          = useState(currentUser?.theme          || 'custom');
 
   // Security
   const [currentPassword, setCurrentPassword] = useState('');
@@ -93,7 +94,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
     try {
       const res = await api.put('/profile', {
         username, fullName, bio, avatar, phone,
-        neonColor, neonBrightness,
+        neonColor, neonBrightness, theme,
         dateOfBirth, city, website, hobbies,
       });
       onUpdate(res.data);
@@ -300,48 +301,87 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onUpdate }: Edi
               {activeTab === 'design' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   <div>
-                    <FieldLabel>{t('settings.neonPresets')}</FieldLabel>
+                    <FieldLabel>{t('settings.interfaceTheme') || 'Тема интерфейса'}</FieldLabel>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-                      {NEON_PRESETS.map(preset => (
-                        <button key={preset.name} onClick={() => { setNeonColor(preset.color); updateUser({ ...currentUser, neonColor: preset.color, neonBrightness }); }}
-                          style={{ padding: '12px 8px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: `2px solid ${neonColor === preset.color ? preset.color : 'transparent'}`, cursor: 'pointer', transition: 'all 0.2s' }}>
-                          <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: preset.color, margin: '0 auto 8px', boxShadow: `0 0 10px ${preset.color}` }} />
-                          <span style={{ fontSize: '0.65rem', color: 'white', fontWeight: '600' }}>{preset.name}</span>
+                      {[
+                        { id: 'light', label: 'Светлая', icon: '☀️' },
+                        { id: 'dark', label: 'Темная', icon: '🌑' },
+                        { id: 'custom', label: 'Неон', icon: '⚡' }
+                      ].map(t => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => {
+                            setTheme(t.id);
+                            updateUser({ ...currentUser, theme: t.id });
+                          }}
+                          style={{
+                            padding: '12px 8px',
+                            borderRadius: '14px',
+                            background: theme === t.id ? `${neonColor}18` : 'rgba(255,255,255,0.03)',
+                            border: `2px solid ${theme === t.id ? neonColor : 'transparent'}`,
+                            color: 'white',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <span style={{ fontSize: '1.2rem' }}>{t.icon}</span>
+                          <span style={{ fontSize: '0.7rem', fontWeight: '800' }}>{t.label}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <div>
-                    <FieldLabel>{t('settings.customColor')}</FieldLabel>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <div style={{ position: 'relative', flex: 1 }}>
-                        <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: neonColor, fontWeight: '800' }}>#</span>
-                        <input type="text" value={neonColor.replace('#', '')} 
-                          onChange={e => { 
-                            const val = '#' + e.target.value.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
-                            setNeonColor(val); 
-                            updateUser({ ...currentUser, neonColor: val, neonBrightness }); 
-                          }}
-                          style={{ ...inputStyle, paddingLeft: '32px' }} placeholder="00f5ff" />
+                  {theme === 'custom' && (
+                    <>
+                      <div>
+                        <FieldLabel>{t('settings.neonPresets')}</FieldLabel>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                          {NEON_PRESETS.map(preset => (
+                            <button key={preset.name} onClick={() => { setNeonColor(preset.color); updateUser({ ...currentUser, neonColor: preset.color, neonBrightness, theme }); }}
+                              style={{ padding: '12px 8px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: `2px solid ${neonColor === preset.color ? preset.color : 'transparent'}`, cursor: 'pointer', transition: 'all 0.2s' }}>
+                              <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: preset.color, margin: '0 auto 8px', boxShadow: `0 0 10px ${preset.color}` }} />
+                              <span style={{ fontSize: '0.65rem', color: 'white', fontWeight: '600' }}>{preset.name}</span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <input type="color" value={neonColor.startsWith('#') && neonColor.length === 7 ? neonColor : '#00f5ff'} 
-                        onChange={e => { setNeonColor(e.target.value); updateUser({ ...currentUser, neonColor: e.target.value, neonBrightness }); }}
-                        style={{ width: '48px', height: '48px', padding: '4px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', cursor: 'pointer' }} />
-                    </div>
-                  </div>
 
+                      <div>
+                        <FieldLabel>{t('settings.customColor')}</FieldLabel>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <div style={{ position: 'relative', flex: 1 }}>
+                            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: neonColor, fontWeight: '800' }}>#</span>
+                            <input type="text" value={neonColor.replace('#', '')} 
+                              onChange={e => { 
+                                const val = '#' + e.target.value.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
+                                setNeonColor(val); 
+                                updateUser({ ...currentUser, neonColor: val, neonBrightness, theme }); 
+                              }}
+                              style={{ ...inputStyle, paddingLeft: '32px' }} placeholder="00f5ff" />
+                          </div>
+                          <input type="color" value={neonColor.startsWith('#') && neonColor.length === 7 ? neonColor : '#00f5ff'} 
+                            onChange={e => { setNeonColor(e.target.value); updateUser({ ...currentUser, neonColor: e.target.value, neonBrightness, theme }); }}
+                            style={{ width: '48px', height: '48px', padding: '4px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', cursor: 'pointer' }} />
+                        </div>
+                      </div>
 
-                  <div>
-                    <FieldLabel>{t('settings.neonBrightness')}</FieldLabel>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.03)', padding: '14px 18px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <Sun size={18} color={neonColor} />
-                      <input type="range" min="0" max="1.5" step="0.05" value={neonBrightness}
-                        onChange={e => { const v = parseFloat(e.target.value); setNeonBrightness(v); updateUser({ ...currentUser, neonColor, neonBrightness: v }); }}
-                        style={{ flex: 1, accentColor: neonColor, cursor: 'pointer' }} />
-                      <span style={{ minWidth: '40px', fontSize: '0.85rem', fontWeight: '800', color: neonColor }}>{Math.round(neonBrightness * 100)}%</span>
-                    </div>
-                  </div>
+                      <div>
+                        <FieldLabel>{t('settings.neonBrightness')}</FieldLabel>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.03)', padding: '14px 18px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <Sun size={18} color={neonColor} />
+                          <input type="range" min="0" max="1.5" step="0.05" value={neonBrightness}
+                            onChange={e => { const v = parseFloat(e.target.value); setNeonBrightness(v); updateUser({ ...currentUser, neonColor, neonBrightness: v, theme }); }}
+                            style={{ flex: 1, accentColor: neonColor, cursor: 'pointer' }} />
+                          <span style={{ minWidth: '40px', fontSize: '0.85rem', fontWeight: '800', color: neonColor }}>{Math.round(neonBrightness * 100)}%</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <button onClick={() => handleGeneralSubmit()} disabled={isSubmitting} style={saveBtnStyle}>
                     <Save size={18} /> {t('settings.applyDesign')}
