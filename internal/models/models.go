@@ -17,6 +17,7 @@ type User struct {
 	NeonColor      string         `gorm:"default:'#00f5ff'" json:"neonColor"`
 	NeonBrightness float64        `gorm:"default:1.0" json:"neonBrightness"`
 	FCMToken       string         `json:"fcmToken"`
+	Theme          string         `gorm:"default:'custom'" json:"theme"`
 	// Extended profile fields
 	FullName       string         `json:"fullName"`
 	DateOfBirth    string         `json:"dateOfBirth"`

@@ -13,6 +13,7 @@ type RegisterInput struct {
 	Email    string `json:"email"`
 	Phone    string `json:"phone" binding:"required"`
 	Password string `json:"password" binding:"required,min=6"`
+	Theme    string `json:"theme"`
 }
 
 type LoginInput struct {
@@ -39,6 +40,7 @@ func Register(c *gin.Context) {
 		Phone:    input.Phone,
 		Password: hashedPassword,
 		Avatar:   "https://api.dicebear.com/7.x/avataaars/svg?seed=" + input.Username,
+		Theme:    input.Theme,
 	}
 
 	if err := db.DB.Create(&user).Error; err != nil {

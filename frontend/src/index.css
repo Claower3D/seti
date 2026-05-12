@@ -29,6 +29,32 @@
   --glow-opacity: 1;
 }
 
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg2: #f8f9fa;
+  --bg3: #f1f3f5;
+  --text: #1a1a1a;
+  --text-secondary: rgba(0, 0, 0, 0.5);
+  --border: rgba(0, 0, 0, 0.1);
+  --border-bright: rgba(0, 0, 0, 0.2);
+  --card: rgba(0, 0, 0, 0.02);
+  --card-hover: rgba(0, 0, 0, 0.04);
+  --glow-opacity: 0;
+}
+
+[data-theme="dark"] {
+  --bg: #000000;
+  --bg2: #0a0a0a;
+  --bg3: #111111;
+  --text: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.5);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-bright: rgba(255, 255, 255, 0.2);
+  --card: rgba(255, 255, 255, 0.03);
+  --card-hover: rgba(255, 255, 255, 0.06);
+  --glow-opacity: 0;
+}
+
 html,
 body,
 #root {
@@ -63,6 +89,11 @@ body::before {
   z-index: 0;
 }
 
+[data-theme="light"] body::before,
+[data-theme="dark"] body::before {
+  display: none;
+}
+
 body::after {
   content: '';
   position: fixed;
@@ -76,6 +107,11 @@ body::after {
   /* Isolate to own GPU layer — prevents repainting on scroll */
   will-change: auto;
   contain: strict;
+}
+
+[data-theme="light"] body::after,
+[data-theme="dark"] body::after {
+  display: none;
 }
 
 #root {

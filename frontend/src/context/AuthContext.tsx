@@ -10,6 +10,7 @@ interface User {
   bio: string;
   neonColor?: string;
   neonBrightness?: number;
+  theme?: 'light' | 'dark' | 'custom';
 }
 
 interface AuthContextType {
@@ -43,11 +44,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Theme application
   useEffect(() => {
     const root = document.documentElement;
-    const color = user?.neonColor || '#00f5ff';
-    const brightness = user?.neonBrightness !== undefined ? user.neonBrightness : 1.0;
-    root.style.setProperty('--primary', color);
-    root.style.setProperty('--glow-opacity', brightness.toString());
-    root.style.setProperty('--primary-glow', `${color}${Math.round(brightness * 255).toString(16).padStart(2, '0')}`);
+    const theme = user?.theme || 'custom';
+    
+    // Set data-theme attribute
+    if (theme === 'custom') {
+      root.removeAttribute('data-theme');
+      const color = user?.neonColor || '#00f5ff';
+      const brightness = user?.neonBrightness !== undefined ? user.neonBrightness : 1.0;
+      root.style.setProperty('--primary', color);
+      root.style.setProperty('--glow-opacity', brightness.toString());
+      root.style.setProperty('--primary-glow', `${color}${Math.round(brightness * 255).toString(16).padStart(2, '0')}`);
+    } else {
+      root.setAttribute('data-theme', theme);
+      // Reset custom properties to defaults or neutral
+      root.style.setProperty('--primary', theme === 'light' ? '#2196f3' : '#bb86fc');
+      root.style.setProperty('--glow-opacity', '0');
+    }
   }, [user]);
 
   // On mount: validate token from localStorage

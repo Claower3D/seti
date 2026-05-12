@@ -199,6 +199,7 @@ export const RegisterPage = () => {
   const [phone, setPhone] = useState('');
   const [phoneValid, setPhoneValid] = useState(false);
   const [password, setPassword] = useState('');
+  const [theme, setTheme] = useState<'light' | 'dark' | 'custom'>('custom');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
@@ -220,7 +221,7 @@ export const RegisterPage = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await api.post('/register', { username, phone, password });
+      const res = await api.post('/register', { username, phone, password, theme });
       login(res.data.token, res.data.user);
       navigate('/');
     } catch (err: any) {
@@ -268,6 +269,44 @@ export const RegisterPage = () => {
             <input type="password" className="input-field" placeholder="Криптографический пароль"
               style={{ paddingLeft: '48px', height: '52px' }}
               value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+          </div>
+
+          {/* Theme Selection */}
+          <div style={{ marginBottom: '0.5rem' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '12px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              🎨 Выберите тему интерфейса
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+              {[
+                { id: 'light', label: 'Светлая', icon: '☀️' },
+                { id: 'dark', label: 'Темная', icon: '🌑' },
+                { id: 'custom', label: 'Неон', icon: '⚡' }
+              ].map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTheme(t.id as any)}
+                  style={{
+                    padding: '12px 4px',
+                    borderRadius: '12px',
+                    background: theme === t.id ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${theme === t.id ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}`,
+                    color: theme === t.id ? 'white' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontWeight: '800',
+                    transition: '0.2s',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem' }}>{t.icon}</span>
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <button className="btn-primary" type="submit"
